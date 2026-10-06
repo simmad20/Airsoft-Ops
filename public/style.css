@@ -184,3 +184,53 @@ body.pulse .clock.bomb { text-shadow: 0 0 40px var(--danger); }
   .switch span, .switch span::after, .led, .adv summary::after { transition: none; }
   .sheet, .sheet-bg { animation: none; }
 }
+
+/* ---------- Sessions ---------- */
+.net { display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px; border-radius: 999px; border: 1px solid var(--line); font-family: var(--mono); font-size: 13px; color: var(--muted); }
+.net i { width: 8px; height: 8px; border-radius: 50%; background: var(--danger); box-shadow: 0 0 6px var(--danger); }
+.net.on i { background: var(--good); box-shadow: 0 0 6px var(--good); }
+.net b { font-weight: 400; letter-spacing: 0.08em; }
+
+.mp { display: grid; gap: 12px; padding: 16px; border-radius: 14px; border: 1px solid var(--line); background: var(--panel); }
+.mp .lbl { font-weight: 600; }
+.mp .desc { color: var(--muted); font-size: 13px; margin-top: 2px; }
+.mp-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.mp .msg { margin: 0; }
+.mp.host { border-color: var(--good); background: linear-gradient(180deg, rgba(63,217,138,0.08), var(--panel)); }
+.mp-top { display: flex; gap: 14px; align-items: center; justify-content: space-between; }
+.code { font-family: var(--mono); font-size: 48px; line-height: 1.05; letter-spacing: 0.14em; color: var(--fg); }
+.qr { flex-shrink: 0; width: 116px; height: 116px; padding: 4px; border-radius: 10px; background: #fff; }
+.qr svg { display: block; width: 100%; height: 100%; }
+.members { display: flex; flex-wrap: wrap; gap: 6px; }
+.mhead { width: 100%; font-size: 13px; color: var(--muted); }
+.mchip { padding: 5px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel-2); font-size: 13px; }
+.mchip.speaker { border-color: var(--good); }
+
+.codein { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); color: var(--amber); font-family: var(--mono); font-size: 44px; letter-spacing: 0.35em; text-align: center; text-transform: uppercase; }
+.codein::placeholder { color: var(--line); }
+.namein { width: 140px; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel-2); color: var(--fg); font: inherit; }
+.codein:focus-visible, .namein:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+.val { font-family: var(--mono); font-size: 13px; color: var(--amber); margin-left: 6px; }
+
+.remote-card { display: grid; gap: 6px; justify-items: center; text-align: center; padding: 24px 16px; border-radius: 14px; border: 1px solid var(--line); background: var(--panel); }
+.remote-card .desc { color: var(--muted); font-size: 14px; max-width: 40ch; }
+.rem-status { font-family: var(--display); font-weight: 600; font-size: 18px; letter-spacing: 0.04em; color: var(--amber); }
+#advSlot .adv { border-top: 0; }
+
+/* Speaker/viewer phones mirror the game read-only */
+body.remote .hold { pointer-events: none; }
+body.remote #abortRound, body.remote #abortPlanted, body.remote .endbtns { display: none; }
+body.remote .hold:disabled { opacity: 1; }
+.brand, .chip, .net { white-space: nowrap; }
+.topr { min-width: 0; }
+@media (max-width: 420px) {
+  .top { gap: 8px; }
+  .topr { gap: 6px; }
+  .brand { font-size: 14px; letter-spacing: 0.08em; gap: 8px; }
+  .chip { font-size: 11px; padding: 4px 8px; letter-spacing: 0.06em; }
+  .net { font-size: 12px; padding: 4px 7px; }
+  body.insession .brand { letter-spacing: 0.04em; font-size: 13px; }
+  body.insession .net b { letter-spacing: 0.02em; }
+}
+.row.stack { flex-direction: column; align-items: stretch; }
+.row.stack .seg button { flex: 1; }

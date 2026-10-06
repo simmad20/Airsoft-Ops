@@ -4,7 +4,7 @@ Ein Bomb-Timer fürs Airsoft-Feld als Web-App fürs Handy: Bombe auf Punkt A ode
 
 **▶ Live: [airsoft-ops.onrender.com](https://airsoft-ops.onrender.com)**
 
-Die App läuft komplett im Browser. Der Server liefert nur die Dateien aus. Nach dem ersten Öffnen funktioniert sie dank Service Worker **auch ohne Netz** auf dem Spielfeld.
+Im **Allein-Modus** läuft die App komplett im Browser und funktioniert nach dem ersten Öffnen dank Service Worker **auch ohne Netz**. Im **Session-Modus** verbinden sich mehrere Handys über mobiles Internet: ein Handy ist die Bombe, die anderen spielen als Lautsprecher die Töne synchron über ihre eigenen Bluetooth-Boxen ab.
 
 ## Features
 
@@ -25,6 +25,26 @@ Die App läuft komplett im Browser. Der Server liefert nur die Dateien aus. Nach
 - **Display bleibt an:** Solange eine Runde läuft, sperrt sich das Handy nicht (Screen Wake Lock). Kann der Browser das nicht, zeigt die App einen Hinweis.
 - **Zum Startbildschirm hinzufügbar (PWA):** Über das Browsermenü („Zum Startbildschirm hinzufügen“ bzw. Teilen → „Zum Home-Bildschirm“) startet die App ohne Browserleiste wie eine normale App.
 
+## Mehrere Handys (Session)
+
+**So geht's:**
+
+1. Auf dem Handy, das die **Bombe** sein soll: **„Session starten“**. Es erscheinen ein 4-stelliger Code und ein QR-Code.
+2. Mitspieler scannen den QR-Code (oder öffnen die Seite → **„Beitreten“** → Code eingeben) und wählen eine Rolle:
+   - **Lautsprecher:** Spielt alle Töne und Ansagen über die Box, die mit diesem Handy gekoppelt ist. Beliebig viele, verteilt übers Feld.
+   - **Zuschauer:** Zeigt Rundenzeit, Bomben-Timer, Plant- und Entschärf-Fortschritt live, ohne Ton.
+3. Das Bomben-Handy sieht, wer verbunden ist, und startet die Runde wie gewohnt. Geplantet und entschärft wird nur am Bomben-Handy.
+
+**Wie die Synchronisation funktioniert:** Es wird kein Ton übertragen, sondern nur der Spielstand mit Zeitstempeln. Jedes Handy gleicht seine Uhr laufend mit dem Server ab (wie NTP) und spielt Piepen und Explosion selbst zur gemeinsamen Uhrzeit ab. Im Test lagen die Handys dabei wenige Millisekunden auseinander, auch bei verstellter Handy-Uhr. Ansagen wie „Bombe platziert“ kommen um die Netz-Verzögerung später (meist unter 0,3 s).
+
+**Box-Verzögerung:** Bluetooth-Boxen haben selbst 100–300 ms Verzögerung, je nach Modell unterschiedlich. Unter *Erweiterte Einstellungen → Synchronisation* gibt es pro Handy die **Box-Verzögerung** und das **Abgleich-Piepen** (piept jede Sekunde auf allen Handys gleichzeitig). Auf zwei Handys einschalten und die Verzögerung der langsameren Box erhöhen, bis beide zusammen piepen.
+
+**Gut zu wissen:**
+- Alle Handys brauchen mobiles Internet und müssen die App **im Vordergrund offen** lassen. Das Display bleibt dabei automatisch an.
+- Bricht die Verbindung kurz ab, verbindet sich das Handy automatisch neu und holt sich den aktuellen Stand. Explosion und Zeitablauf ergeben sich aus der Uhr, sie passieren also auch dann pünktlich, wenn das Bomben-Handy gerade kein Netz hat.
+- Auch nach einem Neuladen der Seite tritt jedes Handy automatisch wieder seiner Session bei. Das Bomben-Handy übernimmt dabei eine laufende Runde.
+- Auf dem Bomben-Handy lässt sich unter *Synchronisation* der eigene Ton abschalten („Ton auf diesem Handy“), wenn nur die Lautsprecher Ton machen sollen.
+
 ## Projektstruktur
 
 ```
@@ -34,11 +54,12 @@ Die App läuft komplett im Browser. Der Server liefert nur die Dateien aus. Nach
 │   ├── style.css
 │   ├── app.js              # Spiellogik, Sound, Sprachausgabe
 │   ├── audio/de, audio/en  # Ansagen als MP3
+│   ├── vendor/qrcode.js    # QR-Code-Generator (MIT, Kazuhiko Arase)
 │   ├── sw.js               # Service Worker für Offline-Betrieb
 │   ├── manifest.webmanifest
 │   └── icon.svg, icon-192.png, icon-512.png
 ├── tools/generate_voice.py # Erzeugt die Ansagen neu (Piper TTS)
-├── server.js               # Kleiner Node-Server ohne Abhängigkeiten
+├── server.js               # Node-Server: liefert die App aus und verwaltet die Sessions (WebSocket)
 ├── package.json
 └── render.yaml             # Render-Blueprint für das Deployment
 ```
@@ -59,6 +80,7 @@ Die Stimmen werden beim ersten Lauf automatisch heruntergeladen.
 Voraussetzung: [Node.js](https://nodejs.org) 18 oder neuer.
 
 ```bash
+npm install
 npm start
 ```
 
@@ -68,38 +90,27 @@ Dann im Browser `http://localhost:3000` öffnen. Einen anderen Port setzt man mi
 
 ## Auf Render veröffentlichen
 
-Die App läuft aktuell als **Static Site** auf Render unter **https://airsoft-ops.onrender.com** (Branch `main`, Publish Directory `public`). Jeder Push auf `main` wird automatisch neu deployt.
+Für Sessions mit mehreren Handys braucht die App einen laufenden Server (WebSocket). Sie muss deshalb als **Web Service** laufen, eine Static Site reicht dafür nicht mehr.
 
-Für eine eigene Instanz gibt es diese Möglichkeiten:
+### Von der Static Site auf Web Service umstellen (URL bleibt gleich)
 
-### Variante A: Blueprint (am einfachsten)
-
-1. Auf [render.com](https://render.com) einloggen und das GitHub-Konto verbinden.
-2. **New → Blueprint** wählen und dieses Repository auswählen.
-3. Render liest die `render.yaml` und legt den Service `airsoft-bomb-timer` an. Mit **Apply** bestätigen.
-4. Nach ein bis zwei Minuten ist die App unter `https://airsoft-bomb-timer.onrender.com` (oder ähnlich) erreichbar.
-
-### Variante B: Web Service manuell anlegen
-
-1. **New → Web Service** und das Repository auswählen.
-2. Einstellungen:
-   - **Runtime:** Node
+1. Im Render-Dashboard die Static Site **Airsoft-Ops** öffnen → **Settings** → ganz unten **Delete Static Site**. Erst dadurch wird der Name `airsoft-ops` frei.
+2. **New → Web Service** → Repository `simmad20/Airsoft-Ops` auswählen.
+3. Einstellungen:
+   - **Name:** `Airsoft-Ops` (ergibt wieder `https://airsoft-ops.onrender.com`)
+   - **Branch:** `main`
+   - **Runtime / Language:** Node
    - **Build Command:** `npm install`
    - **Start Command:** `npm start`
    - **Instance Type:** Free
-3. **Create Web Service** klicken.
+   - Unter **Advanced** optional **Health Check Path:** `/healthz`
+4. **Create Web Service** klicken. Nach ein bis zwei Minuten steht im Log „Your service is live“.
 
-### Variante C: Static Site (kostenlos, ohne Einschlafen)
+Alternativ legt **New → Blueprint** den Service automatisch aus der `render.yaml` an (Name dann `airsoft-bomb-timer`).
 
-Da die App nur aus statischen Dateien besteht, geht es auch ohne Node-Server:
+> **Free-Plan:** Ein kostenloser Web Service schläft nach ca. 15 Minuten ohne Aufrufe ein, der erste Aufruf danach dauert bis zu einer Minute. Also **vor dem Spiel einmal die Seite öffnen**. Während einer Session halten die verbundenen Handys den Server wach. Wird der Server neu gestartet (z. B. durch ein Deploy), sind laufende Sessions weg und müssen neu gestartet werden. Ohne Einschlafen kostet der kleinste bezahlte Plan bei Render ca. 7 $ im Monat.
 
-1. **New → Static Site** und das Repository auswählen.
-2. **Build Command:** leer lassen. **Publish Directory:** `public`
-3. **Create Static Site** klicken.
-
-> **Free-Plan bei Web Services:** Ein kostenloser Web Service schläft nach ca. 15 Minuten ohne Aufrufe ein. Der erste Aufruf danach dauert dann bis zu einer Minute. Für die laufende Runde ist das egal, weil die App komplett im Browser läuft. Wer das Warten vermeiden will, nimmt Variante C.
-
-Bei jedem Push auf den verbundenen Branch deployt Render automatisch neu.
+Bei jedem Push auf `main` deployt Render automatisch neu. Deshalb nicht während eines Spiels pushen.
 
 ## Vollbild auf Android und iPhone
 

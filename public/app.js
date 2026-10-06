@@ -4,7 +4,7 @@
   /* ---------- Settings ---------- */
   const DEF = {
     roundTime: 10, bombTime: 45, plantTime: 4, defuseTime: 7, half: true,
-    lang: 'de', voice: 'male', radio: false, voiceVol: 100, vol: 80, vibrate: true, fs: true,
+    lang: 'de', voice: 'male', radio: false, voiceVol: 100, vol: 80, vibrate: true, fs: true, lat: 0, local: true,
     say: { start: true, planted: true, min1: true, bomb: true, result: true },
     snd: { tick: true, hold: true, signal: true, boom: true, jingle: true }
   };
@@ -132,6 +132,7 @@
     });
     painters.forEach((p) => p());
     updateHints();
+    $('latVal').textContent = S.lat + ' ms';
     $('voiceDesc').textContent = S.voice === 'male'
       ? 'Männliche Ansager-Stimme, funktioniert offline'
       : 'Sprachausgabe des Handys, klingt je nach Gerät anders';
@@ -139,16 +140,11 @@
   document.querySelectorAll('[data-opt]').forEach((el) => el.addEventListener('change', () => { S[el.dataset.opt] = el.checked; save(); updateHints(); }));
   document.querySelectorAll('[data-say]').forEach((el) => el.addEventListener('change', () => { S.say[el.dataset.say] = el.checked; save(); }));
   document.querySelectorAll('[data-snd]').forEach((el) => el.addEventListener('change', () => { S.snd[el.dataset.snd] = el.checked; save(); }));
-  document.querySelectorAll('[data-range]').forEach((el) => el.addEventListener('input', () => { S[el.dataset.range] = +el.value; applyGains(); save(); }));
+  document.querySelectorAll('[data-range]').forEach((el) => el.addEventListener('input', () => { S[el.dataset.range] = +el.value; applyGains(); save(); $('latVal').textContent = S.lat + ' ms'; }));
   document.querySelectorAll('[data-seg]').forEach((seg) => seg.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
     S[seg.dataset.seg] = b.dataset.v; save(); bindAll();
     if (seg.dataset.seg === 'lang') loadLines();
   })));
-
-  function updateHints() {
-    $('hintA').textContent = $('hintB').textContent = S.plantTime + ' s halten zum Planten';
-    $('defuseHint').textContent = S.defuseTime + ' s gedrückt halten' + (S.half ? ' · ab 50 % gesichert' : '');
-  }
 
   /* ---------- Announcer ---------- */
   /* Pre-rendered male voice (public/audio, made by tools/generate_voice.py). The phone's own
@@ -287,9 +283,9 @@
     o.connect(g); g.connect(master);
     o.start(t); o.stop(t + dur + 0.03);
   }
-  function explosion() {
-    const a = audio(); if (!a) return;
-    const t = a.currentTime, len = 3.2;
+  function explosion(when) {
+    const a = audio(); if (!a) return null;
+    const t = a.currentTime + (when || 0), len = 3.2;
     const buf = a.createBuffer(1, Math.floor(a.sampleRate * len), a.sampleRate);
     const d = buf.getChannelData(0);
     for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 2);
@@ -302,6 +298,7 @@
     o.frequency.setValueAtTime(120, t); o.frequency.exponentialRampToValueAtTime(28, t + 1.3);
     const og = a.createGain(); og.gain.setValueAtTime(1, t); og.gain.exponentialRampToValueAtTime(0.001, t + 1.6);
     o.connect(og); og.connect(master); o.start(t); o.stop(t + 1.7);
+    return [n, o];
   }
   function winJingle() {
     [523, 659, 784, 1047].forEach((f, i) => tone(f, i === 3 ? 0.4 : 0.13, 'triangle', 0.4, i * 0.13));
@@ -326,7 +323,7 @@
   async function wake() { try { if ('wakeLock' in navigator && !wl) { wl = await navigator.wakeLock.request('screen'); wl.addEventListener('release', () => { wl = null; }); } } catch (e) { wl = null; } }
   function unwake() { try { wl && wl.release(); } catch (e) {} wl = null; }
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible' && inGame()) wake();
+    if (document.visibilityState === 'visible' && (inGame() || isRemote())) wake();
   });
   if (!('wakeLock' in navigator)) {
     $('wakeNote').textContent = 'Achtung: Dieser Browser kann das Display nicht wach halten. Automatische Sperre am Handy für die Runde hochstellen oder Browser aktualisieren.';
@@ -368,42 +365,283 @@
   window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); });
 
   /* ---------- Guard against leaving mid-round ---------- */
-  function inGame() { return st.phase === 'round' || st.phase === 'planted'; }
+  function inGame() { return G.phase === 'round' || G.phase === 'planted'; }
   let toastT = 0;
   function toast(msg) {
     const t = $('toast'); t.textContent = msg; t.hidden = false;
-    clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, 3000);
+    clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, 3500);
   }
   /* Asks "Leave page?" on reload, closing the tab or typing a new address. */
   window.addEventListener('beforeunload', (e) => { if (inGame()) { e.preventDefault(); e.returnValue = ''; } });
   /* The back button / back swipe lands on an extra history entry instead of leaving the page. */
   function armBack() { if (!(history.state && history.state.abt)) { try { history.pushState({ abt: 1 }, ''); } catch (e) {} } }
   window.addEventListener('popstate', () => {
-    if (inGame()) { armBack(); toast('Runde läuft. Zum Beenden „Runde abbrechen“ nutzen.'); }
+    if (inGame()) { armBack(); toast(isRemote() ? 'Runde läuft. Bitte die App offen lassen.' : 'Runde läuft. Zum Beenden „Runde abbrechen“ nutzen.'); }
   });
+
+  /* ---------- Session: clock sync & connection ---------- */
+  /* Every timestamp in the game state is server time. now() is this phone's estimate of it. */
+  let offset = 0;
+  const now = () => Date.now() + offset;
+  const NET = { ws: null, role: 'solo', code: null, hostKey: null, name: '', pending: null, online: false, members: [], retry: 0, retryT: 0, samples: [], fresh: false };
+  const isRemote = () => NET.role === 'speaker' || NET.role === 'viewer';
+  const isHost = () => NET.role === 'bomb';
+  const inSession = () => NET.role !== 'solo';
+  const myId = (() => {
+    try {
+      let id = localStorage.getItem('abt-id');
+      if (!id) { id = Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem('abt-id', id); }
+      return id;
+    } catch (e) { return Math.random().toString(36).slice(2); }
+  })();
+  function saveSess() {
+    try {
+      if (inSession() && NET.code) localStorage.setItem('abt-session', JSON.stringify({ role: NET.role, code: NET.code, hostKey: NET.hostKey, name: NET.name }));
+      else localStorage.removeItem('abt-session');
+    } catch (e) {}
+  }
+  function wsSend(m) { if (NET.ws && NET.ws.readyState === 1) { NET.ws.send(JSON.stringify(m)); return true; } return false; }
+
+  function connect() {
+    if (NET.ws) return;
+    let ws;
+    try { ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws'); } catch (e) { return retry(); }
+    NET.ws = ws;
+    ws.onopen = () => {
+      NET.retry = 0; NET.samples = [];
+      for (let i = 0; i < 6; i++) setTimeout(ping, i * 200);
+      if (NET.pending === 'create') wsSend({ t: 'create', id: myId, name: NET.name });
+      else if (NET.code) wsSend({ t: 'join', code: NET.code, role: NET.role, hostKey: NET.hostKey, id: myId, name: NET.name });
+    };
+    ws.onmessage = (e) => { let m; try { m = JSON.parse(e.data); } catch (_) { return; } onMsg(m); };
+    ws.onclose = () => {
+      if (NET.ws === ws) NET.ws = null;
+      setOnline(false);
+      if (NET.code || NET.pending) retry();
+    };
+    ws.onerror = () => {};
+  }
+  function retry() {
+    clearTimeout(NET.retryT);
+    NET.retryT = setTimeout(connect, Math.min(8000, 400 * Math.pow(2, NET.retry++)));
+  }
+  function disconnect() {
+    clearTimeout(NET.retryT);
+    const ws = NET.ws; NET.ws = null;
+    if (ws) { ws.onclose = null; try { ws.close(); } catch (e) {} }
+    setOnline(false);
+  }
+  function ping() { wsSend({ t: 'ping', c: Date.now() }); }
+  setInterval(() => { if (NET.online) ping(); }, 3000);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible' || !inSession()) return;
+    if (!NET.ws) { NET.retry = 0; connect(); } else for (let i = 0; i < 3; i++) setTimeout(ping, i * 200);
+  });
+
+  /* NTP-style: the sample with the shortest round trip gives the best offset estimate. */
+  function onPong(m) {
+    const t1 = Date.now(), rtt = t1 - m.c;
+    if (rtt < 0 || rtt > 5000) return;
+    NET.samples.push({ rtt, est: m.s + rtt / 2 - t1 });
+    if (NET.samples.length > 12) NET.samples.shift();
+    const best = NET.samples.reduce((a, b) => (b.rtt < a.rtt ? b : a));
+    offset = NET.samples.length < 3 ? best.est : offset + (best.est - offset) * 0.5;
+    NET.rtt = best.rtt;
+  }
+
+  function onMsg(m) {
+    switch (m.t) {
+      case 'pong': return onPong(m);
+      case 'created':
+        NET.pending = null; NET.code = m.code; NET.hostKey = m.hostKey; NET.role = 'bomb';
+        saveSess(); paintSession();
+        return;
+      case 'joined': {
+        NET.role = m.role; NET.code = m.code;
+        if (m.role !== 'bomb') NET.hostKey = null;
+        saveSess(); setOnline(true);
+        if (isRemote()) {
+          enterRemote();
+          applyRemote(m.state);
+        } else if (m.state && m.state.phase !== 'setup' && G.phase === 'setup') {
+          G = m.state; /* bomb phone reloaded mid-round: pick the game back up */
+          if (inGame()) { keepAlive(true); wake(); armBack(); }
+        } else publish();
+        paintSession(); render();
+        return;
+      }
+      case 'state': if (isRemote()) applyRemote(m.state); return;
+      case 'members': NET.members = m.list || []; paintMembers(); return;
+      case 'ended':
+        toast('Die Bomben-Session wurde beendet.');
+        return leaveSession();
+      case 'error':
+        if (m.code === 'nosession') {
+          const joining = NET.fresh;
+          leaveSession();
+          if (joining) { showJoin(); $('joinMsg').textContent = m.msg; }
+          else toast('Session existiert nicht mehr.');
+        }
+        return;
+    }
+  }
+  function setOnline(on) {
+    NET.online = on;
+    if (on) NET.fresh = false;
+    paintSession();
+  }
+
+  function startHost() {
+    audio(); loadLines();
+    NET.role = 'bomb'; NET.pending = 'create'; NET.code = null; NET.fresh = true;
+    $('hostMsg').textContent = 'Verbinde …';
+    connect();
+    paintSession();
+  }
+  function joinSession(code, role, name) {
+    audio(); loadLines();
+    disconnect();
+    NET.role = role; NET.code = code; NET.name = name; NET.hostKey = null; NET.pending = null; NET.fresh = true;
+    $('joinMsg').textContent = '';
+    G = { phase: 'setup' };
+    enterRemote();
+    connect();
+    paintSession();
+  }
+  function leaveSession() {
+    if (isHost()) wsSend({ t: 'end' }); else wsSend({ t: 'leave' });
+    const wasRemote = isRemote();
+    disconnect();
+    NET.role = 'solo'; NET.code = null; NET.hostKey = null; NET.pending = null; NET.members = []; NET.fresh = false;
+    offset = 0;
+    saveSess();
+    if (wasRemote) { exitRemote(); G = { phase: 'setup' }; stopVoice(); keepAlive(false); unwake(); }
+    paintSession(); render();
+  }
+
+  /* ---------- Session UI ---------- */
+  const ROLE_NAME = { bomb: 'Bombe', speaker: 'Lautsprecher', viewer: 'Zuschauer' };
+  function joinUrl() { return location.origin + location.pathname + '?s=' + NET.code; }
+  let qrFor = null;
+  function paintSession() {
+    const host = isHost();
+    $('net').hidden = !inSession();
+    document.body.classList.toggle('insession', inSession());
+    $('net').classList.toggle('on', NET.online);
+    $('netCode').textContent = NET.code || '…';
+    $('mpIdle').hidden = host;
+    $('mpHost').hidden = !host;
+    $('syncHead').hidden = $('syncGroup').hidden = !inSession();
+    if (host) {
+      $('hostCode').textContent = NET.code || '····';
+      $('hostMsg').textContent = '';
+      if (NET.code && qrFor !== NET.code && window.qrcode) {
+        try {
+          const q = qrcode(0, 'M'); q.addData(joinUrl()); q.make();
+          $('hostQr').innerHTML = q.createSvgTag({ cellSize: 4, margin: 2, scalable: true });
+          qrFor = NET.code;
+        } catch (e) {}
+      }
+      paintMembers();
+    }
+    if (isRemote()) {
+      $('remRole').textContent = ROLE_NAME[NET.role];
+      $('remCode').textContent = NET.code || '····';
+      $('remHint').textContent = NET.role === 'speaker'
+        ? 'Box mit diesem Handy koppeln, Lautstärke aufdrehen und die App offen lassen. Das Display bleibt an.'
+        : 'Zeigt den Spielstand live. Dieses Handy macht keinen Ton.';
+    }
+    render();
+  }
+  function paintMembers() {
+    const others = NET.members.filter((m) => m.role !== 'bomb');
+    const box = $('members'); box.textContent = '';
+    const n = (r) => others.filter((m) => m.role === r).length;
+    const head = document.createElement('div');
+    head.className = 'mhead';
+    head.textContent = others.length
+      ? n('speaker') + ' Lautsprecher · ' + n('viewer') + ' Zuschauer verbunden'
+      : (NET.online ? 'Noch niemand verbunden' : 'Verbinde mit dem Server …');
+    box.appendChild(head);
+    others.forEach((m) => {
+      const c = document.createElement('span');
+      c.className = 'mchip ' + m.role;
+      c.textContent = (m.role === 'speaker' ? '🔊 ' : '👁 ') + (m.name || ROLE_NAME[m.role]);
+      box.appendChild(c);
+    });
+  }
+
+  /* Speaker/viewer phones reuse the settings panel and the game screens, read-only. */
+  const adv = $('adv'), advHome = adv.parentNode, advNext = adv.nextSibling;
+  function enterRemote() {
+    $('advSlot').appendChild(adv);
+    document.body.classList.add('remote');
+    wake(); keepAlive(soundOn());
+  }
+  function exitRemote() {
+    advHome.insertBefore(adv, advNext);
+    document.body.classList.remove('remote');
+  }
+  function applyRemote(state) {
+    G = state && typeof state === 'object' ? state : { phase: 'setup' };
+    render();
+  }
+
+  function showJoin(code) {
+    if (code) $('joinCode').value = code;
+    setScreen('scrJoin');
+    $('chip').textContent = 'Beitreten';
+  }
+  let joinRole = 'speaker';
+  function paintRole() {
+    $('joinRole').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === joinRole)));
+    $('roleDesc').textContent = joinRole === 'speaker' ? 'Spielt alle Töne über die Box an diesem Handy' : 'Zeigt nur den Spielstand, ohne Ton';
+  }
+  $('joinRole').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { joinRole = b.dataset.v; paintRole(); }));
+  paintRole();
+  $('joinCode').addEventListener('input', (e) => {
+    e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
+    $('joinMsg').textContent = '';
+  });
+  $('btnShowJoin').addEventListener('click', () => showJoin());
+  $('btnJoinBack').addEventListener('click', () => { if (NET.fresh && !isHost()) leaveSession(); view = null; render(); });
+  $('btnJoin').addEventListener('click', () => {
+    const code = $('joinCode').value.trim().toUpperCase();
+    if (code.length !== 4) { $('joinMsg').textContent = 'Bitte den 4-stelligen Code eingeben.'; return; }
+    joinSession(code, joinRole, $('joinName').value.trim());
+  });
+  $('btnHost').addEventListener('click', startHost);
+  $('btnShare').addEventListener('click', async () => {
+    const url = joinUrl();
+    try {
+      if (navigator.share) { await navigator.share({ title: 'Bomb Timer Session ' + NET.code, url }); return; }
+      await navigator.clipboard.writeText(url); toast('Link kopiert');
+    } catch (e) {}
+  });
+  $('btnLeave').addEventListener('click', leaveSession);
 
   /* ---------- Hold-to-act buttons ---------- */
   function makeHold(el, o) {
     let raf = 0, startT = 0, base = 0, active = false, lastStep = -1;
     const h = { progress: 0 };
     const paint = () => el.style.setProperty('--p', h.progress);
-    function frame(now) {
+    function frame(t) {
       if (!active) return;
-      h.progress = Math.min(1, base + (now - startT) / (o.duration() * 1000));
+      h.progress = Math.min(1, base + (t - startT) / (o.duration() * 1000));
       paint();
       const stepN = Math.floor(h.progress * 8);
-      if (stepN !== lastStep) { lastStep = stepN; if (S.snd.hold) tone(600 + stepN * 90, 0.05, 'sine', 0.22); }
+      if (stepN !== lastStep) { lastStep = stepN; if (S.snd.hold && soundOn()) tone(600 + stepN * 90, 0.05, 'sine', 0.22); }
       if (h.progress >= 1) { active = false; el.classList.remove('holding'); o.onDone(); return; }
       raf = requestAnimationFrame(frame);
     }
     function down(e) {
-      if (el.disabled || active) return;
+      if (el.disabled || active || isRemote()) return;
       if (e.cancelable) e.preventDefault();
       if (e.pointerId != null) { try { el.setPointerCapture(e.pointerId); } catch (_) {} }
       audio();
       active = true; base = h.progress; startT = performance.now(); lastStep = -1;
       el.classList.add('holding');
-      o.onStart && o.onStart();
+      o.onStart && o.onStart(h.progress);
       raf = requestAnimationFrame(frame);
     }
     function up() {
@@ -412,7 +650,7 @@
       const cp = o.checkpoint ? o.checkpoint() : 0;
       h.progress = (cp && h.progress >= cp) ? cp : 0;
       paint();
-      o.onCancel && o.onCancel();
+      o.onCancel && o.onCancel(h.progress);
     }
     h.reset = () => { active = false; cancelAnimationFrame(raf); el.classList.remove('holding'); h.progress = 0; paint(); };
     el.addEventListener('pointerdown', down);
@@ -424,165 +662,299 @@
   }
 
   const holdA = makeHold($('holdA'), {
-    duration: () => S.plantTime,
-    onStart: () => { $('holdB').disabled = true; },
-    onCancel: () => { $('holdB').disabled = false; },
+    duration: () => G.cfg.plantTime,
+    onStart: () => { $('holdB').disabled = true; setHold({ site: 'A', start: now(), dur: G.cfg.plantTime * 1000 }); },
+    onCancel: () => { $('holdB').disabled = false; setHold(null); },
     onDone: () => plant('A')
   });
   const holdB = makeHold($('holdB'), {
-    duration: () => S.plantTime,
-    onStart: () => { $('holdA').disabled = true; },
-    onCancel: () => { $('holdA').disabled = false; },
+    duration: () => G.cfg.plantTime,
+    onStart: () => { $('holdA').disabled = true; setHold({ site: 'B', start: now(), dur: G.cfg.plantTime * 1000 }); },
+    onCancel: () => { $('holdA').disabled = false; setHold(null); },
     onDone: () => plant('B')
   });
   const holdDef = makeHold($('holdDefuse'), {
-    duration: () => S.defuseTime,
-    checkpoint: () => (S.half ? 0.5 : 0),
+    duration: () => G.cfg.defuseTime,
+    checkpoint: () => (G.cfg.half ? 0.5 : 0),
+    onStart: (p) => { if (G.phase === 'planted') { G.def = { base: p, start: now(), dur: G.cfg.defuseTime * 1000 }; publish(); } },
+    onCancel: (p) => { if (G.phase === 'planted') { G.def = { base: p, start: null }; publish(); } },
     onDone: () => defused()
   });
+  function setHold(h) { if (G.phase === 'round') { G.hold = h; publish(); } }
 
-  /* ---------- Game flow ---------- */
-  let st = { phase: 'setup' };
-  const CHIP = { setup: 'Bereit', round: 'Runde läuft', planted: 'Bombe aktiv', end: 'Runde vorbei' };
-  function setPhase(p, screen) {
-    st.phase = p;
-    document.body.className = p;
-    $('chip').textContent = CHIP[p];
-    ['scrSetup', 'scrRound', 'scrPlanted', 'scrEnd'].forEach((id) => { $(id).hidden = id !== screen; });
-    window.scrollTo(0, 0);
+  /* ---------- Game state (owned by the bomb phone, or this phone alone) ---------- */
+  /* G.phase: setup | round | planted | end. Times are server time (see now()). */
+  let G = { phase: 'setup' };
+  const rid = () => Math.random().toString(36).slice(2, 10);
+  function publish() {
+    G.rev = (G.rev || 0) + 1;
+    if (isHost()) wsSend({ t: 'state', state: G });
+    render();
   }
 
+  function startRound() {
+    if (isRemote()) return;
+    audio(); keepAlive(true); wake();
+    if (S.fs) enterFs();
+    armBack();
+    const t = now();
+    const cfg = { roundTime: S.roundTime, bombTime: S.bombTime, plantTime: S.plantTime, defuseTime: S.defuseTime, half: S.half };
+    holdA.reset(); holdB.reset(); holdDef.reset();
+    $('holdA').disabled = false; $('holdB').disabled = false;
+    G = { phase: 'round', id: rid(), cfg, startedAt: t, roundEnd: cfg.roundTime > 0 ? t + cfg.roundTime * 60000 : null, hold: null };
+    publish();
+  }
+  function plant(site) {
+    if (G.phase !== 'round') return;
+    const t = now();
+    holdDef.reset();
+    G = Object.assign({}, G, { phase: 'planted', site, plantedAt: t, bombEnd: t + G.cfg.bombTime * 1000, hold: null, def: { base: 0, start: null } });
+    publish();
+  }
+  function defused() {
+    if (G.phase !== 'planted') return;
+    const t = now();
+    if (t >= G.bombEnd) return;
+    G = Object.assign({}, G, { phase: 'end', def: null, result: { why: 'defused', at: t, rem: G.bombEnd - t } });
+    publish();
+  }
+  function toSetup() {
+    holdA.reset(); holdB.reset(); holdDef.reset();
+    G = { phase: 'setup' };
+    publish();
+  }
+  /* Explosion and timeout follow from the clock alone, so every phone reaches them at the same moment
+     even if the bomb phone is out of reach. The bomb phone then records the result. */
+  function derive(g, t) {
+    if (g.phase === 'planted' && t >= g.bombEnd) return Object.assign({}, g, { phase: 'end', def: null, result: { why: 'boom', at: g.bombEnd } });
+    if (g.phase === 'round' && g.roundEnd && t >= g.roundEnd) return Object.assign({}, g, { phase: 'end', hold: null, result: { why: 'timeout', at: g.roundEnd } });
+    return g;
+  }
+
+  /* ---------- Rendering ---------- */
+  const CHIP = { setup: 'Bereit', round: 'Runde läuft', planted: 'Bombe aktiv', end: 'Runde vorbei' };
+  const SCREEN = { round: 'scrRound', planted: 'scrPlanted', end: 'scrEnd' };
+  let view = null;
+  function setScreen(id) {
+    if (view === id) return;
+    view = id;
+    ['scrSetup', 'scrJoin', 'scrRemote', 'scrRound', 'scrPlanted', 'scrEnd'].forEach((s) => { $(s).hidden = s !== id; });
+    window.scrollTo(0, 0);
+  }
   function fmt(ms, tenths) {
     ms = Math.max(0, ms);
     if (tenths && ms < 10000) return (Math.floor(ms / 100) / 10).toFixed(1);
     const s = Math.ceil(ms / 1000);
     return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
   }
+  function updateHints() {
+    const c = G.cfg || S;
+    if (isRemote()) {
+      $('hintA').textContent = $('hintB').textContent = 'Wird an der Bombe geplantet';
+      $('defuseHint').textContent = 'Wird an der Bombe entschärft' + (c.half ? ' · ab 50 % gesichert' : '');
+      return;
+    }
+    $('hintA').textContent = $('hintB').textContent = c.plantTime + ' s halten zum Planten';
+    $('defuseHint').textContent = c.defuseTime + ' s gedrückt halten' + (c.half ? ' · ab 50 % gesichert' : '');
+  }
 
-  function startRound() {
-    audio(); keepAlive(true); wake();
-    if (S.fs) enterFs();
-    armBack();
-    const now = performance.now();
-    st = { phase: 'round', roundEnd: S.roundTime > 0 ? now + S.roundTime * 60000 : null, said: {} };
-    holdA.reset(); holdB.reset(); $('holdA').disabled = false; $('holdB').disabled = false;
-    $('roundLabel').textContent = S.roundTime > 0 ? 'Rundenzeit' : 'Ohne Zeitlimit';
-    $('roundClock').textContent = S.roundTime > 0 ? fmt(S.roundTime * 60000) : '--:--';
+  let lastKey = null;
+  function render() {
+    if (view === 'scrJoin' && !isRemote()) return;
+    const t = now();
+    const g = derive(G, t);
+    const phase = g.phase || 'setup';
+    const key = (g.id || '-') + ':' + phase;
+    if (key !== lastKey) { lastKey = key; enter(g, t); }
+
+    if (phase === 'setup') {
+      setScreen(isRemote() ? 'scrRemote' : 'scrSetup');
+      $('chip').textContent = isRemote() ? (NET.online ? 'Verbunden' : 'Offline') : CHIP.setup;
+      if (isRemote()) $('remStatus').textContent = NET.online ? 'Warte auf Rundenstart …' : 'Verbindung wird hergestellt …';
+      return;
+    }
+    setScreen(SCREEN[phase]);
+    $('chip').textContent = CHIP[phase];
+
+    if (phase === 'round') {
+      $('roundLabel').textContent = g.roundEnd ? 'Rundenzeit' : 'Ohne Zeitlimit';
+      $('roundClock').textContent = g.roundEnd ? fmt(g.roundEnd - t) : '--:--';
+      if (isRemote()) {
+        const h = g.hold, p = h && h.start ? Math.min(1, Math.max(0, (t - h.start) / h.dur)) : 0;
+        $('holdA').style.setProperty('--p', h && h.site === 'A' ? p : 0);
+        $('holdB').style.setProperty('--p', h && h.site === 'B' ? p : 0);
+      }
+    } else if (phase === 'planted') {
+      const total = g.bombEnd - g.plantedAt, rem = g.bombEnd - t;
+      $('bombClock').textContent = fmt(rem, true);
+      $('bombBar').style.transform = 'scaleX(' + Math.max(0, rem / total) + ')';
+      if (isRemote() && g.def) {
+        const p = g.def.start ? Math.min(1, g.def.base + (t - g.def.start) / g.def.dur) : g.def.base;
+        $('holdDefuse').style.setProperty('--p', p);
+        $('holdDefuse').classList.toggle('holding', !!g.def.start);
+      }
+    }
+  }
+
+  /* Runs once per phase change on every phone: screen setup plus the one-shot sounds. */
+  function enter(g, t) {
+    const phase = g.phase || 'setup';
+    ['setup', 'round', 'planted', 'end'].forEach((p) => document.body.classList.toggle(p, p === phase));
     updateHints();
-    setPhase('round', 'scrRound');
-    if (S.snd.signal) { tone(880, 0.12, 'square', 0.3); tone(1320, 0.18, 'square', 0.3, 0.14); }
-    if (S.say.start) speak('start');
+    const fresh = (at) => t - at < 4000;   /* late joiners skip stale announcements */
+    const snd = soundOn();
+    if (phase === 'setup') {
+      stopVoice();
+      cancelBoom();
+      if (!isRemote()) { keepAlive(false); unwake(); }
+      return;
+    }
+    keepAlive(snd || !inSession()); wake();
+    if (phase === 'round') {
+      P.said = {};
+      if (isRemote()) { $('holdA').disabled = $('holdB').disabled = false; }
+      if (snd && fresh(g.startedAt)) {
+        if (S.snd.signal) { tone(880, 0.12, 'square', 0.3); tone(1320, 0.18, 'square', 0.3, 0.14); }
+        if (S.say.start) speak('start');
+      }
+    } else if (phase === 'planted') {
+      const badge = $('plantSite'); badge.textContent = g.site; badge.classList.toggle('b', g.site === 'B');
+      $('halfMark').hidden = !g.cfg.half;
+      if (isRemote()) $('holdDefuse').style.setProperty('--p', 0);
+      if (fresh(g.plantedAt)) {
+        buzz([120, 60, 120]);
+        if (snd && S.snd.signal) { tone(1500, 0.1, 'square', 0.35); tone(1500, 0.1, 'square', 0.35, 0.15); }
+        if (snd && S.say.planted) speak(g.site === 'B' ? 'planted_b' : 'planted_a');
+      }
+    } else if (phase === 'end') {
+      const r = g.result || { why: 'timeout', at: t };
+      const isFresh = fresh(r.at);
+      if (r.why === 'defused') {
+        cancelBoom();
+        showResult('def', 'Bombe entschärft', 'Verteidiger gewinnen', 'Auf Punkt ' + g.site + ' entschärft, ' + (Math.max(0, r.rem) / 1000).toFixed(1) + ' s vor der Explosion.');
+        if (isFresh) {
+          buzz(200);
+          if (snd && S.snd.jingle) winJingle();
+          if (snd && S.say.result) setTimeout(() => { if (G.phase === 'end') speak(['defused', 'def_win']); }, S.snd.jingle ? 700 : 150);
+        }
+      } else if (r.why === 'boom') {
+        holdDef.reset();
+        showResult('att', 'Explosion', 'Angreifer gewinnen', 'Die Bombe auf Punkt ' + g.site + ' ist hochgegangen.');
+        if (isFresh) {
+          if (snd && S.snd.boom && P.boomId !== g.id && t - r.at < 1500) { P.boomId = g.id; explosion(0); }
+          buzz([400, 100, 400]);
+          let n = 0; const iv = setInterval(() => { flash(); if (++n > 8) clearInterval(iv); }, 140);
+          if (snd && S.say.result) setTimeout(() => { if (G.phase !== 'setup') speak('att_win'); }, Math.max(300, r.at + (S.snd.boom ? 2200 : 300) - now()));
+        }
+      } else {
+        holdA.reset(); holdB.reset();
+        showResult('def', 'Zeit abgelaufen', 'Verteidiger gewinnen', 'Die Angreifer haben nicht rechtzeitig geplantet.');
+        if (isFresh && snd) {
+          if (S.snd.signal) { tone(440, 0.4, 'square', 0.3); tone(330, 0.6, 'square', 0.3, 0.45); }
+          if (S.say.result) speak(['timeout', 'def_win']);
+        }
+      }
+      if (!isRemote()) { unwake(); setTimeout(() => { if (G.phase === 'end') keepAlive(false); }, 6000); }
+    }
   }
-
-  function plant(site) {
-    if (st.phase !== 'round') return;
-    const now = performance.now();
-    st = { phase: 'planted', site, plantedAt: now, bombEnd: now + S.bombTime * 1000, nextBeep: now + 900, said: {} };
-    holdDef.reset();
-    const badge = $('plantSite'); badge.textContent = site; badge.classList.toggle('b', site === 'B');
-    $('halfMark').hidden = !S.half;
-    updateHints();
-    setPhase('planted', 'scrPlanted');
-    buzz([120, 60, 120]);
-    if (S.snd.signal) { tone(1500, 0.1, 'square', 0.35); tone(1500, 0.1, 'square', 0.35, 0.15); }
-    if (S.say.planted) speak(site === 'B' ? 'planted_b' : 'planted_a');
-  }
-
-  function defused() {
-    if (st.phase !== 'planted') return;
-    const rem = st.bombEnd - performance.now();
-    finish('def', 'Bombe entschärft', 'Verteidiger gewinnen',
-      'Auf Punkt ' + st.site + ' entschärft, ' + (Math.max(0, rem) / 1000).toFixed(1) + ' s vor der Explosion.');
-    if (S.snd.jingle) winJingle();
-    buzz(200);
-    if (S.say.result) setTimeout(() => { if (st.phase === 'end') speak(['defused', 'def_win']); }, S.snd.jingle ? 700 : 150);
-  }
-
-  function boom() {
-    const site = st.site;
-    holdDef.reset();
-    finish('att', 'Explosion', 'Angreifer gewinnen', 'Die Bombe auf Punkt ' + site + ' ist hochgegangen.');
-    if (S.snd.boom) explosion();
-    buzz([400, 100, 400]);
-    let n = 0; const iv = setInterval(() => { flash(); if (++n > 8) clearInterval(iv); }, 140);
-    if (S.say.result) setTimeout(() => { if (st.phase === 'end') speak('att_win'); }, S.snd.boom ? 2200 : 300);
-  }
-
-  function timeout() {
-    holdA.reset(); holdB.reset();
-    finish('def', 'Zeit abgelaufen', 'Verteidiger gewinnen', 'Die Angreifer haben nicht rechtzeitig geplantet.');
-    if (S.snd.signal) { tone(440, 0.4, 'square', 0.3); tone(330, 0.6, 'square', 0.3, 0.45); }
-    if (S.say.result) speak(['timeout', 'def_win']);
-  }
-
-  function finish(side, kicker, title, sub) {
-    st.phase = 'end';
+  function showResult(side, kicker, title, sub) {
     $('result').className = 'result ' + side;
     $('resKicker').textContent = kicker;
     $('resTitle').textContent = title;
     $('resSub').textContent = sub;
-    setPhase('end', 'scrEnd');
-    unwake();
-    setTimeout(() => { if (st.phase === 'end') keepAlive(false); }, 6000);
   }
 
-  function toSetup() {
-    stopVoice();
-    holdA.reset(); holdB.reset(); holdDef.reset();
-    keepAlive(false); unwake();
-    st = { phase: 'setup' };
-    setPhase('setup', 'scrSetup');
+  /* ---------- Sound scheduling ---------- */
+  /* Beeps and the explosion are placed on the shared clock ahead of time (look-ahead), shifted by this
+     phone's box delay, so several boxes sound together. The beep pattern only depends on plant time
+     and bomb time, so every phone computes the same sequence. */
+  const P = { said: {}, beepId: null, beepT: 0, boomId: null, boomNodes: null, syncT: 0 };
+  const LOOK = 160;
+  function soundOn() { return NET.role === 'speaker' || NET.role === 'solo' || (NET.role === 'bomb' && S.local); }
+  function lat() { return inSession() ? S.lat : 0; }
+  function cancelBoom() {
+    if (P.boomNodes) P.boomNodes.forEach((n) => { try { n.stop(); } catch (e) {} });
+    P.boomNodes = null;
+  }
+  function schedule(t) {
+    const L = lat(), snd = soundOn();
+    if (G.phase === 'planted' && t < G.bombEnd + 100) {
+      const total = G.bombEnd - G.plantedAt;
+      if (P.beepId !== G.id) { P.beepId = G.id; P.beepT = G.plantedAt + 900; }
+      while (P.beepT < G.bombEnd && P.beepT - L <= t + LOOK) {
+        const bt = P.beepT, rem = G.bombEnd - bt, r = Math.max(0, rem / total);
+        const d = bt - L - t;
+        if (d > -60) {
+          if (snd && S.snd.tick) tone(2000 + 900 * (1 - r), 0.07, 'square', 0.35, Math.max(0, d) / 1000);
+          setTimeout(flash, Math.max(0, bt - t));
+        }
+        P.beepT = bt + (rem < 2000 ? 90 : 110 + 890 * Math.pow(r, 0.8));
+      }
+      if (snd && S.snd.boom && P.boomId !== G.id && G.bombEnd - L <= t + LOOK) {
+        P.boomId = G.id;
+        const d = G.bombEnd - L - t;
+        if (d > -1500) P.boomNodes = explosion(Math.max(0, d) / 1000);
+      }
+      const remL = G.bombEnd - (t + L);
+      if (snd && S.say.bomb && !P.said.s30 && remL <= 30500 && G.cfg.bombTime >= 40) { P.said.s30 = 1; if (remL > 27000) speak('s30'); }
+      if (snd && S.say.bomb && !P.said.s10 && remL <= 10500 && G.cfg.bombTime >= 20) { P.said.s10 = 1; if (remL > 8000) speak('s10'); }
+    }
+    if (G.phase === 'round' && G.roundEnd) {
+      const remL = G.roundEnd - (t + L);
+      if (snd && S.say.min1 && !P.said.min1 && remL <= 60000 && G.cfg.roundTime > 1) { P.said.min1 = 1; if (remL > 55000) speak('min1'); }
+    }
+    /* Calibration: one beep on every full second of server time. */
+    if ($('optSyncBeep').checked && snd) {
+      if (P.syncT < t - 1000) P.syncT = Math.ceil((t + L) / 1000) * 1000;
+      while (P.syncT - L <= t + LOOK) {
+        const d = P.syncT - L - t;
+        if (d > -30) tone(1760, 0.06, 'square', 0.4, Math.max(0, d) / 1000);
+        P.syncT += 1000;
+      }
+    }
   }
 
   function tick() {
-    const now = performance.now();
-    if (st.phase === 'round' && st.roundEnd) {
-      const rem = st.roundEnd - now;
-      $('roundClock').textContent = fmt(rem);
-      if (rem <= 60000 && !st.said.min1 && S.roundTime > 1) { st.said.min1 = true; if (S.say.min1) speak('min1'); }
-      if (rem <= 0) timeout();
-    } else if (st.phase === 'planted') {
-      const total = S.bombTime * 1000;
-      const rem = st.bombEnd - now;
-      $('bombClock').textContent = fmt(rem, true);
-      $('bombBar').style.transform = 'scaleX(' + Math.max(0, rem / total) + ')';
-      if (rem <= 0) { boom(); return; }
-      if (now >= st.nextBeep) {
-        const r = Math.max(0, rem / total);
-        if (S.snd.tick) tone(2000 + 900 * (1 - r), 0.07, 'square', 0.35);
-        flash();
-        st.nextBeep = now + (rem < 2000 ? 90 : 110 + 890 * Math.pow(r, 0.8));
-      }
-      if (rem <= 30500 && !st.said.s30 && S.bombTime >= 40) { st.said.s30 = true; if (S.say.bomb) speak('s30'); }
-      if (rem <= 10500 && !st.said.s10 && S.bombTime >= 20) { st.said.s10 = true; if (S.say.bomb) speak('s10'); }
+    const t = now();
+    if (!isRemote()) {
+      const d = derive(G, t);
+      if (d !== G) { G = d; publish(); return; }
     }
+    schedule(t);
+    render();
   }
   setInterval(tick, 40);
 
   /* Two-tap confirm instead of a dialog */
-  function armConfirm(btn, action) {
+  function armConfirm(btn, action, prompt) {
     const label = btn.textContent; let t = 0;
     btn.addEventListener('click', () => {
       if (btn.classList.contains('armed')) { clearTimeout(t); btn.classList.remove('armed'); btn.textContent = label; action(); return; }
-      btn.classList.add('armed'); btn.textContent = 'Nochmal tippen zum Abbrechen';
+      btn.classList.add('armed'); btn.textContent = prompt || 'Nochmal tippen zum Abbrechen';
       t = setTimeout(() => { btn.classList.remove('armed'); btn.textContent = label; }, 3000);
     });
   }
   armConfirm($('abortRound'), toSetup);
   armConfirm($('abortPlanted'), toSetup);
+  armConfirm($('btnEndSession'), leaveSession, 'Nochmal tippen zum Beenden');
 
   $('btnStart').addEventListener('click', startRound);
   $('btnAgain').addEventListener('click', startRound);
   $('btnSetup').addEventListener('click', toSetup);
 
-  $('btnTest').addEventListener('click', () => {
-    audio();
+  function testSound() {
+    audio(); keepAlive(true);
     tone(2400, 0.08, 'square', 0.35); tone(2400, 0.08, 'square', 0.35, 0.25);
     loadLines();
     speak('test');
+  }
+  $('btnTest').addEventListener('click', () => {
+    testSound();
     $('testMsg').textContent = 'Du solltest zwei Pieptöne und eine Ansage aus der Box hören.';
   });
+  $('btnRemTest').addEventListener('click', testSound);
   $('btnVoiceTest').addEventListener('click', () => { audio(); loadLines(); speak('planted_a'); });
+  $('optSyncBeep').addEventListener('change', () => { audio(); P.syncT = 0; });
 
   let resetT = 0;
   $('btnReset').addEventListener('click', () => {
@@ -598,6 +970,24 @@
 
   bindAll();
   loadLines();
+
+  /* Resume a saved session (page reload) or open the join screen from a shared link (?s=CODE). */
+  (function boot() {
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem('abt-session') || 'null'); } catch (e) {}
+    const linkCode = (new URLSearchParams(location.search).get('s') || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
+    if (linkCode) { try { history.replaceState(null, '', location.pathname); } catch (e) {} }
+    if (saved && saved.code && (!linkCode || linkCode === saved.code)) {
+      NET.role = saved.role; NET.code = saved.code; NET.hostKey = saved.hostKey || null; NET.name = saved.name || '';
+      if (isRemote()) enterRemote();
+      connect();
+    } else if (linkCode) {
+      if (saved) saveSess();
+      showJoin(linkCode);
+    }
+    paintSession();
+    render();
+  })();
 
   /* ---------- Offline support (PWA) ---------- */
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
