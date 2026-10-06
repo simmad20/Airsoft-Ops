@@ -2,101 +2,225 @@
   const $ = (id) => document.getElementById(id);
 
   /* ---------- Settings ---------- */
-  const DEF = { roundTime: 10, bombTime: 45, plantTime: 4, defuseTime: 7, half: true, lang: 'en', vol: 80, fs: true };
-  const S = Object.assign({}, DEF);
-  try { Object.assign(S, JSON.parse(localStorage.getItem('abt-settings') || '{}')); } catch (e) {}
+  const DEF = {
+    roundTime: 10, bombTime: 45, plantTime: 4, defuseTime: 7, half: true,
+    lang: 'de', voice: 'male', radio: false, voiceVol: 100, vol: 80, vibrate: true, fs: true,
+    say: { start: true, planted: true, min1: true, bomb: true, result: true },
+    snd: { tick: true, hold: true, signal: true, boom: true, jingle: true }
+  };
+  const clone = (o) => JSON.parse(JSON.stringify(o));
+  let S = clone(DEF);
+  try {
+    const saved = JSON.parse(localStorage.getItem('abt-settings') || '{}');
+    S = Object.assign(clone(DEF), saved, {
+      say: Object.assign({}, DEF.say, saved.say),
+      snd: Object.assign({}, DEF.snd, saved.snd)
+    });
+  } catch (e) {}
   function save() { try { localStorage.setItem('abt-settings', JSON.stringify(S)); } catch (e) {} }
 
-  document.querySelectorAll('.step').forEach((box) => {
-    const key = box.dataset.key, min = +box.dataset.min, max = +box.dataset.max, step = +box.dataset.step, unit = box.dataset.unit;
+  /* Time settings: presets for the usual values, +/- for fine tuning (hold to repeat). */
+  const TIME = {
+    roundTime: { min: 0, max: 60, step: () => 1, fmt: (v) => (v === 0 ? 'Aus' : v + ' min'), chip: (v) => (v === 0 ? 'Aus' : v + "'") },
+    bombTime: { min: 10, max: 600, step: (v, d) => ((d > 0 ? v >= 60 : v > 60) ? 15 : 5), fmt: fmtSecs, chip: fmtSecsShort },
+    plantTime: { min: 1, max: 20, step: () => 1, fmt: (v) => v + ' s', chip: (v) => v + 's' },
+    defuseTime: { min: 1, max: 30, step: () => 1, fmt: (v) => v + ' s', chip: (v) => v + 's' }
+  };
+  function fmtSecs(v) { return v < 60 ? v + ' s' : Math.floor(v / 60) + ':' + String(v % 60).padStart(2, '0') + ' min'; }
+  function fmtSecsShort(v) { return v < 60 ? v + 's' : Math.floor(v / 60) + ':' + String(v % 60).padStart(2, '0'); }
+
+  const painters = [];
+  document.querySelectorAll('.tset').forEach((box) => {
+    const key = box.dataset.key, T = TIME[key];
     const out = box.querySelector('output');
-    const paint = () => { out.textContent = (key === 'roundTime' && S[key] === 0) ? 'aus' : S[key] + ' ' + unit; };
-    box.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
-      S[key] = Math.min(max, Math.max(min, S[key] + step * +b.dataset.d));
+    const chipsEl = box.querySelector('.chips');
+    const chips = chipsEl.dataset.presets.split(',').map(Number).map((v) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'pre'; b.textContent = T.chip(v);
+      b.addEventListener('click', () => set(v));
+      chipsEl.appendChild(b);
+      return { v, b };
+    });
+    function set(v) {
+      S[key] = Math.min(T.max, Math.max(T.min, v));
       paint(); save(); updateHints();
-    }));
-    paint();
+    }
+    function paint() {
+      out.textContent = T.fmt(S[key]);
+      chips.forEach((c) => c.b.setAttribute('aria-pressed', String(c.v === S[key])));
+    }
+    box.querySelectorAll('.step button').forEach((b) => {
+      const d = +b.dataset.d;
+      const bump = () => set(S[key] + d * T.step(S[key], d));
+      let t = 0, n = 0;
+      const stop = () => { clearTimeout(t); t = 0; };
+      const loop = () => { bump(); n++; t = setTimeout(loop, n > 8 ? 70 : 140); };
+      b.addEventListener('pointerdown', (e) => {
+        if (e.button > 0) return;
+        e.preventDefault(); stop(); n = 0; bump();
+        t = setTimeout(loop, 380);
+      });
+      ['pointerup', 'pointerleave', 'pointercancel'].forEach((ev) => b.addEventListener(ev, stop));
+      b.addEventListener('contextmenu', (e) => e.preventDefault());
+      b.addEventListener('click', (e) => { if (e.detail === 0) bump(); }); /* keyboard */
+    });
+    painters.push(paint);
   });
-  $('optHalf').checked = !!S.half;
-  $('optHalf').addEventListener('change', (e) => { S.half = e.target.checked; save(); });
-  const langBtns = document.querySelectorAll('#optLang button');
-  function paintLang() { langBtns.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.lang === S.lang))); }
-  langBtns.forEach((b) => b.addEventListener('click', () => { S.lang = b.dataset.lang; paintLang(); save(); }));
-  paintLang();
-  $('optVol').value = S.vol;
-  $('optVol').addEventListener('input', (e) => { S.vol = +e.target.value; if (master) master.gain.value = S.vol / 100; save(); });
+
+  /* Generic bindings for switches, segmented buttons and sliders. */
+  function bindAll() {
+    document.querySelectorAll('[data-opt]').forEach((el) => { el.checked = !!S[el.dataset.opt]; });
+    document.querySelectorAll('[data-say]').forEach((el) => { el.checked = !!S.say[el.dataset.say]; });
+    document.querySelectorAll('[data-snd]').forEach((el) => { el.checked = !!S.snd[el.dataset.snd]; });
+    document.querySelectorAll('[data-range]').forEach((el) => { el.value = S[el.dataset.range]; });
+    document.querySelectorAll('[data-seg]').forEach((seg) => {
+      seg.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === S[seg.dataset.seg])));
+    });
+    painters.forEach((p) => p());
+    updateHints();
+    $('voiceDesc').textContent = S.voice === 'male'
+      ? 'Männliche Ansager-Stimme, funktioniert offline'
+      : 'Sprachausgabe des Handys, klingt je nach Gerät anders';
+  }
+  document.querySelectorAll('[data-opt]').forEach((el) => el.addEventListener('change', () => { S[el.dataset.opt] = el.checked; save(); updateHints(); }));
+  document.querySelectorAll('[data-say]').forEach((el) => el.addEventListener('change', () => { S.say[el.dataset.say] = el.checked; save(); }));
+  document.querySelectorAll('[data-snd]').forEach((el) => el.addEventListener('change', () => { S.snd[el.dataset.snd] = el.checked; save(); }));
+  document.querySelectorAll('[data-range]').forEach((el) => el.addEventListener('input', () => { S[el.dataset.range] = +el.value; applyGains(); save(); }));
+  document.querySelectorAll('[data-seg]').forEach((seg) => seg.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
+    S[seg.dataset.seg] = b.dataset.v; save(); bindAll();
+    if (seg.dataset.seg === 'lang') loadLines();
+  })));
 
   function updateHints() {
     $('hintA').textContent = $('hintB').textContent = S.plantTime + ' s halten zum Planten';
     $('defuseHint').textContent = S.defuseTime + ' s gedrückt halten' + (S.half ? ' · ab 50 % gesichert' : '');
   }
-  updateHints();
 
-  /* ---------- Announcements ---------- */
+  /* ---------- Announcer ---------- */
+  /* Pre-rendered male voice (public/audio, made by tools/generate_voice.py). The phone's own
+     speech engine is the fallback and the "Handy" option. */
   const LINES = {
-    en: {
-      start: 'Round start. Attackers, plant the bomb.',
-      planted: (s) => 'Bomb planted on Site ' + s + '.',
-      s30: 'Thirty seconds.', s10: 'Ten seconds.',
-      min1: 'One minute remaining.',
-      defused: 'Bomb defused.',
-      defWin: 'Defenders win!',
-      boom: 'Attackers win!',
-      timeout: 'Time is up.',
-      test: 'Speaker check. Site A. Site B.'
-    },
     de: {
-      start: 'Runde gestartet. Angreifer, platziert die Bombe.',
-      planted: (s) => 'Bombe platziert auf Punkt ' + s + '.',
-      s30: 'Noch dreißig Sekunden.', s10: 'Noch zehn Sekunden.',
-      min1: 'Noch eine Minute.',
-      defused: 'Bombe entschärft.',
-      defWin: 'Verteidiger gewinnen!',
-      boom: 'Angreifer gewinnen!',
-      timeout: 'Zeit abgelaufen.',
-      test: 'Lautsprechertest. Punkt A. Punkt B.'
+      start: 'Runde gestartet. Angreifer, platziert die Bombe!',
+      planted_a: 'Bombe platziert auf Punkt A!', planted_b: 'Bombe platziert auf Punkt B!',
+      min1: 'Noch eine Minute.', s30: 'Noch dreißig Sekunden!', s10: 'Noch zehn Sekunden!',
+      defused: 'Bombe entschärft.', def_win: 'Verteidiger gewinnen!', att_win: 'Angreifer gewinnen!',
+      timeout: 'Zeit abgelaufen.', test: 'Lautsprechertest. Punkt A. Punkt B.'
+    },
+    en: {
+      start: 'Round start. Attackers, plant the bomb!',
+      planted_a: 'Bomb planted on site A!', planted_b: 'Bomb planted on site B!',
+      min1: 'One minute remaining.', s30: 'Thirty seconds!', s10: 'Ten seconds!',
+      defused: 'Bomb defused.', def_win: 'Defenders win!', att_win: 'Attackers win!',
+      timeout: 'Time is up.', test: 'Speaker check. Site A. Site B.'
     }
   };
-  const L = () => LINES[S.lang] || LINES.en;
+  const lang = () => (LINES[S.lang] ? S.lang : 'de');
+  const buffers = {};   /* "de/start" -> AudioBuffer */
+  const loading = {};
+  function loadLines() {
+    const a = ctx(); if (!a) return;
+    const l = lang();
+    Object.keys(LINES[l]).forEach((k) => {
+      const id = l + '/' + k;
+      if (buffers[id] || loading[id]) return;
+      loading[id] = fetch('audio/' + id + '.mp3')
+        .then((r) => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
+        .then((ab) => new Promise((res, rej) => a.decodeAudioData(ab, res, rej)))
+        .then((buf) => { buffers[id] = buf; })
+        .catch(() => { delete loading[id]; });
+    });
+  }
 
   const hasTTS = 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
-  let voices = [];
-  function loadVoices() { try { voices = speechSynthesis.getVoices() || []; } catch (e) {} }
-  if (hasTTS) { loadVoices(); try { speechSynthesis.onvoiceschanged = loadVoices; } catch (e) {} }
-  function pickVoice(lang) {
-    const list = voices.filter((v) => v.lang && v.lang.toLowerCase().replace('_', '-').startsWith(lang));
-    return list.find((v) => /google|enhanced|premium|neural/i.test(v.name)) || list.find((v) => v.localService) || list[0] || null;
-  }
-  /* Speaks one line, or a list of lines one after another (e.g. "Bomb defused." then "Defenders win!"). */
-  function speak(text) {
-    if (!hasTTS) return;
-    const lines = Array.isArray(text) ? text : [text];
-    try { speechSynthesis.cancel(); } catch (e) {}
-    lines.forEach((line, i) => say(line, i === lines.length - 1 && lines.length > 1));
-  }
-  function say(text, emphasis) {
-    try {
-      speechSynthesis.resume();
-      const u = new SpeechSynthesisUtterance(text);
-      const lang = S.lang === 'de' ? 'de' : 'en';
-      u.lang = lang === 'de' ? 'de-DE' : 'en-US';
-      const v = pickVoice(lang); if (v) u.voice = v;
-      u.rate = emphasis ? 0.92 : 1; u.pitch = 1; u.volume = 1;
-      speechSynthesis.speak(u);
-    } catch (e) {}
+  let ttsVoices = [];
+  function loadTtsVoices() { try { ttsVoices = speechSynthesis.getVoices() || []; } catch (e) {} }
+  if (hasTTS) { loadTtsVoices(); try { speechSynthesis.onvoiceschanged = loadTtsVoices; } catch (e) {} }
+  function pickTtsVoice(l) {
+    const list = ttsVoices.filter((v) => v.lang && v.lang.toLowerCase().replace('_', '-').startsWith(l));
+    return list.find((v) => /male|männ|daniel|markus|yannick|stefan|thomas|alex|fred|david|guy|ryan/i.test(v.name) && !/female/i.test(v.name))
+      || list.find((v) => /google|enhanced|premium|neural/i.test(v.name)) || list.find((v) => v.localService) || list[0] || null;
   }
 
-  /* ---------- Sound ---------- */
-  let ac = null, master = null, keep = null;
-  function audio() {
+  let voiceSrcs = [];
+  function stopVoice() {
+    voiceSrcs.forEach((s) => { try { s.stop(); } catch (e) {} });
+    voiceSrcs = [];
+    try { hasTTS && speechSynthesis.cancel(); } catch (e) {}
+  }
+  /* Plays one line or several back to back, e.g. speak(['defused', 'def_win']). */
+  function speak(keys) {
+    keys = Array.isArray(keys) ? keys : [keys];
+    stopVoice();
+    const l = lang();
+    const bufs = keys.map((k) => buffers[l + '/' + k]);
+    if (S.voice === 'male' && bufs.every(Boolean) && ctx()) return playBuffers(bufs);
+    if (!hasTTS) return;
+    keys.forEach((k, i) => {
+      try {
+        speechSynthesis.resume();
+        const u = new SpeechSynthesisUtterance(LINES[l][k]);
+        u.lang = l === 'de' ? 'de-DE' : 'en-US';
+        const v = pickTtsVoice(l); if (v) u.voice = v;
+        u.rate = i === keys.length - 1 && keys.length > 1 ? 0.92 : 1;
+        u.pitch = 0.85; u.volume = S.voiceVol / 100;
+        speechSynthesis.speak(u);
+      } catch (e) {}
+    });
+  }
+  function playBuffers(bufs) {
+    const a = ctx();
+    let t = a.currentTime + 0.03;
+    if (S.radio) { squelch(t); t += 0.12; }
+    bufs.forEach((buf) => {
+      const s = a.createBufferSource(); s.buffer = buf;
+      s.connect(S.radio ? radioIn : voiceGain);
+      s.start(t); voiceSrcs.push(s);
+      t += buf.duration + 0.18;
+    });
+    if (S.radio) squelch(t - 0.12);
+  }
+
+  /* ---------- Audio graph ---------- */
+  let ac = null, master = null, voiceGain = null, radioIn = null, keep = null;
+  function ctx() {
     if (!ac) {
       const C = window.AudioContext || window.webkitAudioContext;
       if (!C) return null;
-      ac = new C(); master = ac.createGain(); master.connect(ac.destination);
+      try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {} /* iPhone: play even on silent */
+      ac = new C();
+      master = ac.createGain(); master.connect(ac.destination);
+      voiceGain = ac.createGain(); voiceGain.connect(ac.destination);
+      /* Walkie-talkie: narrow band-pass plus a little drive. */
+      const hp = ac.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 450;
+      const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2800;
+      const drive = ac.createWaveShaper();
+      const curve = new Float32Array(1024);
+      for (let i = 0; i < curve.length; i++) { const x = i / 511.5 - 1; curve[i] = Math.tanh(2.6 * x) / Math.tanh(2.6); }
+      drive.curve = curve;
+      const post = ac.createGain(); post.gain.value = 1.15;
+      hp.connect(drive); drive.connect(lp); lp.connect(post); post.connect(voiceGain);
+      radioIn = hp;
+      applyGains();
     }
-    if (ac.state === 'suspended') ac.resume();
-    master.gain.value = S.vol / 100;
     return ac;
+  }
+  function audio() {
+    const a = ctx(); if (!a) return null;
+    if (a.state === 'suspended') a.resume();
+    return a;
+  }
+  function applyGains() {
+    if (!ac) return;
+    master.gain.value = S.vol / 100;
+    voiceGain.gain.value = S.voiceVol / 100;
+  }
+  function squelch(t) {
+    const a = ctx(), len = 0.1;
+    const buf = a.createBuffer(1, Math.floor(a.sampleRate * len), a.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * 0.35 * (1 - i / d.length);
+    const n = a.createBufferSource(); n.buffer = buf; n.connect(radioIn); n.start(t); voiceSrcs.push(n);
   }
   function tone(freq, dur, type, vol, when) {
     const a = audio(); if (!a) return;
@@ -141,7 +265,7 @@
     const led = $('led'); led.classList.add('on'); document.body.classList.add('pulse');
     setTimeout(() => { led.classList.remove('on'); document.body.classList.remove('pulse'); }, 80);
   }
-  function buzz(p) { try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} }
+  function buzz(p) { if (!S.vibrate) return; try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} }
 
   /* ---------- Screen wake lock ---------- */
   let wl = null;
@@ -185,8 +309,6 @@
     document.addEventListener('fullscreenchange', paintFs);
     document.addEventListener('webkitfullscreenchange', paintFs);
   }
-  $('optFs').checked = !!S.fs;
-  $('optFs').addEventListener('change', (e) => { S.fs = e.target.checked; save(); });
 
   /* No install banner: keeps Chrome's own "Add to Home screen" bar from popping up over the game. */
   window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); });
@@ -216,7 +338,7 @@
       h.progress = Math.min(1, base + (now - startT) / (o.duration() * 1000));
       paint();
       const stepN = Math.floor(h.progress * 8);
-      if (stepN !== lastStep) { lastStep = stepN; tone(600 + stepN * 90, 0.05, 'sine', 0.22); }
+      if (stepN !== lastStep) { lastStep = stepN; if (S.snd.hold) tone(600 + stepN * 90, 0.05, 'sine', 0.22); }
       if (h.progress >= 1) { active = false; el.classList.remove('holding'); o.onDone(); return; }
       raf = requestAnimationFrame(frame);
     }
@@ -294,8 +416,8 @@
     $('roundClock').textContent = S.roundTime > 0 ? fmt(S.roundTime * 60000) : '--:--';
     updateHints();
     setPhase('round', 'scrRound');
-    tone(880, 0.12, 'square', 0.3); tone(1320, 0.18, 'square', 0.3, 0.14);
-    speak(L().start);
+    if (S.snd.signal) { tone(880, 0.12, 'square', 0.3); tone(1320, 0.18, 'square', 0.3, 0.14); }
+    if (S.say.start) speak('start');
   }
 
   function plant(site) {
@@ -308,8 +430,8 @@
     updateHints();
     setPhase('planted', 'scrPlanted');
     buzz([120, 60, 120]);
-    tone(1500, 0.1, 'square', 0.35); tone(1500, 0.1, 'square', 0.35, 0.15);
-    speak(L().planted(site));
+    if (S.snd.signal) { tone(1500, 0.1, 'square', 0.35); tone(1500, 0.1, 'square', 0.35, 0.15); }
+    if (S.say.planted) speak(site === 'B' ? 'planted_b' : 'planted_a');
   }
 
   function defused() {
@@ -317,25 +439,26 @@
     const rem = st.bombEnd - performance.now();
     finish('def', 'Bombe entschärft', 'Verteidiger gewinnen',
       'Auf Punkt ' + st.site + ' entschärft, ' + (Math.max(0, rem) / 1000).toFixed(1) + ' s vor der Explosion.');
-    winJingle();
+    if (S.snd.jingle) winJingle();
     buzz(200);
-    setTimeout(() => { if (st.phase === 'end') speak([L().defused, L().defWin]); }, 700);
+    if (S.say.result) setTimeout(() => { if (st.phase === 'end') speak(['defused', 'def_win']); }, S.snd.jingle ? 700 : 150);
   }
 
   function boom() {
     const site = st.site;
     holdDef.reset();
     finish('att', 'Explosion', 'Angreifer gewinnen', 'Die Bombe auf Punkt ' + site + ' ist hochgegangen.');
-    explosion(); buzz([400, 100, 400]);
+    if (S.snd.boom) explosion();
+    buzz([400, 100, 400]);
     let n = 0; const iv = setInterval(() => { flash(); if (++n > 8) clearInterval(iv); }, 140);
-    setTimeout(() => { if (st.phase === 'end') speak(L().boom); }, 2200);
+    if (S.say.result) setTimeout(() => { if (st.phase === 'end') speak('att_win'); }, S.snd.boom ? 2200 : 300);
   }
 
   function timeout() {
     holdA.reset(); holdB.reset();
     finish('def', 'Zeit abgelaufen', 'Verteidiger gewinnen', 'Die Angreifer haben nicht rechtzeitig geplantet.');
-    tone(440, 0.4, 'square', 0.3); tone(330, 0.6, 'square', 0.3, 0.45);
-    speak([L().timeout, L().defWin]);
+    if (S.snd.signal) { tone(440, 0.4, 'square', 0.3); tone(330, 0.6, 'square', 0.3, 0.45); }
+    if (S.say.result) speak(['timeout', 'def_win']);
   }
 
   function finish(side, kicker, title, sub) {
@@ -350,7 +473,7 @@
   }
 
   function toSetup() {
-    try { hasTTS && speechSynthesis.cancel(); } catch (e) {}
+    stopVoice();
     holdA.reset(); holdB.reset(); holdDef.reset();
     keepAlive(false); unwake();
     st = { phase: 'setup' };
@@ -362,7 +485,7 @@
     if (st.phase === 'round' && st.roundEnd) {
       const rem = st.roundEnd - now;
       $('roundClock').textContent = fmt(rem);
-      if (rem <= 60000 && !st.said.min1 && S.roundTime > 1) { st.said.min1 = true; speak(L().min1); }
+      if (rem <= 60000 && !st.said.min1 && S.roundTime > 1) { st.said.min1 = true; if (S.say.min1) speak('min1'); }
       if (rem <= 0) timeout();
     } else if (st.phase === 'planted') {
       const total = S.bombTime * 1000;
@@ -372,12 +495,12 @@
       if (rem <= 0) { boom(); return; }
       if (now >= st.nextBeep) {
         const r = Math.max(0, rem / total);
-        tone(2000 + 900 * (1 - r), 0.07, 'square', 0.35);
+        if (S.snd.tick) tone(2000 + 900 * (1 - r), 0.07, 'square', 0.35);
         flash();
         st.nextBeep = now + (rem < 2000 ? 90 : 110 + 890 * Math.pow(r, 0.8));
       }
-      if (rem <= 30500 && !st.said.s30 && S.bombTime >= 40) { st.said.s30 = true; speak(L().s30); }
-      if (rem <= 10500 && !st.said.s10 && S.bombTime >= 20) { st.said.s10 = true; speak(L().s10); }
+      if (rem <= 30500 && !st.said.s30 && S.bombTime >= 40) { st.said.s30 = true; if (S.say.bomb) speak('s30'); }
+      if (rem <= 10500 && !st.said.s10 && S.bombTime >= 20) { st.said.s10 = true; if (S.say.bomb) speak('s10'); }
     }
   }
   setInterval(tick, 40);
@@ -401,11 +524,26 @@
   $('btnTest').addEventListener('click', () => {
     audio();
     tone(2400, 0.08, 'square', 0.35); tone(2400, 0.08, 'square', 0.35, 0.25);
-    speak(L().test);
-    $('testMsg').textContent = hasTTS
-      ? 'Du solltest zwei Pieptöne und eine Ansage aus der Box hören.'
-      : 'Dieser Browser hat keine Sprachausgabe. Pieptöne und Explosion funktionieren trotzdem.';
+    loadLines();
+    speak('test');
+    $('testMsg').textContent = 'Du solltest zwei Pieptöne und eine Ansage aus der Box hören.';
   });
+  $('btnVoiceTest').addEventListener('click', () => { audio(); loadLines(); speak('planted_a'); });
+
+  let resetT = 0;
+  $('btnReset').addEventListener('click', () => {
+    const b = $('btnReset');
+    if (!b.classList.contains('armed')) {
+      b.classList.add('armed'); b.textContent = 'Sicher?';
+      resetT = setTimeout(() => { b.classList.remove('armed'); b.textContent = 'Zurücksetzen'; }, 3000);
+      return;
+    }
+    clearTimeout(resetT); b.classList.remove('armed'); b.textContent = 'Zurücksetzen';
+    S = clone(DEF); save(); bindAll(); applyGains(); loadLines();
+  });
+
+  bindAll();
+  loadLines();
 
   /* ---------- Offline support (PWA) ---------- */
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {

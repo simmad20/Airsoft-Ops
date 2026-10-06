@@ -8,7 +8,13 @@ Die App läuft komplett im Browser. Der Server liefert nur die Dateien aus. Nach
 
 ## Features
 
-- **Setup:** Rundenzeit (0 = ohne Limit), Bomben-Timer, Plant- und Entschärfzeit, Halb-Entschärfen (Fortschritt bleibt ab 50 % erhalten), Sprache der Ansagen (EN/DE) und Piep-Lautstärke. Die Einstellungen werden auf dem Gerät gespeichert.
+- **Setup:** Rundenzeit, Bomben-Timer, Plant- und Entschärfzeit per Schnellwahl (z. B. 5' · 10' · 15' oder 45s · 1:00 · 1:30) oder fein mit Plus/Minus. Plus und Minus gedrückt halten zählt schnell weiter. Dazu Halb-Entschärfen (Fortschritt bleibt ab 50 % erhalten). Alles wird auf dem Gerät gespeichert.
+- **Erweiterte Einstellungen** (zugeklappt unter dem Start-Knopf):
+  - *Ansagen:* Sprache DE/EN, Sprecher (männlicher Ansager oder Handy-Stimme), Funkgerät-Effekt, eigene Lautstärke, Probe hören.
+  - *Was angesagt wird:* Rundenstart, Bombe platziert, Noch eine Minute, Bomben-Restzeit (30 s / 10 s), Ergebnis, jeweils einzeln abschaltbar.
+  - *Sounds:* eigene Lautstärke, Bomben-Piepen, Halte-Töne, Signaltöne, Explosion, Sieger-Jingle und Vibration, jeweils einzeln abschaltbar.
+  - *Anzeige:* Vollbild beim Rundenstart, alles auf Standard zurücksetzen.
+- **Männlicher Ansager:** Die Ansagen sind fertige Audiodateien (Deutsch und Englisch), laut abgemischt und offline verfügbar. Sie klingen auf jedem Handy gleich.
 - **Planten:** Punkt A oder B gedrückt halten, mit Fortschrittsanzeige und Tönen.
 - **Bombe aktiv:** großer Countdown, Piepen wird immer schneller, blinkende LED, Ansagen bei 30 s und 10 s.
 - **Entschärfen:** Feld gedrückt halten. Loslassen setzt den Fortschritt zurück (bei Halb-Entschärfen auf 50 %).
@@ -27,13 +33,26 @@ Die App läuft komplett im Browser. Der Server liefert nur die Dateien aus. Nach
 │   ├── index.html
 │   ├── style.css
 │   ├── app.js              # Spiellogik, Sound, Sprachausgabe
+│   ├── audio/de, audio/en  # Ansagen als MP3
 │   ├── sw.js               # Service Worker für Offline-Betrieb
 │   ├── manifest.webmanifest
 │   └── icon.svg, icon-192.png, icon-512.png
+├── tools/generate_voice.py # Erzeugt die Ansagen neu (Piper TTS)
 ├── server.js               # Kleiner Node-Server ohne Abhängigkeiten
 ├── package.json
 └── render.yaml             # Render-Blueprint für das Deployment
 ```
+
+## Ansagen ändern
+
+Die Texte stehen in `tools/generate_voice.py` (und für die Handy-Stimme in `public/app.js` unter `LINES`). Nach einer Änderung die MP3s neu erzeugen:
+
+```bash
+pip install piper-tts      # außerdem wird ffmpeg benötigt
+python3 tools/generate_voice.py
+```
+
+Die Stimmen werden beim ersten Lauf automatisch heruntergeladen.
 
 ## Lokal starten
 
@@ -101,6 +120,13 @@ Für maximalen Schutz vor versehentlichem Schließen kann man zusätzlich die Bi
 2. App öffnen (am besten vorher zum Home-Bildschirm hinzufügen) und **„Ton & Box testen“** drücken.
 3. Einstellungen wählen und **„Runde starten“**.
 4. Handy während der Runde nicht sperren und die App im Vordergrund lassen.
+
+## Stimmen und Lizenzen
+
+Die Ansagen wurden offline mit [Piper](https://github.com/rhasspy/piper) erzeugt:
+
+- **Deutsch:** Stimme „Thorsten“ von [Thorsten-Voice](https://github.com/thorstenMueller/Thorsten-Voice), Lizenz CC0.
+- **Englisch:** Stimme „Ryan“ auf Basis des [RyanSpeech](https://www.kaggle.com/datasets/roholazandie/ryanspeech)-Datensatzes, Lizenz [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/). Die englischen Ansagen dürfen daher nur **nicht-kommerziell** genutzt werden.
 
 ## Browser-Unterstützung
 

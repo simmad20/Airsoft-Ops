@@ -70,7 +70,30 @@ h1 { font-size: 24px; }
 .step button:active { background: var(--line); }
 .step output { min-width: 64px; text-align: center; font-family: var(--mono); font-size: 18px; font-variant-numeric: tabular-nums; }
 
-.switch { position: relative; width: 52px; height: 30px; flex-shrink: 0; }
+.tset { padding: 14px; display: grid; gap: 10px; }
+.tset + .tset, .tset + .row { border-top: 1px solid var(--line); }
+.thead { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.thead .lbl { font-weight: 600; }
+.thead .desc { color: var(--muted); font-size: 13px; }
+.chips { display: grid; grid-template-columns: repeat(auto-fit, minmax(36px, 1fr)); gap: 5px; }
+.pre { padding: 9px 2px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel-2); font-family: var(--mono); font-size: 14px; cursor: pointer; }
+.pre[aria-pressed="true"] { background: var(--amber); border-color: var(--amber); color: #1a1205; }
+.step output.on { color: var(--amber); }
+
+label.row.check { cursor: pointer; }
+.row[hidden] + .row { border-top: 0; }
+
+.adv { border-top: 1px solid var(--line); padding-top: 8px; }
+.adv summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 12px 2px; font-family: var(--display); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; font-size: 15px; color: var(--muted); }
+.adv summary::-webkit-details-marker { display: none; }
+.adv summary::after { content: "▾"; font-size: 18px; transition: transform 150ms; }
+.adv[open] summary { color: var(--fg); }
+.adv[open] summary::after { transform: rotate(180deg); }
+.adv h3 { font-family: var(--display); font-size: 12px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); margin: 18px 2px 8px; }
+.adv h3:first-of-type { margin-top: 4px; }
+.btn.small { padding: 10px 14px; font-size: 13px; flex-shrink: 0; }
+
+.switch { position: relative; display: block; width: 52px; height: 30px; flex-shrink: 0; }
 .switch input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
 .switch span { position: absolute; inset: 0; border-radius: 999px; background: var(--panel-2); border: 1px solid var(--line); pointer-events: none; transition: background 150ms; }
 .switch span::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: var(--muted); transition: transform 150ms, background 150ms; }
@@ -135,5 +158,5 @@ body.pulse .clock.bomb { text-shadow: 0 0 40px var(--danger); }
 .endbtns { display: grid; gap: 10px; }
 
 @media (prefers-reduced-motion: reduce) {
-  .switch span, .switch span::after, .led { transition: none; }
+  .switch span, .switch span::after, .led, .adv summary::after { transition: none; }
 }

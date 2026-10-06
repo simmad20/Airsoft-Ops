@@ -43,52 +43,103 @@
     <p class="msg" id="testMsg"></p>
 
     <div class="group">
-      <div class="row">
-        <div class="txt"><div class="lbl">Rundenzeit</div><div class="desc">Zeit zum Planten. 0 = ohne Limit</div></div>
-        <div class="step" data-key="roundTime" data-min="0" data-max="30" data-step="1" data-unit="min">
-          <button type="button" data-d="-1" aria-label="Weniger">−</button><output id="out-roundTime"></output><button type="button" data-d="1" aria-label="Mehr">+</button>
+      <div class="tset" data-key="roundTime">
+        <div class="thead">
+          <div class="txt"><div class="lbl">Rundenzeit</div><div class="desc">Zeit zum Planten</div></div>
+          <div class="step"><button type="button" data-d="-1" aria-label="Rundenzeit verringern">−</button><output></output><button type="button" data-d="1" aria-label="Rundenzeit erhöhen">+</button></div>
         </div>
+        <div class="chips" data-presets="0,3,5,10,15,20,30"></div>
       </div>
-      <div class="row">
-        <div class="txt"><div class="lbl">Bomben-Timer</div><div class="desc">Zeit bis zur Explosion</div></div>
-        <div class="step" data-key="bombTime" data-min="20" data-max="300" data-step="5" data-unit="s">
-          <button type="button" data-d="-1" aria-label="Weniger">−</button><output id="out-bombTime"></output><button type="button" data-d="1" aria-label="Mehr">+</button>
+      <div class="tset" data-key="bombTime">
+        <div class="thead">
+          <div class="txt"><div class="lbl">Bomben-Timer</div><div class="desc">Zeit bis zur Explosion</div></div>
+          <div class="step"><button type="button" data-d="-1" aria-label="Bomben-Timer verringern">−</button><output></output><button type="button" data-d="1" aria-label="Bomben-Timer erhöhen">+</button></div>
         </div>
+        <div class="chips" data-presets="30,40,45,60,90,120,180"></div>
       </div>
-      <div class="row">
-        <div class="txt"><div class="lbl">Planten</div><div class="desc">So lange gedrückt halten</div></div>
-        <div class="step" data-key="plantTime" data-min="1" data-max="15" data-step="1" data-unit="s">
-          <button type="button" data-d="-1" aria-label="Weniger">−</button><output id="out-plantTime"></output><button type="button" data-d="1" aria-label="Mehr">+</button>
+      <div class="tset" data-key="plantTime">
+        <div class="thead">
+          <div class="txt"><div class="lbl">Planten</div><div class="desc">So lange gedrückt halten</div></div>
+          <div class="step"><button type="button" data-d="-1" aria-label="Plantzeit verringern">−</button><output></output><button type="button" data-d="1" aria-label="Plantzeit erhöhen">+</button></div>
         </div>
+        <div class="chips" data-presets="2,3,4,5,8,10"></div>
       </div>
-      <div class="row">
-        <div class="txt"><div class="lbl">Entschärfen</div><div class="desc">So lange gedrückt halten</div></div>
-        <div class="step" data-key="defuseTime" data-min="2" data-max="30" data-step="1" data-unit="s">
-          <button type="button" data-d="-1" aria-label="Weniger">−</button><output id="out-defuseTime"></output><button type="button" data-d="1" aria-label="Mehr">+</button>
+      <div class="tset" data-key="defuseTime">
+        <div class="thead">
+          <div class="txt"><div class="lbl">Entschärfen</div><div class="desc">So lange gedrückt halten</div></div>
+          <div class="step"><button type="button" data-d="-1" aria-label="Entschärfzeit verringern">−</button><output></output><button type="button" data-d="1" aria-label="Entschärfzeit erhöhen">+</button></div>
         </div>
+        <div class="chips" data-presets="3,5,7,10,15,20"></div>
       </div>
       <div class="row">
         <div class="txt"><div class="lbl">Halb-Entschärfen</div><div class="desc">Fortschritt bleibt ab 50 % erhalten</div></div>
-        <label class="switch"><input type="checkbox" id="optHalf" aria-label="Halb-Entschärfen"><span></span></label>
-      </div>
-      <div class="row">
-        <div class="txt"><div class="lbl">Sprache der Ansagen</div><div class="desc">„Bomb planted on Site A“</div></div>
-        <div class="seg" id="optLang">
-          <button type="button" data-lang="en" aria-pressed="true">EN</button><button type="button" data-lang="de" aria-pressed="false">DE</button>
-        </div>
-      </div>
-      <div class="row" id="rowFs" hidden>
-        <div class="txt"><div class="lbl">Vollbild in der Runde</div><div class="desc">Blendet die Browserleiste beim Start aus</div></div>
-        <label class="switch"><input type="checkbox" id="optFs" aria-label="Vollbild in der Runde"><span></span></label>
-      </div>
-      <div class="row">
-        <div class="txt"><div class="lbl">Piep-Lautstärke</div><div class="desc">Ansagen nutzen die Handy-Lautstärke</div></div>
-        <input type="range" id="optVol" min="10" max="100" step="5" aria-label="Piep-Lautstärke">
+        <label class="switch"><input type="checkbox" data-opt="half" aria-label="Halb-Entschärfen"><span></span></label>
       </div>
     </div>
+    <p class="fine">Tipp: Plus und Minus gedrückt halten, um schnell zu zählen.</p>
 
     <button class="btn primary big" id="btnStart" type="button">Runde starten</button>
     <p class="fine" id="wakeNote">Während der Runde bleibt das Display an und sperrt sich nicht. Die App im Vordergrund lassen.</p>
+
+    <details class="adv" id="adv">
+      <summary>Erweiterte Einstellungen</summary>
+
+      <h3>Ansagen</h3>
+      <div class="group">
+        <div class="row">
+          <div class="txt"><div class="lbl">Sprache</div></div>
+          <div class="seg" data-seg="lang"><button type="button" data-v="de">DE</button><button type="button" data-v="en">EN</button></div>
+        </div>
+        <div class="row">
+          <div class="txt"><div class="lbl">Sprecher</div><div class="desc" id="voiceDesc">Männliche Ansager-Stimme, funktioniert offline</div></div>
+          <div class="seg" data-seg="voice"><button type="button" data-v="male">Ansager</button><button type="button" data-v="device">Handy</button></div>
+        </div>
+        <div class="row">
+          <div class="txt"><div class="lbl">Funkgerät-Effekt</div><div class="desc">Klingt wie über Funk, mit Rauschen</div></div>
+          <label class="switch"><input type="checkbox" data-opt="radio" aria-label="Funkgerät-Effekt"><span></span></label>
+        </div>
+        <div class="row">
+          <div class="txt"><div class="lbl">Lautstärke Ansagen</div></div>
+          <input type="range" data-range="voiceVol" min="10" max="100" step="5" aria-label="Lautstärke Ansagen">
+        </div>
+        <div class="row">
+          <div class="txt"><div class="lbl">Probe hören</div><div class="desc">Spielt „Bombe platziert“ mit den aktuellen Einstellungen</div></div>
+          <button class="btn small" id="btnVoiceTest" type="button">Abspielen</button>
+        </div>
+      </div>
+
+      <h3>Was angesagt wird</h3>
+      <div class="group">
+        <label class="row check"><div class="txt"><div class="lbl">Rundenstart</div><div class="desc">„Runde gestartet. Angreifer, platziert die Bombe!“</div></div><span class="switch"><input type="checkbox" data-say="start"><span></span></span></label>
+        <label class="row check"><div class="txt"><div class="lbl">Bombe platziert</div><div class="desc">„Bombe platziert auf Punkt A!“</div></div><span class="switch"><input type="checkbox" data-say="planted"><span></span></span></label>
+        <label class="row check"><div class="txt"><div class="lbl">Noch eine Minute</div><div class="desc">Bei ablaufender Rundenzeit</div></div><span class="switch"><input type="checkbox" data-say="min1"><span></span></span></label>
+        <label class="row check"><div class="txt"><div class="lbl">Bomben-Restzeit</div><div class="desc">„Noch dreißig Sekunden“ und „Noch zehn Sekunden“</div></div><span class="switch"><input type="checkbox" data-say="bomb"><span></span></span></label>
+        <label class="row check"><div class="txt"><div class="lbl">Ergebnis</div><div class="desc">„Bombe entschärft. Verteidiger gewinnen!“</div></div><span class="switch"><input type="checkbox" data-say="result"><span></span></span></label>
+      </div>
+
+      <h3>Sounds</h3>
+      <div class="group">
+        <div class="row">
+          <div class="txt"><div class="lbl">Lautstärke Sounds</div><div class="desc">Piepen, Explosion, Signale</div></div>
+          <input type="range" data-range="vol" min="10" max="100" step="5" aria-label="Lautstärke Sounds">
+        </div>
+        <label class="row check"><div class="txt"><div class="lbl">Bomben-Piepen</div><div class="desc">Wird zum Ende hin immer schneller</div></div><span class="switch"><input type="checkbox" data-snd="tick"><span></span></span></label>
+        <label class="row check"><div class="txt"><div class="lbl">Halte-Töne</div><div class="desc">Ansteigende Töne beim Planten und Entschärfen</div></div><span class="switch"><input type="checkbox" data-snd="hold"><span></span></span></label>
+        <label class="row check"><div class="txt"><div class="lbl">Signaltöne</div><div class="desc">Bei Rundenstart, Plant und Zeitablauf</div></div><span class="switch"><input type="checkbox" data-snd="signal"><span></span></span></label>
+        <label class="row check"><div class="txt"><div class="lbl">Explosion</div></div><span class="switch"><input type="checkbox" data-snd="boom"><span></span></span></label>
+        <label class="row check"><div class="txt"><div class="lbl">Sieger-Jingle</div><div class="desc">Nach dem Entschärfen</div></div><span class="switch"><input type="checkbox" data-snd="jingle"><span></span></span></label>
+        <label class="row check"><div class="txt"><div class="lbl">Vibration</div><div class="desc">Nur auf Android</div></div><span class="switch"><input type="checkbox" data-opt="vibrate"><span></span></span></label>
+      </div>
+
+      <h3>Anzeige</h3>
+      <div class="group">
+        <label class="row check" id="rowFs" hidden><div class="txt"><div class="lbl">Vollbild in der Runde</div><div class="desc">Blendet die Browserleiste beim Start aus</div></div><span class="switch"><input type="checkbox" data-opt="fs"><span></span></span></label>
+        <div class="row">
+          <div class="txt"><div class="lbl">Alles zurücksetzen</div><div class="desc">Alle Einstellungen auf Standard</div></div>
+          <button class="btn small" id="btnReset" type="button">Zurücksetzen</button>
+        </div>
+      </div>
+    </details>
   </section>
 
   <!-- ROUND: waiting for plant -->
