@@ -188,26 +188,8 @@
   $('optFs').checked = !!S.fs;
   $('optFs').addEventListener('change', (e) => { S.fs = e.target.checked; save(); });
 
-  /* Install hint: Android offers a real install prompt, iPhone needs "Add to Home Screen" (no fullscreen API there). */
-  let installEvt = null;
-  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  if (!isApp()) {
-    if (isIOS) {
-      $('installDesc').textContent = 'Für Vollbild ohne Safari-Leiste: unten auf Teilen tippen und „Zum Home-Bildschirm“ wählen. Dann die App über das neue Symbol starten.';
-      $('installBox').hidden = false;
-    }
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault(); installEvt = e;
-      $('btnInstall').hidden = false; $('installBox').hidden = false;
-    });
-    $('btnInstall').addEventListener('click', async () => {
-      if (!installEvt) return;
-      installEvt.prompt();
-      try { await installEvt.userChoice; } catch (e) {}
-      installEvt = null; $('installBox').hidden = true;
-    });
-    window.addEventListener('appinstalled', () => { $('installBox').hidden = true; });
-  }
+  /* No install banner: keeps Chrome's own "Add to Home screen" bar from popping up over the game. */
+  window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); });
 
   /* ---------- Guard against leaving mid-round ---------- */
   function inGame() { return st.phase === 'round' || st.phase === 'planted'; }

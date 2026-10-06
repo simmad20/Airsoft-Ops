@@ -17,7 +17,7 @@ Die App läuft komplett im Browser. Der Server liefert nur die Dateien aus. Nach
 - **Vollbild:** Beim Rundenstart blendet die App die Browserleiste automatisch aus (abschaltbar). Zusätzlich gibt es oben rechts einen Vollbild-Knopf.
 - **Schutz vor versehentlichem Verlassen:** Während einer Runde führt die Zurück-Taste bzw. die Zurück-Wischgeste nicht aus der App, sondern zeigt nur einen Hinweis. Beim Neuladen oder Schließen des Tabs fragt der Browser nach.
 - **Display bleibt an:** Solange eine Runde läuft, sperrt sich das Handy nicht (Screen Wake Lock). Kann der Browser das nicht, zeigt die App einen Hinweis.
-- **Installierbar (PWA):** Auf Android erscheint in der App ein „Installieren“-Knopf, auf dem iPhone ein Hinweis zu „Zum Home-Bildschirm“. Installiert startet die App ohne Browserleiste wie eine normale App.
+- **Zum Startbildschirm hinzufügbar (PWA):** Über das Browsermenü („Zum Startbildschirm hinzufügen“ bzw. Teilen → „Zum Home-Bildschirm“) startet die App ohne Browserleiste wie eine normale App.
 
 ## Projektstruktur
 
@@ -88,6 +88,8 @@ Bei jedem Push auf den verbundenen Branch deployt Render automatisch neu.
 |---|---|---|
 | Im Browser | Vollbild per Knopf oder automatisch beim Rundenstart | Nicht möglich, Apple erlaubt Vollbild im Browser nur für Videos |
 | Als App installiert | Vollbild ohne Status- und Browserleiste | Ohne Safari-Leiste, nur die Statusleiste bleibt |
+
+Beim Wechsel ins Vollbild blendet Chrome kurz selbst einen Hinweis mit der Adresse ein („… zum Beenden nach unten wischen“). Das ist eine Sicherheitsfunktion des Browsers und lässt sich von der Webseite aus nicht abschalten. Wer ihn nicht sehen will, fügt die App zum Startbildschirm hinzu.
 
 Für das iPhone also unbedingt **Teilen → „Zum Home-Bildschirm“** nutzen und die App über das neue Symbol starten.
 
