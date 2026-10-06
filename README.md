@@ -14,7 +14,10 @@ Die App läuft komplett im Browser. Der Server liefert nur die Dateien aus. Nach
 - **Entschärfen:** Feld gedrückt halten. Loslassen setzt den Fortschritt zurück (bei Halb-Entschärfen auf 50 %).
 - **Ende:** Explosion mit Sound und Vibration oder Sieger-Jingle, Sprachansage, wer gewonnen hat.
 - **Fürs Feld gebaut:** Das Display bleibt während der Runde an (Wake Lock). Ein fast unhörbarer Ton hält die Bluetooth-Box wach. Dunkles Design, gut lesbar draußen.
-- **Installierbar (PWA):** Über „Zum Home-Bildschirm hinzufügen“ startet die App im Vollbild wie eine normale App.
+- **Vollbild:** Beim Rundenstart blendet die App die Browserleiste automatisch aus (abschaltbar). Zusätzlich gibt es oben rechts einen Vollbild-Knopf.
+- **Schutz vor versehentlichem Verlassen:** Während einer Runde führt die Zurück-Taste bzw. die Zurück-Wischgeste nicht aus der App, sondern zeigt nur einen Hinweis. Beim Neuladen oder Schließen des Tabs fragt der Browser nach.
+- **Display bleibt an:** Solange eine Runde läuft, sperrt sich das Handy nicht (Screen Wake Lock). Kann der Browser das nicht, zeigt die App einen Hinweis.
+- **Installierbar (PWA):** Auf Android erscheint in der App ein „Installieren“-Knopf, auf dem iPhone ein Hinweis zu „Zum Home-Bildschirm“. Installiert startet die App ohne Browserleiste wie eine normale App.
 
 ## Projektstruktur
 
@@ -78,6 +81,17 @@ Da die App nur aus statischen Dateien besteht, geht es auch ohne Node-Server:
 > **Free-Plan bei Web Services:** Ein kostenloser Web Service schläft nach ca. 15 Minuten ohne Aufrufe ein. Der erste Aufruf danach dauert dann bis zu einer Minute. Für die laufende Runde ist das egal, weil die App komplett im Browser läuft. Wer das Warten vermeiden will, nimmt Variante C.
 
 Bei jedem Push auf den verbundenen Branch deployt Render automatisch neu.
+
+## Vollbild auf Android und iPhone
+
+| | Android (Chrome) | iPhone (Safari) |
+|---|---|---|
+| Im Browser | Vollbild per Knopf oder automatisch beim Rundenstart | Nicht möglich, Apple erlaubt Vollbild im Browser nur für Videos |
+| Als App installiert | Vollbild ohne Status- und Browserleiste | Ohne Safari-Leiste, nur die Statusleiste bleibt |
+
+Für das iPhone also unbedingt **Teilen → „Zum Home-Bildschirm“** nutzen und die App über das neue Symbol starten.
+
+Für maximalen Schutz vor versehentlichem Schließen kann man zusätzlich die Bildschirmfixierung des Handys nutzen: **Android:** „App-Pinning“ bzw. „Bildschirm anheften“ in den Sicherheitseinstellungen. **iPhone:** „Geführter Zugriff“ unter Bedienungshilfen. Damit lässt sich die App erst mit PIN bzw. Code verlassen.
 
 ## Am Spieltag
 

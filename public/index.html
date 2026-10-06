@@ -21,9 +21,16 @@
 </head>
 <body>
 <div class="app">
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
   <header class="top">
     <div class="brand"><span class="led" id="led" aria-hidden="true"></span><span>BOMB <b>TIMER</b></span></div>
-    <span class="chip" id="chip">Bereit</span>
+    <div class="topr">
+      <span class="chip" id="chip">Bereit</span>
+      <button class="iconbtn" id="btnFs" type="button" aria-label="Vollbild" title="Vollbild" hidden>
+        <svg id="icoFsOn" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+        <svg id="icoFsOff" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>
+      </button>
+    </div>
   </header>
 
   <!-- SETUP -->
@@ -31,6 +38,13 @@
     <div class="intro">
       <h1>Runde einstellen</h1>
       <p>Bluetooth-Box mit diesem Handy koppeln, Lautstärke aufdrehen und einmal testen.</p>
+    </div>
+    <div class="install" id="installBox" hidden>
+      <div class="txt">
+        <div class="lbl">Als App installieren</div>
+        <div class="desc" id="installDesc">Startet ohne Browserleiste im Vollbild, wie eine normale App.</div>
+      </div>
+      <button class="btn primary" id="btnInstall" type="button" hidden>Installieren</button>
     </div>
     <button class="btn ghost" id="btnTest" type="button">Ton &amp; Box testen</button>
     <p class="msg" id="testMsg"></p>
@@ -70,6 +84,10 @@
           <button type="button" data-lang="en" aria-pressed="true">EN</button><button type="button" data-lang="de" aria-pressed="false">DE</button>
         </div>
       </div>
+      <div class="row" id="rowFs" hidden>
+        <div class="txt"><div class="lbl">Vollbild in der Runde</div><div class="desc">Blendet die Browserleiste beim Start aus</div></div>
+        <label class="switch"><input type="checkbox" id="optFs" aria-label="Vollbild in der Runde"><span></span></label>
+      </div>
       <div class="row">
         <div class="txt"><div class="lbl">Piep-Lautstärke</div><div class="desc">Ansagen nutzen die Handy-Lautstärke</div></div>
         <input type="range" id="optVol" min="10" max="100" step="5" aria-label="Piep-Lautstärke">
@@ -77,7 +95,7 @@
     </div>
 
     <button class="btn primary big" id="btnStart" type="button">Runde starten</button>
-    <p class="fine">Während der Runde bleibt das Display an. Handy nicht sperren und die App im Vordergrund lassen.</p>
+    <p class="fine" id="wakeNote">Während der Runde bleibt das Display an und sperrt sich nicht. Die App im Vordergrund lassen.</p>
   </section>
 
   <!-- ROUND: waiting for plant -->

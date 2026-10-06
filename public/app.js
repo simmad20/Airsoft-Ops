@@ -2,7 +2,7 @@
   const $ = (id) => document.getElementById(id);
 
   /* ---------- Settings ---------- */
-  const DEF = { roundTime: 10, bombTime: 45, plantTime: 4, defuseTime: 7, half: true, lang: 'en', vol: 80 };
+  const DEF = { roundTime: 10, bombTime: 45, plantTime: 4, defuseTime: 7, half: true, lang: 'en', vol: 80, fs: true };
   const S = Object.assign({}, DEF);
   try { Object.assign(S, JSON.parse(localStorage.getItem('abt-settings') || '{}')); } catch (e) {}
   function save() { try { localStorage.setItem('abt-settings', JSON.stringify(S)); } catch (e) {} }
@@ -148,7 +148,80 @@
   async function wake() { try { if ('wakeLock' in navigator && !wl) { wl = await navigator.wakeLock.request('screen'); wl.addEventListener('release', () => { wl = null; }); } } catch (e) { wl = null; } }
   function unwake() { try { wl && wl.release(); } catch (e) {} wl = null; }
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible' && (st.phase === 'round' || st.phase === 'planted')) wake();
+    if (document.visibilityState === 'visible' && inGame()) wake();
+  });
+  if (!('wakeLock' in navigator)) {
+    $('wakeNote').textContent = 'Achtung: Dieser Browser kann das Display nicht wach halten. Automatische Sperre am Handy für die Runde hochstellen oder Browser aktualisieren.';
+  }
+
+  /* ---------- Fullscreen & app mode ---------- */
+  const root = document.documentElement;
+  const canFs = !!(document.fullscreenEnabled || document.webkitFullscreenEnabled);
+  const isApp = () => matchMedia('(display-mode: fullscreen)').matches || matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
+  function enterFs() {
+    const req = root.requestFullscreen || root.webkitRequestFullscreen;
+    if (!canFs || fsEl() || !req) return;
+    try {
+      const p = req.call(root, { navigationUI: 'hide' });
+      const lock = () => { try { screen.orientation.lock('portrait').catch(() => {}); } catch (e) {} };
+      p && p.then ? p.then(lock, () => {}) : lock();
+    } catch (e) {}
+  }
+  function exitFs() {
+    const ex = document.exitFullscreen || document.webkitExitFullscreen;
+    if (fsEl() && ex) { try { const p = ex.call(document); p && p.catch && p.catch(() => {}); } catch (e) {} }
+  }
+  function paintFs() {
+    const on = !!fsEl();
+    $('icoFsOn').hidden = on; $('icoFsOff').hidden = !on;
+    $('btnFs').setAttribute('aria-label', on ? 'Vollbild beenden' : 'Vollbild');
+    $('btnFs').title = on ? 'Vollbild beenden' : 'Vollbild';
+  }
+  if (canFs && !isApp()) {
+    $('btnFs').hidden = false;
+    $('rowFs').hidden = false;
+    $('btnFs').addEventListener('click', () => { fsEl() ? exitFs() : enterFs(); });
+    document.addEventListener('fullscreenchange', paintFs);
+    document.addEventListener('webkitfullscreenchange', paintFs);
+  }
+  $('optFs').checked = !!S.fs;
+  $('optFs').addEventListener('change', (e) => { S.fs = e.target.checked; save(); });
+
+  /* Install hint: Android offers a real install prompt, iPhone needs "Add to Home Screen" (no fullscreen API there). */
+  let installEvt = null;
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if (!isApp()) {
+    if (isIOS) {
+      $('installDesc').textContent = 'Für Vollbild ohne Safari-Leiste: unten auf Teilen tippen und „Zum Home-Bildschirm“ wählen. Dann die App über das neue Symbol starten.';
+      $('installBox').hidden = false;
+    }
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault(); installEvt = e;
+      $('btnInstall').hidden = false; $('installBox').hidden = false;
+    });
+    $('btnInstall').addEventListener('click', async () => {
+      if (!installEvt) return;
+      installEvt.prompt();
+      try { await installEvt.userChoice; } catch (e) {}
+      installEvt = null; $('installBox').hidden = true;
+    });
+    window.addEventListener('appinstalled', () => { $('installBox').hidden = true; });
+  }
+
+  /* ---------- Guard against leaving mid-round ---------- */
+  function inGame() { return st.phase === 'round' || st.phase === 'planted'; }
+  let toastT = 0;
+  function toast(msg) {
+    const t = $('toast'); t.textContent = msg; t.hidden = false;
+    clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, 3000);
+  }
+  /* Asks "Leave page?" on reload, closing the tab or typing a new address. */
+  window.addEventListener('beforeunload', (e) => { if (inGame()) { e.preventDefault(); e.returnValue = ''; } });
+  /* The back button / back swipe lands on an extra history entry instead of leaving the page. */
+  function armBack() { if (!(history.state && history.state.abt)) { try { history.pushState({ abt: 1 }, ''); } catch (e) {} } }
+  window.addEventListener('popstate', () => {
+    if (inGame()) { armBack(); toast('Runde läuft. Zum Beenden „Runde abbrechen“ nutzen.'); }
   });
 
   /* ---------- Hold-to-act buttons ---------- */
@@ -230,6 +303,8 @@
 
   function startRound() {
     audio(); keepAlive(true); wake();
+    if (S.fs) enterFs();
+    armBack();
     const now = performance.now();
     st = { phase: 'round', roundEnd: S.roundTime > 0 ? now + S.roundTime * 60000 : null, said: {} };
     holdA.reset(); holdB.reset(); $('holdA').disabled = false; $('holdB').disabled = false;
