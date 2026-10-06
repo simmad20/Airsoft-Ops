@@ -2,6 +2,8 @@
 
 Ein Bomb-Timer fürs Airsoft-Feld als Web-App fürs Handy: Bombe auf Punkt A oder B planten, Countdown mit Piepen und Sprachansagen über die Bluetooth-Box, entschärfen per Gedrückthalten.
 
+**▶ Live: [airsoft-ops.onrender.com](https://airsoft-ops.onrender.com)**
+
 Die App läuft komplett im Browser. Der Server liefert nur die Dateien aus. Nach dem ersten Öffnen funktioniert sie dank Service Worker **auch ohne Netz** auf dem Spielfeld.
 
 ## Features
@@ -43,6 +45,10 @@ Dann im Browser `http://localhost:3000` öffnen. Einen anderen Port setzt man mi
 > **Hinweis:** Wake Lock, Service Worker und teilweise die Sprachausgabe funktionieren auf dem Handy nur über **HTTPS** (oder `localhost`). Zum Testen am Handy also die Render-URL verwenden, nicht die lokale IP.
 
 ## Auf Render veröffentlichen
+
+Die App läuft aktuell als **Static Site** auf Render unter **https://airsoft-ops.onrender.com** (Branch `main`, Publish Directory `public`). Jeder Push auf `main` wird automatisch neu deployt.
+
+Für eine eigene Instanz gibt es diese Möglichkeiten:
 
 ### Variante A: Blueprint (am einfachsten)
 
