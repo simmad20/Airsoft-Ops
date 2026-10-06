@@ -1,0 +1,11 @@
+# Render Blueprint: https://render.com/docs/blueprint-spec
+# Deploys the Bomb Timer as a free Node web service.
+services:
+  - type: web
+    name: airsoft-bomb-timer
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /healthz
+    autoDeploy: true

@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Airsoft Bomb Timer</title>
+  <meta name="description" content="Bomb-Timer für Airsoft: Planten, Entschärfen, Countdown und Ansagen über die Bluetooth-Box.">
+  <meta name="theme-color" content="#111417">
+  <meta name="color-scheme" content="dark">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Bomb Timer">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Chakra+Petch:wght@600;700&family=Share+Tech+Mono&display=swap">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand"><span class="led" id="led" aria-hidden="true"></span><span>BOMB <b>TIMER</b></span></div>
+    <span class="chip" id="chip">Bereit</span>
+  </header>
+
+  <!-- SETUP -->
+  <section class="scr" id="scrSetup">
+    <div class="intro">
+      <h1>Runde einstellen</h1>
+      <p>Bluetooth-Box mit diesem Handy koppeln, Lautstärke aufdrehen und einmal testen.</p>
+    </div>
+    <button class="btn ghost" id="btnTest" type="button">Ton &amp; Box testen</button>
+    <p class="msg" id="testMsg"></p>
+
+    <div class="group">
+      <div class="row">
+        <div class="txt"><div class="lbl">Rundenzeit</div><div class="desc">Zeit zum Planten. 0 = ohne Limit</div></div>
+        <div class="step" data-key="roundTime" data-min="0" data-max="30" data-step="1" data-unit="min">
+          <button type="button" data-d="-1" aria-label="Weniger">−</button><output id="out-roundTime"></output><button type="button" data-d="1" aria-label="Mehr">+</button>
+        </div>
+      </div>
+      <div class="row">
+        <div class="txt"><div class="lbl">Bomben-Timer</div><div class="desc">Zeit bis zur Explosion</div></div>
+        <div class="step" data-key="bombTime" data-min="20" data-max="300" data-step="5" data-unit="s">
+          <button type="button" data-d="-1" aria-label="Weniger">−</button><output id="out-bombTime"></output><button type="button" data-d="1" aria-label="Mehr">+</button>
+        </div>
+      </div>
+      <div class="row">
+        <div class="txt"><div class="lbl">Planten</div><div class="desc">So lange gedrückt halten</div></div>
+        <div class="step" data-key="plantTime" data-min="1" data-max="15" data-step="1" data-unit="s">
+          <button type="button" data-d="-1" aria-label="Weniger">−</button><output id="out-plantTime"></output><button type="button" data-d="1" aria-label="Mehr">+</button>
+        </div>
+      </div>
+      <div class="row">
+        <div class="txt"><div class="lbl">Entschärfen</div><div class="desc">So lange gedrückt halten</div></div>
+        <div class="step" data-key="defuseTime" data-min="2" data-max="30" data-step="1" data-unit="s">
+          <button type="button" data-d="-1" aria-label="Weniger">−</button><output id="out-defuseTime"></output><button type="button" data-d="1" aria-label="Mehr">+</button>
+        </div>
+      </div>
+      <div class="row">
+        <div class="txt"><div class="lbl">Halb-Entschärfen</div><div class="desc">Fortschritt bleibt ab 50 % erhalten</div></div>
+        <label class="switch"><input type="checkbox" id="optHalf" aria-label="Halb-Entschärfen"><span></span></label>
+      </div>
+      <div class="row">
+        <div class="txt"><div class="lbl">Sprache der Ansagen</div><div class="desc">„Bomb planted on Site A“</div></div>
+        <div class="seg" id="optLang">
+          <button type="button" data-lang="en" aria-pressed="true">EN</button><button type="button" data-lang="de" aria-pressed="false">DE</button>
+        </div>
+      </div>
+      <div class="row">
+        <div class="txt"><div class="lbl">Piep-Lautstärke</div><div class="desc">Ansagen nutzen die Handy-Lautstärke</div></div>
+        <input type="range" id="optVol" min="10" max="100" step="5" aria-label="Piep-Lautstärke">
+      </div>
+    </div>
+
+    <button class="btn primary big" id="btnStart" type="button">Runde starten</button>
+    <p class="fine">Während der Runde bleibt das Display an. Handy nicht sperren und die App im Vordergrund lassen.</p>
+  </section>
+
+  <!-- ROUND: waiting for plant -->
+  <section class="scr" id="scrRound" hidden>
+    <div class="clockwrap">
+      <div class="label" id="roundLabel">Rundenzeit</div>
+      <div class="clock" id="roundClock">10:00</div>
+    </div>
+    <div class="sites">
+      <button class="hold site a" id="holdA" type="button" aria-label="Auf Punkt A planten"><span class="fill"></span><span class="letter">A</span><span class="hint" id="hintA">4 s halten zum Planten</span></button>
+      <button class="hold site b" id="holdB" type="button" aria-label="Auf Punkt B planten"><span class="fill"></span><span class="letter">B</span><span class="hint" id="hintB">4 s halten zum Planten</span></button>
+    </div>
+    <button class="btn ghost danger" id="abortRound" type="button">Runde abbrechen</button>
+  </section>
+
+  <!-- PLANTED -->
+  <section class="scr" id="scrPlanted" hidden>
+    <div class="planted-head"><span class="sitebadge" id="plantSite">A</span><span>Bombe platziert</span></div>
+    <div class="clock bomb" id="bombClock">0:45</div>
+    <div class="bar"><span id="bombBar"></span></div>
+    <button class="hold defuse" id="holdDefuse" type="button" aria-label="Bombe entschärfen"><span class="fill"></span><span class="mark" id="halfMark"></span><span class="letter">ENTSCHÄRFEN</span><span class="hint" id="defuseHint">7 s gedrückt halten</span></button>
+    <button class="btn ghost danger" id="abortPlanted" type="button">Runde abbrechen</button>
+  </section>
+
+  <!-- END -->
+  <section class="scr" id="scrEnd" hidden>
+    <div class="result" id="result">
+      <div class="rk" id="resKicker">Runde vorbei</div>
+      <h2 id="resTitle">Verteidiger gewinnen</h2>
+      <p id="resSub"></p>
+    </div>
+    <div class="endbtns">
+      <button class="btn primary big" id="btnAgain" type="button">Neue Runde</button>
+      <button class="btn ghost" id="btnSetup" type="button">Einstellungen</button>
+    </div>
+  </section>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
