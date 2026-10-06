@@ -1,6 +1,6 @@
 /* Offline support: the app shell is cached on first visit so the timer still opens on a field without signal.
    Own files are fetched network-first (a new deploy shows up right away), fonts cache-first. */
-const CACHE = 'bomb-timer-v4';
+const CACHE = 'bomb-timer-v5';
 const LINES = ['start', 'planted_a', 'planted_b', 'min1', 's30', 's10', 'defused', 'def_win', 'att_win', 'timeout', 'test'];
 const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png']
   .concat(...['de', 'en'].map((l) => LINES.map((k) => 'audio/' + l + '/' + k + '.mp3')));

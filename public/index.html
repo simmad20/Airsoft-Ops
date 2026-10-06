@@ -42,41 +42,18 @@
     <button class="btn ghost" id="btnTest" type="button">Ton &amp; Box testen</button>
     <p class="msg" id="testMsg"></p>
 
+    <div class="tgrid">
+      <button class="tcard" type="button" data-key="roundTime"><span class="tl">Rundenzeit</span><span class="tv"></span><span class="td">Zeit zum Planten</span></button>
+      <button class="tcard" type="button" data-key="bombTime"><span class="tl">Bombe</span><span class="tv"></span><span class="td">Bis zur Explosion</span></button>
+      <button class="tcard" type="button" data-key="plantTime"><span class="tl">Planten</span><span class="tv"></span><span class="td">Gedrückt halten</span></button>
+      <button class="tcard" type="button" data-key="defuseTime"><span class="tl">Entschärfen</span><span class="tv"></span><span class="td">Gedrückt halten</span></button>
+    </div>
     <div class="group">
-      <div class="tset" data-key="roundTime">
-        <div class="thead">
-          <div class="txt"><div class="lbl">Rundenzeit</div><div class="desc">Zeit zum Planten</div></div>
-          <div class="step"><button type="button" data-d="-1" aria-label="Rundenzeit verringern">−</button><output></output><button type="button" data-d="1" aria-label="Rundenzeit erhöhen">+</button></div>
-        </div>
-        <div class="chips" data-presets="0,3,5,10,15,20,30"></div>
-      </div>
-      <div class="tset" data-key="bombTime">
-        <div class="thead">
-          <div class="txt"><div class="lbl">Bomben-Timer</div><div class="desc">Zeit bis zur Explosion</div></div>
-          <div class="step"><button type="button" data-d="-1" aria-label="Bomben-Timer verringern">−</button><output></output><button type="button" data-d="1" aria-label="Bomben-Timer erhöhen">+</button></div>
-        </div>
-        <div class="chips" data-presets="30,40,45,60,90,120,180"></div>
-      </div>
-      <div class="tset" data-key="plantTime">
-        <div class="thead">
-          <div class="txt"><div class="lbl">Planten</div><div class="desc">So lange gedrückt halten</div></div>
-          <div class="step"><button type="button" data-d="-1" aria-label="Plantzeit verringern">−</button><output></output><button type="button" data-d="1" aria-label="Plantzeit erhöhen">+</button></div>
-        </div>
-        <div class="chips" data-presets="2,3,4,5,8,10"></div>
-      </div>
-      <div class="tset" data-key="defuseTime">
-        <div class="thead">
-          <div class="txt"><div class="lbl">Entschärfen</div><div class="desc">So lange gedrückt halten</div></div>
-          <div class="step"><button type="button" data-d="-1" aria-label="Entschärfzeit verringern">−</button><output></output><button type="button" data-d="1" aria-label="Entschärfzeit erhöhen">+</button></div>
-        </div>
-        <div class="chips" data-presets="3,5,7,10,15,20"></div>
-      </div>
       <div class="row">
         <div class="txt"><div class="lbl">Halb-Entschärfen</div><div class="desc">Fortschritt bleibt ab 50 % erhalten</div></div>
         <label class="switch"><input type="checkbox" data-opt="half" aria-label="Halb-Entschärfen"><span></span></label>
       </div>
     </div>
-    <p class="fine">Tipp: Plus und Minus gedrückt halten, um schnell zu zählen.</p>
 
     <button class="btn primary big" id="btnStart" type="button">Runde starten</button>
     <p class="fine" id="wakeNote">Während der Runde bleibt das Display an und sperrt sich nicht. Die App im Vordergrund lassen.</p>
@@ -176,6 +153,24 @@
       <button class="btn ghost" id="btnSetup" type="button">Einstellungen</button>
     </div>
   </section>
+</div>
+
+<div class="sheet-bg" id="sheetBg" hidden>
+  <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="shTitle">
+    <div class="sh-head">
+      <div><h2 id="shTitle">Rundenzeit</h2><p id="shDesc"></p></div>
+      <button class="iconbtn" id="shClose" type="button" aria-label="Schließen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <div class="sh-val">
+      <button class="rbtn" type="button" data-d="-1" aria-label="Weniger">−</button>
+      <output class="sh-out" id="shOut"></output>
+      <button class="rbtn" type="button" data-d="1" aria-label="Mehr">+</button>
+    </div>
+    <input type="range" class="ruler" id="shRange" min="0" max="10" step="1" aria-label="Wert">
+    <div class="sh-scale"><span id="shMin"></span><span id="shMax"></span></div>
+    <div class="sh-presets" id="shPresets"></div>
+    <button class="btn primary big" id="shDone" type="button">Fertig</button>
+  </div>
 </div>
 
 <script src="app.js"></script>

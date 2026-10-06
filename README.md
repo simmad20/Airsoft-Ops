@@ -8,7 +8,7 @@ Die App läuft komplett im Browser. Der Server liefert nur die Dateien aus. Nach
 
 ## Features
 
-- **Setup:** Rundenzeit, Bomben-Timer, Plant- und Entschärfzeit per Schnellwahl (z. B. 5' · 10' · 15' oder 45s · 1:00 · 1:30) oder fein mit Plus/Minus. Plus und Minus gedrückt halten zählt schnell weiter. Dazu Halb-Entschärfen (Fortschritt bleibt ab 50 % erhalten). Alles wird auf dem Gerät gespeichert.
+- **Setup:** Rundenzeit, Bomben-Timer, Plant- und Entschärfzeit als Kacheln mit großen Ziffern. Ein Tipp öffnet ein Einstell-Fenster mit Schieberegler, großen Plus/Minus-Knöpfen (gedrückt halten zählt schnell weiter) und Schnellwahl (z. B. 5 min · 10 min oder 45 s · 1:30). Dazu Halb-Entschärfen (Fortschritt bleibt ab 50 % erhalten). Alles wird auf dem Gerät gespeichert.
 - **Erweiterte Einstellungen** (zugeklappt unter dem Start-Knopf):
   - *Ansagen:* Sprache DE/EN, Sprecher (männlicher Ansager oder Handy-Stimme), Funkgerät-Effekt, eigene Lautstärke, Probe hören.
   - *Was angesagt wird:* Rundenstart, Bombe platziert, Noch eine Minute, Bomben-Restzeit (30 s / 10 s), Ergebnis, jeweils einzeln abschaltbar.

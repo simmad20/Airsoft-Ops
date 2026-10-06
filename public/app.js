@@ -19,52 +19,106 @@
   } catch (e) {}
   function save() { try { localStorage.setItem('abt-settings', JSON.stringify(S)); } catch (e) {} }
 
-  /* Time settings: presets for the usual values, +/- for fine tuning (hold to repeat). */
+  /* Time settings: big readout cards; tapping one opens a bottom sheet with slider, +/- (hold to repeat) and presets. */
+  const range = (a, b, step) => { const r = []; for (let v = a; v <= b; v += step) r.push(v); return r; };
+  const mmss = (v) => Math.floor(v / 60) + ':' + String(v % 60).padStart(2, '0');
   const TIME = {
-    roundTime: { min: 0, max: 60, step: () => 1, fmt: (v) => (v === 0 ? 'Aus' : v + ' min'), chip: (v) => (v === 0 ? 'Aus' : v + "'") },
-    bombTime: { min: 10, max: 600, step: (v, d) => ((d > 0 ? v >= 60 : v > 60) ? 15 : 5), fmt: fmtSecs, chip: fmtSecsShort },
-    plantTime: { min: 1, max: 20, step: () => 1, fmt: (v) => v + ' s', chip: (v) => v + 's' },
-    defuseTime: { min: 1, max: 30, step: () => 1, fmt: (v) => v + ' s', chip: (v) => v + 's' }
+    roundTime: {
+      title: 'Rundenzeit', desc: 'So lange haben die Angreifer zum Planten.',
+      values: range(0, 60, 1), presets: [0, 3, 5, 8, 10, 15, 20, 30],
+      parts: (v) => (v === 0 ? ['Aus', ''] : [String(v), 'min']), chip: (v) => (v === 0 ? 'Aus' : v + ' min')
+    },
+    bombTime: {
+      title: 'Bomben-Timer', desc: 'Zeit von der Platzierung bis zur Explosion.',
+      values: range(10, 60, 5).concat(range(75, 300, 15), range(330, 600, 30)), presets: [30, 40, 45, 60, 90, 120, 180, 300],
+      parts: (v) => (v < 60 ? [String(v), 's'] : [mmss(v), 'min']), chip: (v) => (v < 60 ? v + ' s' : mmss(v))
+    },
+    plantTime: {
+      title: 'Planten', desc: 'So lange muss A oder B gedrückt werden.',
+      values: range(1, 20, 1), presets: [2, 3, 4, 5, 6, 8, 10, 15],
+      parts: (v) => [String(v), 's'], chip: (v) => v + ' s'
+    },
+    defuseTime: {
+      title: 'Entschärfen', desc: 'So lange muss „Entschärfen“ gedrückt werden.',
+      values: range(1, 30, 1), presets: [3, 5, 7, 8, 10, 12, 15, 20],
+      parts: (v) => [String(v), 's'], chip: (v) => v + ' s'
+    }
   };
-  function fmtSecs(v) { return v < 60 ? v + ' s' : Math.floor(v / 60) + ':' + String(v % 60).padStart(2, '0') + ' min'; }
-  function fmtSecsShort(v) { return v < 60 ? v + 's' : Math.floor(v / 60) + ':' + String(v % 60).padStart(2, '0'); }
+  const nearest = (T, v) => T.values.reduce((bi, x, i) => (Math.abs(x - v) < Math.abs(T.values[bi] - v) ? i : bi), 0);
+  function readout(el, T, v) {
+    const [num, unit] = T.parts(v);
+    el.textContent = num;
+    if (unit) { const u = document.createElement('small'); u.textContent = unit; el.appendChild(u); }
+    el.classList.toggle('off', unit === '');
+  }
 
   const painters = [];
-  document.querySelectorAll('.tset').forEach((box) => {
-    const key = box.dataset.key, T = TIME[key];
-    const out = box.querySelector('output');
-    const chipsEl = box.querySelector('.chips');
-    const chips = chipsEl.dataset.presets.split(',').map(Number).map((v) => {
+  document.querySelectorAll('.tcard').forEach((card) => {
+    const key = card.dataset.key, T = TIME[key];
+    S[key] = T.values[nearest(T, S[key])];
+    painters.push(() => readout(card.querySelector('.tv'), T, S[key]));
+    card.addEventListener('click', () => openSheet(key));
+  });
+
+  let shKey = null, shLast = null;
+  const shRange = $('shRange');
+  function shPaint() {
+    const T = TIME[shKey], i = T.values.indexOf(S[shKey]);
+    readout($('shOut'), T, S[shKey]);
+    shRange.value = i;
+    shRange.style.setProperty('--p', (i / (T.values.length - 1)) * 100 + '%');
+    $('shPresets').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(+b.dataset.v === S[shKey])));
+  }
+  function shSet(i) {
+    const T = TIME[shKey];
+    i = Math.max(0, Math.min(T.values.length - 1, i));
+    if (T.values[i] === S[shKey]) return;
+    S[shKey] = T.values[i];
+    save(); shPaint(); painters.forEach((p) => p()); updateHints();
+    try { navigator.vibrate && S.vibrate && navigator.vibrate(4); } catch (e) {}
+  }
+  function openSheet(key) {
+    shKey = key; shLast = document.activeElement;
+    const T = TIME[key];
+    $('shTitle').textContent = T.title;
+    $('shDesc').textContent = T.desc;
+    shRange.max = T.values.length - 1;
+    $('shMin').textContent = T.chip(T.values[0]);
+    $('shMax').textContent = T.chip(T.values[T.values.length - 1]);
+    const pre = $('shPresets'); pre.textContent = '';
+    T.presets.forEach((v) => {
       const b = document.createElement('button');
-      b.type = 'button'; b.className = 'pre'; b.textContent = T.chip(v);
-      b.addEventListener('click', () => set(v));
-      chipsEl.appendChild(b);
-      return { v, b };
+      b.type = 'button'; b.dataset.v = v; b.textContent = T.chip(v);
+      b.addEventListener('click', () => shSet(T.values.indexOf(v)));
+      pre.appendChild(b);
     });
-    function set(v) {
-      S[key] = Math.min(T.max, Math.max(T.min, v));
-      paint(); save(); updateHints();
-    }
-    function paint() {
-      out.textContent = T.fmt(S[key]);
-      chips.forEach((c) => c.b.setAttribute('aria-pressed', String(c.v === S[key])));
-    }
-    box.querySelectorAll('.step button').forEach((b) => {
-      const d = +b.dataset.d;
-      const bump = () => set(S[key] + d * T.step(S[key], d));
-      let t = 0, n = 0;
-      const stop = () => { clearTimeout(t); t = 0; };
-      const loop = () => { bump(); n++; t = setTimeout(loop, n > 8 ? 70 : 140); };
-      b.addEventListener('pointerdown', (e) => {
-        if (e.button > 0) return;
-        e.preventDefault(); stop(); n = 0; bump();
-        t = setTimeout(loop, 380);
-      });
-      ['pointerup', 'pointerleave', 'pointercancel'].forEach((ev) => b.addEventListener(ev, stop));
-      b.addEventListener('contextmenu', (e) => e.preventDefault());
-      b.addEventListener('click', (e) => { if (e.detail === 0) bump(); }); /* keyboard */
+    shPaint();
+    $('sheetBg').hidden = false;
+    $('shDone').focus({ preventScroll: true });
+  }
+  function closeSheet() {
+    $('sheetBg').hidden = true;
+    if (shLast && shLast.focus) shLast.focus({ preventScroll: true });
+  }
+  shRange.addEventListener('input', () => shSet(+shRange.value));
+  $('shDone').addEventListener('click', closeSheet);
+  $('shClose').addEventListener('click', closeSheet);
+  $('sheetBg').addEventListener('click', (e) => { if (e.target === $('sheetBg')) closeSheet(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('sheetBg').hidden) closeSheet(); });
+  document.querySelectorAll('.rbtn').forEach((b) => {
+    const d = +b.dataset.d;
+    const bump = () => shSet(TIME[shKey].values.indexOf(S[shKey]) + d);
+    let t = 0, n = 0;
+    const stop = () => { clearTimeout(t); t = 0; };
+    const loop = () => { bump(); n++; t = setTimeout(loop, n > 8 ? 70 : 140); };
+    b.addEventListener('pointerdown', (e) => {
+      if (e.button > 0) return;
+      e.preventDefault(); stop(); n = 0; bump();
+      t = setTimeout(loop, 380);
     });
-    painters.push(paint);
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach((ev) => b.addEventListener(ev, stop));
+    b.addEventListener('contextmenu', (e) => e.preventDefault());
+    b.addEventListener('click', (e) => { if (e.detail === 0) bump(); }); /* keyboard */
   });
 
   /* Generic bindings for switches, segmented buttons and sliders. */
