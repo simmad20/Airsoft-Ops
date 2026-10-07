@@ -243,6 +243,14 @@
     morphOut: { in: [{ opacity: 0 }, { opacity: 1 }], out: [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translate3d(0,24px,0)' }], d: 460, outD: 340, delay: 120 },
     fade: { in: [{ opacity: 0 }, { opacity: 1 }], out: [{ opacity: 1 }, { opacity: 0 }], d: 300 }
   };
+  /* Classic design: the same directions, but a short, small slide without scaling. */
+  const slideX = (a, b) => ({ in: [{ transform: 'translate3d(' + a + 'px,0,0)', opacity: 0 }, { transform: 'none', opacity: 1 }], out: [{ transform: 'none', opacity: 1 }, { transform: 'translate3d(' + b + 'px,0,0)', opacity: 0 }], d: 230, outD: 120, delay: 80 });
+  const slideY = (a, b) => ({ in: [{ transform: 'translate3d(0,' + a + 'px,0)', opacity: 0 }, { transform: 'none', opacity: 1 }], out: [{ transform: 'none', opacity: 1 }, { transform: 'translate3d(0,' + b + 'px,0)', opacity: 0 }], d: 250, outD: 120, delay: 80 });
+  const KFP = {
+    push: slideX(28, -14), pop: slideX(-28, 14), tabR: slideX(24, -12), tabL: slideX(-24, 12),
+    rise: slideY(18, -8), sink: slideY(-12, 12), morphIn: slideX(28, -14), morphOut: slideX(-28, 14),
+    fade: { in: [{ opacity: 0 }, { opacity: 1 }], out: [{ opacity: 1 }, { opacity: 0 }], d: 200, outD: 120, delay: 60 }
+  };
   function stagger(el) {
     $$('[data-st]', el).forEach((s, i) => s.style.setProperty('--i', i));
     el.classList.remove('st-in'); void el.offsetWidth; el.classList.add('st-in');
@@ -269,19 +277,20 @@
       router.busy = true; router.cur = id;
       if (router.hooks.enter) router.hooks.enter(id, prev);
       to.hidden = false; if (kind !== 'keep') to.scrollTop = 0;
-      if (plain) {
+      if (plain && RM) {
         from.hidden = true; setChrome(id); router.busy = false;
         V.stop(); $('#vortex').classList.add('off');
         if (router.hooks.after) router.hooks.after(id, prev);
         return true;
       }
       from.style.zIndex = 1; to.style.zIndex = 2;
-      stagger(to); setChrome(id);
-      if (id === 'home') { $('#vortex').classList.remove('off'); V.start(); }
+      if (!plain) stagger(to);
+      setChrome(id);
+      if (id === 'home' && !plain) { $('#vortex').classList.remove('off'); V.start(); }
       if (RM || !kind || kind === 'keep') kind = 'fade';
-      const k = KF[kind] || KF.fade, anims = [];
-      anims.push(from.animate(k.out, { duration: k.outD || k.d * 0.8, easing: 'cubic-bezier(.45,0,.7,.4)', fill: 'forwards' }));
-      anims.push(to.animate(k.in, { duration: k.d, delay: k.delay != null ? k.delay : k.d * 0.12, easing: EO, fill: 'backwards' }));
+      const K = plain ? KFP : KF, k = K[kind] || K.fade, anims = [];
+      anims.push(from.animate(k.out, { duration: k.outD || k.d * 0.8, easing: plain ? 'cubic-bezier(.4,0,1,1)' : 'cubic-bezier(.45,0,.7,.4)', fill: 'forwards' }));
+      anims.push(to.animate(k.in, { duration: k.d, delay: k.delay != null ? k.delay : k.d * 0.12, easing: plain ? 'cubic-bezier(.2,.7,.3,1)' : EO, fill: 'backwards' }));
       let fin = false;
       const done = () => {
         if (fin) return; fin = true;

@@ -733,7 +733,8 @@
       cardFront();
       const f = $('cvFlip'); f.getAnimations().forEach((x) => x.cancel()); f.style.transform = '';
       const ov = $('cardov'); ov.classList.remove('revealed', 'out', 'in'); ov.hidden = false; void ov.offsetWidth; ov.classList.add('in');
-      if (!UI.RM) document.querySelector('.cv-float').animate([{ transform: 'translateY(60px) scale(.8)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 600, easing: UI.SPRING });
+      if (UI.plain && !UI.RM) document.querySelector('.cv-float').animate([{ transform: 'translateY(16px)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 240, easing: 'cubic-bezier(.2,.7,.3,1)' });
+      else if (!UI.RM) document.querySelector('.cv-float').animate([{ transform: 'translateY(60px) scale(.8)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 600, easing: UI.SPRING });
       setTimeout(() => $('cvCard').focus({ preventScroll: true }), 50);
     }
     function revealCard() {
@@ -742,6 +743,10 @@
       const done = () => { st.busy = false; st.revealed = true; $('cardov').classList.add('revealed'); };
       ctx.buzz([30, 30, 60]);
       if (UI.RM) { f.style.transform = 'rotateY(180deg)'; return done(); }
+      if (UI.plain) {
+        f.animate([{ transform: 'rotateY(0deg)' }, { transform: 'rotateY(180deg)' }], { duration: 480, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'forwards' });
+        setTimeout(done, 480); return;
+      }
       f.animate([{ transform: 'translateY(0) rotateY(0deg) scale(1)' }, { transform: 'translateY(-30px) rotateY(0deg) scale(1.06)', offset: 0.22 }, { transform: 'translateY(-30px) rotateY(196deg) scale(1.09)', offset: 0.72 }, { transform: 'translateY(-6px) rotateY(180deg) scale(1.02)' }], { duration: 1300, easing: 'cubic-bezier(.45,.05,.3,1)', fill: 'forwards' });
       setTimeout(() => { UI.sparksAt($('cvSparks'), 20, 150); $('cardov').classList.add('revealed'); }, 760);
       setTimeout(() => { const g = $('cvGlint'); g.classList.remove('go'); void g.offsetWidth; g.classList.add('go'); }, 1000);
@@ -759,6 +764,7 @@
       if (UI.RM || !withFlip || !st.revealed) return fin();
       ov.classList.remove('revealed');
       f.getAnimations().forEach((x) => x.cancel());
+      if (UI.plain) { f.animate([{ transform: 'rotateY(180deg)' }, { transform: 'rotateY(0deg)' }], { duration: 400, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'forwards' }).onfinish = () => setTimeout(fin, 60); return; }
       f.animate([{ transform: 'translateY(-6px) rotateY(180deg) scale(1.02)' }, { transform: 'translateY(-24px) rotateY(90deg) scale(1.05)', offset: 0.5 }, { transform: 'translateY(0) rotateY(0deg) scale(1)' }], { duration: 650, easing: 'cubic-bezier(.45,.05,.3,1)', fill: 'forwards' }).onfinish = () => setTimeout(fin, 120);
     }
     $('cvCard').addEventListener('click', revealCard);
@@ -773,6 +779,10 @@
         if (CV.onChange) CV.onChange();
         if (UI.RM) return cardFront();
         const f = $('cvFlip'); f.getAnimations().forEach((x) => x.cancel());
+        if (UI.plain) {
+          f.animate([{ transform: 'rotateY(180deg)' }, { transform: 'rotateY(540deg)' }], { duration: 600, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'forwards' });
+          setTimeout(cardFront, 300); return;
+        }
         f.animate([{ transform: 'translateY(-6px) rotateY(180deg) scale(1.02)' }, { transform: 'translateY(-26px) rotateY(270deg) scale(1.08)', offset: 0.45 }, { transform: 'translateY(-6px) rotateY(540deg) scale(1.02)' }], { duration: 1000, easing: 'cubic-bezier(.45,.05,.3,1)', fill: 'forwards' });
         setTimeout(() => { cardFront(); UI.sparksAt($('cvSparks'), 20, 150); }, 450);
       } else {

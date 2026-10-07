@@ -1,5 +1,6 @@
 /* Classic design: the look of the original Airsoft Bomb Timer.
-   Flat dark grey panels, one amber accent, no pictures, no icons, no glow, no animations.
+   Flat dark grey panels, one amber accent, no pictures, no icons, no glow. Motion is kept to short,
+   quiet transitions (see the end of this file).
    Everything is scoped to #app.classic so the modern design stays untouched. */
 #app:not(.classic) .classic-only { display: none !important; }
 .led { display: none; }
@@ -56,10 +57,11 @@ body:has(#app.classic) { background: #111417; }
 #app.classic .screen { padding: 16px 16px calc(var(--tabh) + env(safe-area-inset-bottom, 0px) + 24px); gap: 16px; }
 #app.classic .screen.notab { padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px)); }
 #app.classic .tabbar { background: #111417; border-top: 1px solid var(--line); backdrop-filter: none; -webkit-backdrop-filter: none; padding: 0 0 env(safe-area-inset-bottom, 0px); }
-#app.classic .tabbar::before, #app.classic .tab-ind { display: none; }
-#app.classic .tabbar.hide { display: none; }
-#app.classic .tab { height: 56px; font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); border-top: 2px solid transparent; }
-#app.classic .tab[aria-current="page"] { color: var(--amber); border-top-color: var(--amber); }
+#app.classic .tabbar::before, #app.classic .tab-ind::after { display: none; }
+#app.classic .tab-ind { top: 0; height: 2px; border-radius: 0; background: var(--amber); box-shadow: none; }
+#app.classic .tabbar.hide { transform: translateY(100%); opacity: 1; pointer-events: none; }
+#app.classic .tab { height: 56px; font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+#app.classic .tab[aria-current="page"] { color: var(--amber); }
 #app.classic .tab .dot { top: 10px; left: auto; right: 14px; border-color: #111417; box-shadow: none; }
 #app.classic h1 { font-size: 24px; text-shadow: none; }
 #app.classic .intro p { color: var(--muted); }
@@ -69,7 +71,7 @@ body:has(#app.classic) { background: #111417; }
 /* Controls */
 #app.classic .btn { border-radius: 10px; border: 1px solid var(--line); background: var(--panel); padding: 14px 16px; min-height: 0; box-shadow: none; text-shadow: none; color: var(--fg); }
 #app.classic .btn::before { display: none; }
-#app.classic .btn:active { transform: translateY(1px); }
+#app.classic .btn:active { transform: scale(.98); }
 #app.classic .btn.primary { background: var(--amber); border-color: var(--amber); color: #1a1205; }
 #app.classic .btn.big { padding: 18px 16px; font-size: 18px; min-height: 0; }
 #app.classic .btn.small { padding: 10px 14px; font-size: 13px; }
@@ -81,10 +83,10 @@ body:has(#app.classic) { background: #111417; }
 #app.classic .group, #app.classic .card, #app.classic .how { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; backdrop-filter: none; -webkit-backdrop-filter: none; }
 #app.classic .card-ico { display: none; }
 #app.classic .seg { border: 1px solid var(--line); border-radius: 8px; padding: 0; background: var(--panel-2); overflow: hidden; }
-#app.classic .seg-ind { display: none; }
+#app.classic .seg-ind { top: 0; bottom: 0; left: 0; width: calc(100% / var(--n)); border-radius: 0; background: var(--amber); box-shadow: none; }
 #app.classic .seg button { min-height: 0; padding: 10px 14px; color: var(--fg); text-shadow: none; }
-#app.classic .seg button + button { border-left: 1px solid var(--line); }
-#app.classic .seg button[aria-pressed="true"] { background: var(--amber); color: #1a1205; }
+#app.classic .seg button + button { box-shadow: -1px 0 0 var(--line); }
+#app.classic .seg button[aria-pressed="true"] { color: #1a1205; }
 #app.classic .seg.tall button { min-height: 0; }
 #app.classic .switch span { background: var(--panel-2); border-color: var(--line); box-shadow: none; }
 #app.classic .switch span::after { background: var(--muted); box-shadow: none; }
@@ -221,3 +223,32 @@ body:has(#app.classic) { background: #111417; }
 #app.classic .pickrow button { background: var(--panel-2); border-color: var(--line); }
 #app.classic .pickrow button[aria-pressed="true"] { background: var(--amber); border-color: var(--amber); color: #1a1205; }
 #app.classic .toast { border-color: var(--amber); background: var(--panel-2); box-shadow: 0 8px 24px rgba(0, 0, 0, .5); }
+
+/* Motion: short and quiet. Everything is switched off above; only these transitions come back.
+   Screen changes are a small slide in ui.js (router, plain mode). */
+#app.classic { --cq: cubic-bezier(.2, .7, .3, 1); }
+#app.classic .btn, #app.classic .cmode, #app.classic .tc, #app.classic .rolepick button, #app.classic .pickrow button,
+#app.classic .sh-presets button, #app.classic .wingrid button, #app.classic .pl, #app.classic .team, #app.classic .pcard,
+#app.classic .backbtn, #app.classic .iconbtn, #app.classic .rbtn, #app.classic .inp, #app.classic .chip, #app.classic .devs li {
+  transition: background-color .18s var(--cq), border-color .18s var(--cq), color .18s var(--cq), box-shadow .18s var(--cq), transform .12s var(--cq), opacity .2s !important; }
+#app.classic .cmode:active, #app.classic .tc:active, #app.classic .pcard:active, #app.classic .wingrid button:active, #app.classic .pl:active { transform: scale(.98); }
+#app.classic .seg-ind { transition: transform .24s var(--cq) !important; }
+#app.classic .seg button { transition: color .2s var(--cq) !important; }
+#app.classic .switch span { transition: background-color .2s var(--cq), border-color .2s var(--cq) !important; }
+#app.classic .switch span::after { transition: transform .22s var(--cq), background-color .2s var(--cq) !important; }
+#app.classic .tab { transition: color .2s var(--cq) !important; }
+#app.classic .tab-ind { transition: transform .26s var(--cq), width .26s var(--cq) !important; }
+#app.classic .tabbar { transition: transform .22s var(--cq) !important; }
+#app.classic .backdrop { transition: opacity .22s, visibility 0s .22s !important; }
+#app.classic .backdrop.open { transition: opacity .22s !important; }
+#app.classic .sheet { transition: transform .2s cubic-bezier(.4, 0, 1, 1), visibility 0s .2s !important; }
+#app.classic .sheet.open { transition: transform .28s var(--cq), visibility 0s !important; }
+#app.classic .toast { transition: opacity .2s, transform .24s var(--cq) !important; }
+#app.classic .cardov.in { animation: fadeIn .2s var(--cq) !important; }
+#app.classic .cardov.out { animation: fadeOut .2s ease-in forwards !important; }
+#app.classic .hold.pad { transition: border-color .15s, opacity .2s !important; }
+#app.classic .pp-bar i, #app.classic .ph-line i { transition: transform .3s var(--cq) !important; }
+#app.classic .chip, #app.classic .led { transition: color .2s, border-color .2s, background-color .2s, box-shadow .2s !important; }
+@media (prefers-reduced-motion: reduce) {
+  #app.classic *, #app.classic *::before, #app.classic *::after { transition-duration: .01ms !important; }
+}

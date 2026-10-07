@@ -438,8 +438,10 @@
     $('netCode').textContent = NET.code || '…';
     $('app').classList.toggle('insession', on);
     $('navDot').hidden = !on;
+    const was = $('sessHost').hidden;
     $('sessIdle').hidden = host;
     $('sessHost').hidden = !host;
+    if (host && was && !UI.RM && UI.router.cur === 'session') $('sessHost').animate([{ opacity: 0, transform: 'translate3d(0,8px,0)' }, { opacity: 1, transform: 'none' }], { duration: 240, easing: 'cubic-bezier(.2,.7,.3,1)' });
     $('rowLocal').hidden = !host;
     $('syncNote').hidden = on;
     $$('#syncGroup .sx').forEach((r) => r.classList.toggle('off', !on));
@@ -741,6 +743,17 @@
   }
   /* Classic design: one setup screen like the original bomb timer. Mode buttons with names only,
      the settings of the chosen mode, start, the session and the advanced settings below. */
+  /* Classic: after picking another mode, its settings fade in softly below the mode buttons. */
+  function classicSwap() {
+    if (UI.RM) return;
+    const el = $('s-lobby'), sel = el.querySelector('.cmode[aria-checked="true"]');
+    if (sel) sel.animate([{ borderColor: '#2e363e', backgroundColor: '#1a1f24', boxShadow: 'inset 0 0 0 1px transparent' }, {}], { duration: 200, easing: 'ease-out' });
+    let after = false;
+    [...el.children].forEach((c) => {
+      if (after && !c.hidden) c.animate([{ opacity: 0, transform: 'translate3d(0,6px,0)' }, { opacity: 1, transform: 'none' }], { duration: 220, easing: 'cubic-bezier(.2,.7,.3,1)' });
+      if (c.classList.contains('cmodes')) after = true;
+    });
+  }
   function renderClassic() {
     const id = M.info(S.mode) ? S.mode : 'bomb', m = M.info(id);
     let h = '<div class="intro"><h1>' + esc(tr('cl.title')) + '</h1><p>' + esc(tr('cl.sub')) + '</p></div>' +
@@ -779,7 +792,7 @@
   }
   $('s-lobby').addEventListener('click', (e) => {
     const cm = e.target.closest('[data-cmode]');
-    if (cm) { if (S.mode !== cm.dataset.cmode) { S.mode = cm.dataset.cmode; save(); renderLobby(false); } return; }
+    if (cm) { if (S.mode !== cm.dataset.cmode) { S.mode = cm.dataset.cmode; save(); renderLobby(false); classicSwap(); } return; }
     if (e.target.closest('#setBody, #sessBody')) return;
     const t = e.target.closest('[data-act],[data-k]'); if (!t) return;
     if (t.dataset.k) {
