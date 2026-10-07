@@ -707,7 +707,10 @@
     }
     function openCard(card, onDone, onChange) {
       cardState = { card, onDone, onChange };
-      if (window.ART) { $('cardFrame').innerHTML = window.ART.cardFrame(); $('cardBack').innerHTML = window.ART.cardBack(); }
+      const ai = artStyle() !== 'vector';
+      $('cardReveal').classList.toggle('aicard', ai);
+      if (ai) { $('cardFrame').innerHTML = '<img src="img/card-frame.webp" alt="">'; $('cardBack').innerHTML = '<img src="img/card-back.webp" alt="">'; }
+      else if (window.ART) { $('cardFrame').innerHTML = window.ART.cardFrame(); $('cardBack').innerHTML = window.ART.cardBack(); }
       $('cardReveal').classList.remove('open');
       paintCard();
       $('cardBg').hidden = false;
