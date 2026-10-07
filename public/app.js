@@ -10,7 +10,7 @@
   /* ---------- Settings ---------- */
   const DEF = {
     roundTime: 10, bombTime: 45, plantTime: 4, defuseTime: 7, half: true,
-    lang: window.I18N.guess(), voiceLang: 'auto', art: 'ai', theme: 'modern', voice: 'male', radio: false, voiceVol: 100, vol: 80, vibrate: true, fs: true, lat: 0, local: true
+    lang: window.I18N.guess(), voiceLang: 'auto', art: 'ai', design: 'classic', voice: 'male', radio: false, voiceVol: 100, vol: 80, vibrate: true, fs: true, lat: 0, local: true
   };
   /* Settings and time cards of the other game modes live in modes.js. */
   const MD = window.MODES || { DEF: {}, TIME: {} };
@@ -20,6 +20,7 @@
   try {
     const saved = JSON.parse(localStorage.getItem('abt-settings') || '{}');
     delete saved.say; delete saved.snd; /* removed settings: everything is announced and played */
+    delete saved.theme; /* replaced by 'design' (Classic is the default) */
     S = Object.assign(clone(DEF), saved, { muRoles: Object.assign({}, DEF.muRoles, saved.muRoles) });
   } catch (e) {}
   function save() { try { localStorage.setItem('abt-settings', JSON.stringify(S)); } catch (e) {} }
@@ -464,7 +465,6 @@
     }
     paintLobbySess();
     paintRemote();
-    if (classic()) placeBodies();
     render();
   }
   function paintMembers() {
@@ -649,11 +649,10 @@
   function desiredScreen(g) {
     const phase = g.phase || 'setup';
     if (phase === 'setup') {
-      if (classic()) return isRemote() ? 'remote' : 'lobby';
       if (isRemote()) return UIS.tab === 'settings' ? 'settings' : 'remote';
       if (UIS.tab === 'session') return 'session';
       if (UIS.tab === 'settings') return 'settings';
-      return UIS.lobby ? 'lobby' : 'home';
+      return UIS.lobby || classic() ? 'lobby' : 'home';
     }
     if (phase === 'end') return 'end';
     return isMode(g) ? M.screen(g) : 'game';
@@ -690,7 +689,7 @@
   };
   $$('.tab').forEach((b) => b.addEventListener('click', () => {
     const tab = b.dataset.tab;
-    if (tab === 'home' && UIS.tab === 'home' && UIS.lobby && view === 'lobby') return backToDeck();
+    if (tab === 'home' && UIS.tab === 'home' && UIS.lobby && view === 'lobby' && !classic()) return backToDeck();
     UIS.tab = tab; render();
   }));
   function backToDeck() {
@@ -720,7 +719,6 @@
     if (glint) { const c = el.closest('.tc'); c.classList.remove('glint'); void c.offsetWidth; c.classList.add('glint'); setTimeout(() => c.classList.remove('glint'), 1400); }
   }
   function renderLobby(morph) {
-    parkBodies();
     if (classic()) return renderClassic();
     const id = S.mode, m = M.info(id) || M.info('bomb');
     let h = '<div class="lb-top" data-st><button class="backbtn press" type="button" data-act="back">' + ic('back') + '<span>' + esc(tr('lobby.back')) + '</span></button><span class="lb-num">' + esc(tr('lobby.arcanum', { n: m.num })) + '</span></div>' +
@@ -753,38 +751,19 @@
     if (m.toggles) h += '<div class="group">' + m.toggles.map((x) => '<label class="row"><div class="txt"><div class="lbl">' + esc(tr(x[1])) + '</div><div class="desc">' + esc(tr(x[2])) + '</div></div><span class="switch"><input type="checkbox" role="switch" data-lopt="' + x[0] + '"' + (S[x[0]] ? ' checked' : '') + ' aria-label="' + esc(tr(x[1])) + '"><span></span></span></label>').join('') + '</div>';
     h += M.lobbyExtra(id) +
       '<p class="errmsg" id="lbErr" role="alert"></p><button class="btn primary big" type="button" id="btnStart" data-act="start">' + esc(tr(id === 'murder' ? 'lobby.startMurder' : id === 'bomb' ? 'lobby.startBomb' : 'lobby.start')) + '</button>' +
-      '<p class="fine" id="lobbyFine"></p>' +
-      '<h3 class="sec">' + esc(tr('cl.sess')) + '</h3><div id="clSess"></div>' +
-      '<details class="adv" id="clAdvD"><summary>' + esc(tr('cl.adv')) + '</summary><div id="clAdv"></div></details>';
-    const el = $('s-lobby'), y = el.scrollTop, open = $('clAdvD') && $('clAdvD').open;
+      '<p class="fine" id="lobbyFine"></p>';
+    const el = $('s-lobby'), y = el.scrollTop;
     el.innerHTML = h;
     m.keys.forEach((k) => paintTC(k[0]));
     M.bindLobby(id, el);
-    if (open) $('clAdvD').open = true;
     el.scrollTop = y;
-    placeBodies(); paintLobbySess();
+    paintLobbySess();
   }
-  /* The session and settings blocks live on their own tabs in the modern design and inside the
-     setup screen (or the remote screen) in the classic design. */
-  function parkBodies() {
-    const sb = $('setBody'), ss = $('sessBody');
-    if (sb.parentElement.id !== 's-settings') $('s-settings').insertBefore(sb, $('s-settings').querySelector('.set-ver'));
-    if (ss.parentElement.id !== 's-session') $('s-session').appendChild(ss);
-  }
-  function placeBodies() {
-    if (!classic()) return parkBodies();
-    const sb = $('setBody'), ss = $('sessBody');
-    const adv = isRemote() ? $('remAdv') : $('clAdv');
-    if (adv && sb.parentElement !== adv) adv.appendChild(sb);
-    const sess = $('clSess');
-    if (sess && ss.parentElement !== sess) sess.appendChild(ss);
-  }
-  const classic = () => S.theme === 'classic';
+  const classic = () => S.design === 'classic';
   function applyTheme() {
     $('app').classList.toggle('classic', classic());
     UI.setPlain(classic());
     renderLobby(false);
-    placeBodies();
     view = null;
     render();
     requestAnimationFrame(() => { UI.placeTabInd(); if (view === 'home') UI.deck.size(); });
@@ -796,7 +775,7 @@
       b.querySelector('span').textContent = tr('lobby.sessOn', { code: NET.code || '…' });
       b.querySelector('b').textContent = NET.members.length + ' ' + tr('u.players');
     }
-    if (f) f.textContent = ('wakeLock' in navigator ? tr('lobby.wake') : tr('lobby.wakeNo')) + (isHost() || classic() ? '' : ' ' + tr('lobby.sessHint'));
+    if (f) f.textContent = ('wakeLock' in navigator ? tr('lobby.wake') : tr('lobby.wakeNo')) + (isHost() ? '' : ' ' + tr('lobby.sessHint'));
   }
   $('s-lobby').addEventListener('click', (e) => {
     const cm = e.target.closest('[data-cmode]');
@@ -1178,7 +1157,7 @@
     if (key === 'lang') { applyLang(); loadLines(); }
     if (key === 'voiceLang') loadLines();
     if (key === 'art') { applyArt(true); toast(tr(v === 'ai' ? 'art.ai' : 'art.vec')); }
-    if (key === 'theme') applyTheme();
+    if (key === 'design') applyTheme();
   });
   $('setBody').addEventListener('change', (e) => { const k = e.target.dataset.opt; if (k) { S[k] = e.target.checked; save(); } });
   $('setBody').addEventListener('input', (e) => {
@@ -1250,7 +1229,6 @@
     render();
     requestAnimationFrame(() => {
       UI.deck.size(); UI.placeTabInd(); if (view === 'home') UI.deck.deal();
-      if (linkCode && classic() && !isRemote()) $('joinF').scrollIntoView({ block: 'center' });
     });
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => UI.placeTabInd());
   })();

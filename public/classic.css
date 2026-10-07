@@ -24,7 +24,7 @@
 }
 body:has(#app.classic) { background: #111417; }
 #app.classic *, #app.classic *::before, #app.classic *::after { animation: none !important; transition: none !important; }
-#app.classic .nebula, #app.classic #vortex, #app.classic .tabbar, #app.classic .evt, #app.classic #fx, #app.classic .ripple { display: none !important; }
+#app.classic .nebula, #app.classic #vortex, #app.classic .evt, #app.classic #fx, #app.classic .ripple { display: none !important; }
 #app.classic svg.i { display: none; }
 #app.classic .iconbtn svg.i { display: block; width: 20px; height: 20px; stroke-width: 2; }
 #app.classic .rsym, #app.classic .aslot, #app.classic .hearts, #app.classic .e-emblem, #app.classic .stats, #app.classic .cd svg.cr, #app.classic .cd .cd-ic { display: none !important; }
@@ -52,8 +52,15 @@ body:has(#app.classic) { background: #111417; }
 #app.classic .net.on i { background: var(--good); box-shadow: 0 0 6px var(--good); }
 #app.classic .iconbtn { width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel-2); }
 
-/* Screens: plain column, no tab bar */
-#app.classic .screen { padding: 16px 16px calc(24px + env(safe-area-inset-bottom, 0px)); gap: 16px; }
+/* Screens: plain column; Modi / Session / Einstellungen as a flat text tab bar */
+#app.classic .screen { padding: 16px 16px calc(var(--tabh) + env(safe-area-inset-bottom, 0px) + 24px); gap: 16px; }
+#app.classic .screen.notab { padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px)); }
+#app.classic .tabbar { background: #111417; border-top: 1px solid var(--line); backdrop-filter: none; -webkit-backdrop-filter: none; padding: 0 0 env(safe-area-inset-bottom, 0px); }
+#app.classic .tabbar::before, #app.classic .tab-ind { display: none; }
+#app.classic .tabbar.hide { display: none; }
+#app.classic .tab { height: 56px; font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); border-top: 2px solid transparent; }
+#app.classic .tab[aria-current="page"] { color: var(--amber); border-top-color: var(--amber); }
+#app.classic .tab .dot { top: 10px; left: auto; right: 14px; border-color: #111417; box-shadow: none; }
 #app.classic h1 { font-size: 24px; text-shadow: none; }
 #app.classic .intro p { color: var(--muted); }
 #app.classic h3.sec { color: var(--muted); }
@@ -107,14 +114,7 @@ body:has(#app.classic) { background: #111417; }
 #app.classic .pchips { display: none; }
 #app.classic .hintc { border: 0; background: none; padding: 0; font-size: 13px; }
 #app.classic .count.bad b.err { color: var(--danger); }
-#app.classic .adv { border-top: 1px solid var(--line); padding-top: 8px; }
-#app.classic .adv summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 12px 2px; font-family: var(--display); font-weight: 600; letter-spacing: .08em; text-transform: uppercase; font-size: 15px; color: var(--muted); }
-#app.classic .adv summary::-webkit-details-marker { display: none; }
-#app.classic .adv summary::after { content: ""; width: 8px; height: 8px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg); margin-right: 6px; }
-#app.classic .adv[open] summary { color: var(--fg); }
-#app.classic .adv[open] summary::after { transform: rotate(-135deg); }
 #app.classic .setbody { display: grid; gap: 12px; }
-#app.classic .syncnote .btn { display: none; }
 #app.classic #sessBody .stack, #app.classic #sessBody { gap: 12px; }
 #app.classic .card.host { background: var(--panel); border-color: var(--good); }
 #app.classic .code { gap: 0; margin: 0; }
@@ -220,4 +220,4 @@ body:has(#app.classic) { background: #111417; }
 #app.classic .wingrid button { min-height: 60px; background: var(--panel-2); border-color: var(--line); }
 #app.classic .pickrow button { background: var(--panel-2); border-color: var(--line); }
 #app.classic .pickrow button[aria-pressed="true"] { background: var(--amber); border-color: var(--amber); color: #1a1205; }
-#app.classic .toast { border-color: var(--amber); background: var(--panel-2); box-shadow: 0 8px 24px rgba(0, 0, 0, .5); bottom: calc(24px + env(safe-area-inset-bottom, 0px)); }
+#app.classic .toast { border-color: var(--amber); background: var(--panel-2); box-shadow: 0 8px 24px rgba(0, 0, 0, .5); }

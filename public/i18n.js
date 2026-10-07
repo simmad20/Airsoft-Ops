@@ -243,8 +243,7 @@
       'rem.connectedTo': 'Verbunden mit {c}', 'rem.as': 'Als „{n}“', 'rem.noName': 'Ohne Namen', 'rem.running': 'Spiel läuft',
       'art.ai': 'Bilder: KI-Bilder', 'art.vec': 'Bilder: Eigene Grafik',
       'set.theme': 'Design', 'set.themeDesc': 'Modern mit Bildern und Animationen oder Classic wie der ursprüngliche Bomb Timer', 'set.themeModern': 'Modern', 'set.themeClassic': 'Classic',
-      'cl.title': 'Runde einstellen', 'cl.sub': 'Bluetooth-Box mit diesem Handy koppeln, Lautstärke aufdrehen und einmal testen.', 'cl.modes': 'Spielmodus',
-      'cl.sess': 'Mehrere Handys & Boxen', 'cl.adv': 'Erweiterte Einstellungen'
+      'cl.title': 'Runde einstellen', 'cl.sub': 'Bluetooth-Box mit diesem Handy koppeln, Lautstärke aufdrehen und einmal testen.', 'cl.modes': 'Spielmodus'
     },
 
     en: {
@@ -482,8 +481,7 @@
       'rem.connectedTo': 'Connected to {c}', 'rem.as': 'As “{n}”', 'rem.noName': 'No name', 'rem.running': 'Game running',
       'art.ai': 'Pictures: AI pictures', 'art.vec': 'Pictures: own graphics',
       'set.theme': 'Design', 'set.themeDesc': 'Modern with pictures and animations, or Classic like the original bomb timer', 'set.themeModern': 'Modern', 'set.themeClassic': 'Classic',
-      'cl.title': 'Set up the round', 'cl.sub': 'Pair a Bluetooth speaker with this phone, turn the volume up and run a test.', 'cl.modes': 'Game mode',
-      'cl.sess': 'Several phones & speakers', 'cl.adv': 'Advanced settings'
+      'cl.title': 'Set up the round', 'cl.sub': 'Pair a Bluetooth speaker with this phone, turn the volume up and run a test.', 'cl.modes': 'Game mode'
     }
   };
 
