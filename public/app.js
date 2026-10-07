@@ -213,14 +213,24 @@
   function winJingle() {
     [523, 659, 784, 1047].forEach((f, i) => tone(f, i === 3 ? 0.4 : 0.13, 'triangle', 0.4, i * 0.13));
   }
-  /* A near-silent tone keeps Bluetooth boxes from dozing off and clipping the first beep. */
+  /* An inaudible tone keeps Bluetooth boxes from dozing off and clipping the first beep.
+     20 Hz at -66 dBFS: small boxes do not reproduce it at all, and it is far below hearing there.
+     (It used to be 40 Hz at -54 dBFS, which boxes with bass boost turned into an audible hum under the voice.)
+     Faded in and out, so starting or stopping it never clicks. */
+  let keepT = 0;
   function keepAlive(on) {
     const a = audio(); if (!a) return;
+    clearTimeout(keepT);
     if (on && !keep) {
-      const o = a.createOscillator(), g = a.createGain();
-      o.frequency.value = 40; g.gain.value = 0.002;
-      o.connect(g); g.connect(a.destination); o.start(); keep = o;
-    } else if (!on && keep) { try { keep.stop(); } catch (e) {} keep = null; }
+      const o = a.createOscillator(), g = a.createGain(), t = a.currentTime;
+      o.frequency.value = 20;
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.0005, t + 0.5);
+      o.connect(g); g.connect(a.destination); o.start(t); keep = { o, g };
+    } else if (!on && keep) {
+      const k = keep, t = a.currentTime; keep = null;
+      k.g.gain.cancelScheduledValues(t); k.g.gain.setValueAtTime(k.g.gain.value, t); k.g.gain.linearRampToValueAtTime(0, t + 0.3);
+      try { k.o.stop(t + 0.35); } catch (e) {}
+    }
   }
   /* The clock flashes with every bomb beep. */
   function flash() {
@@ -1137,6 +1147,7 @@
   /* ---------- Settings ---------- */
   function testSound(btn, msg) {
     audio(); keepAlive(true);
+    if (!inGame()) keepT = setTimeout(() => { if (!inGame()) keepAlive(false); }, 30000);
     tone(2400, 0.08, 'square', 0.35); tone(2400, 0.08, 'square', 0.35, 0.25);
     loadLines();
     speak('test');

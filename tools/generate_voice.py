@@ -129,15 +129,55 @@ LINES["en"].update({
     **{f"drop_{i + 1}": f"Supply drop at point {n}!" for i, n in enumerate(EN_NUM[:6])},
 })
 
-# Trim silence, cut rumble, compress and normalise loudly so it carries over a field.
-FILTER = (
-    "silenceremove=start_periods=1:start_threshold=-45dB,"
-    "areverse,silenceremove=start_periods=1:start_threshold=-45dB,areverse,"
-    "highpass=f=110,"
-    "acompressor=threshold=-22dB:ratio=4:attack=4:release=90:makeup=3,"
-    "loudnorm=I=-12:TP=-1:LRA=6,"
-    "apad=pad_dur=0.08"
-)
+SR = 24000
+# Per voice: the low German model hums below 100 Hz and hisses above 7 kHz, the English one hisses in the highs.
+# Steep rumble cut, band limit, spectral denoise, trim the ends, light compression. The old chain (hard
+# compression plus loudnorm) lifted the model's noise floor by 5-7 dB, which was audible as hiss and hum.
+CLEAN = {
+    "de": "highpass=f=95,highpass=f=95,lowpass=f=7000,afftdn=nr=18:nf=-48:tn=1",
+    "en": "highpass=f=95,highpass=f=95,lowpass=f=8000,treble=g=-3:f=5000,afftdn=nr=12:nf=-50:tn=1",
+}
+TRIM = ("silenceremove=start_periods=1:start_threshold=-50dB,"
+        "areverse,silenceremove=start_periods=1:start_threshold=-50dB,areverse,"
+        "acompressor=threshold=-20dB:ratio=2.5:attack=5:release=120:makeup=1.5")
+
+
+def ffmpeg_f32(wav: bytes, af: str) -> np.ndarray:
+    out = subprocess.run(["ffmpeg", "-loglevel", "error", "-i", "pipe:0", "-af", af, "-ac", "1", "-ar", str(SR), "-f", "f32le", "-"],
+                         input=wav, capture_output=True, check=True).stdout
+    return np.frombuffer(out, dtype=np.float32).copy()
+
+
+def gate(x: np.ndarray, below: float = 30, depth: float = 26) -> np.ndarray:
+    """Pull pauses between words down by `depth` dB so no noise bed is left under the announcement.
+    10 ms frames, opens 30 ms early and holds 100 ms, so word starts and endings stay untouched."""
+    win = int(0.01 * SR)
+    n = len(x) // win + 1
+    fr = np.pad(x, (0, n * win - len(x))).reshape(n, win)
+    env = 20 * np.log10(np.sqrt((fr ** 2).mean(1)) + 1e-9)
+    g = np.where(env > np.percentile(env, 95) - below, 0.0, -depth)
+    held = np.array([g[max(0, i - 10):i + 3].max() for i in range(n)])
+    k = np.hanning(5)
+    held = np.convolve(held, k / k.sum(), "same")
+    return x * 10 ** (np.repeat(held, win)[:len(x)] / 20)
+
+
+def render(wav: bytes, lang: str, path: Path) -> None:
+    x = gate(ffmpeg_f32(wav, CLEAN[lang] + "," + TRIM))
+    # Same loudness for every line: speech frames at -14 dBFS RMS, a limiter catches the peaks.
+    win = int(0.02 * SR)
+    n = len(x) // win
+    fr = x[:n * win].reshape(n, win)
+    db = 20 * np.log10(np.sqrt((fr ** 2).mean(1)) + 1e-12)
+    x = x * (10 ** (-14 / 20) / np.sqrt((fr[db > db.max() - 20] ** 2).mean()))
+    # Short fades so a trimmed edge never clicks.
+    fi, fo = int(0.005 * SR), int(0.03 * SR)
+    x[:fi] *= np.linspace(0, 1, fi)
+    x[-fo:] *= np.linspace(1, 0, fo) ** 2
+    x = np.concatenate([x, np.zeros(int(0.08 * SR), np.float32)]).astype(np.float32)
+    subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-f", "f32le", "-ar", str(SR), "-ac", "1", "-i", "pipe:0",
+                    "-af", "alimiter=limit=0.89:attack=2:release=40:level=false", "-c:a", "libmp3lame", "-b:a", "96k", str(path)],
+                   input=x.tobytes(), check=True)
 
 
 def voice_path(name: str) -> Path:
@@ -174,17 +214,14 @@ def synth(voice: PiperVoice, text: str, syn: SynthesisConfig) -> bytes:
 
 
 def main() -> None:
-    syn = SynthesisConfig(length_scale=1.05, noise_scale=0.6, noise_w_scale=0.7)
+    # Lower noise_scale: less breathy, grainy texture in the generated voice.
+    syn = SynthesisConfig(length_scale=1.05, noise_scale=0.4, noise_w_scale=0.6)
     for lang, lines in LINES.items():
         voice = PiperVoice.load(str(voice_path(VOICES[lang])))
         out = OUT_DIR / lang
         out.mkdir(parents=True, exist_ok=True)
         for key, text in lines.items():
-            subprocess.run(
-                ["ffmpeg", "-loglevel", "error", "-y", "-i", "pipe:0", "-af", FILTER,
-                 "-ac", "1", "-ar", "24000", "-c:a", "libmp3lame", "-b:a", "64k", str(out / f"{key}.mp3")],
-                input=synth(voice, text, syn), check=True,
-            )
+            render(synth(voice, text, syn), lang, out / f"{key}.mp3")
             print(f"{lang}/{key}.mp3  {text}")
     # The app reads this for the phone-voice fallback, the service worker for offline caching.
     (OUT_DIR / "lines.json").write_text(json.dumps(LINES, ensure_ascii=False, indent=1), encoding="utf-8")

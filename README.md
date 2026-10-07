@@ -173,7 +173,7 @@ Für maximalen Schutz vor versehentlichem Schließen kann man zusätzlich die Bi
 
 ## Stimmen und Lizenzen
 
-Die Ansagen wurden offline mit [Piper](https://github.com/rhasspy/piper) erzeugt:
+Die Ansagen wurden offline mit [Piper](https://github.com/rhasspy/piper) erzeugt und danach entrauscht: Brummen unter 95 Hz und Zischen in den Höhen werden abgeschnitten, das Grundrauschen des Stimmmodells wird spektral entfernt, Pausen zwischen den Wörtern werden abgesenkt und alle Zeilen gleich laut gemacht (`tools/generate_voice.py`). Damit die Bluetooth-Box nicht einschläft, spielt die App während der Runde einen unhörbaren 20-Hz-Ton sehr leise mit.
 
 - **Deutsch:** Stimme „Thorsten“ von [Thorsten-Voice](https://github.com/thorstenMueller/Thorsten-Voice), Lizenz CC0.
 - **Englisch:** Stimme „Ryan“ auf Basis des [RyanSpeech](https://www.kaggle.com/datasets/roholazandie/ryanspeech)-Datensatzes, Lizenz [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/). Die englischen Ansagen dürfen daher nur **nicht-kommerziell** genutzt werden.
