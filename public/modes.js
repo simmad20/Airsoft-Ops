@@ -682,7 +682,8 @@
         (list.length ? '<div class="pp-prog" data-st><span>' + tr('pass.progress', { s: seen, n: list.length }) + '</span><span class="pp-bar"><i id="ppBar"></i></span></div>' +
         '<div class="pgrid" data-st>' + list.map((x, k) => '<button class="pcard ' + (x.p.seen ? 'seen' : '') + '" type="button" data-p="' + x.i + '" style="--i:' + k + '" aria-label="' + esc(tr('pass.view', { n: x.p.name })) + '"><span class="pc-img">' + cardBackHTML() + '<span class="seal">' + ic('check') + '</span></span><span class="pc-n">' + esc(x.p.name) + '</span><span class="pc-s">' + tr(x.p.seen ? 'pass.seen' : 'pass.open') + '</span></button>').join('') + '</div>' : '') +
         (phones.length ? '<div class="hintc" data-st>' + ic('phone') + '<div>' + tr(phones.length === 1 ? 'pass.phones1' : 'pass.phonesN', { n: '<b>' + phones.map((p) => esc(p.name)).join(', ') + '</b>' }) + '</div></div>' : '') +
-        '<div class="cta"><button class="btn primary big" type="button" data-pass="' + (murder.review ? 'back' : 'play') + '">' + ic(murder.review ? 'back' : 'play') + '<span>' + tr(murder.review ? 'pass.back' : 'mu.play') + '</span></button></div>';
+        '<div class="cta"><button class="btn primary big" type="button" data-pass="' + (murder.review ? 'back' : 'play') + '">' + ic(murder.review ? 'back' : 'play') + '<span>' + tr(murder.review ? 'pass.back' : 'mu.play') + '</span></button></div>' +
+        '<button class="btn ghost danger wide classic-only" type="button" data-pass="abort">' + tr('game.abort') + '</button>';
       requestAnimationFrame(() => { const b = $('ppBar'); if (b) b.style.transform = 'scaleX(' + (list.length ? seen / list.length : 1) + ')'; });
     }
     $('s-pass').addEventListener('click', (e) => {
@@ -696,6 +697,10 @@
         return;
       }
       const a = e.target.closest('[data-pass]'); if (!a) return;
+      if (a.dataset.pass === 'abort') {
+        if (!a.classList.contains('armed')) { a.classList.add('armed'); a.textContent = tr('game.abortConfirm'); ctx.buzz(30); setTimeout(() => { a.classList.remove('armed'); a.textContent = tr('game.abort'); }, 3000); return; }
+        return ctx.abort();
+      }
       if (a.dataset.pass === 'play') murder.act('muPlay');
       else { murder.review = false; ctx.refresh(); }
     });

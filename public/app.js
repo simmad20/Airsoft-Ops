@@ -10,7 +10,7 @@
   /* ---------- Settings ---------- */
   const DEF = {
     roundTime: 10, bombTime: 45, plantTime: 4, defuseTime: 7, half: true,
-    lang: window.I18N.guess(), voiceLang: 'auto', art: 'ai', voice: 'male', radio: false, voiceVol: 100, vol: 80, vibrate: true, fs: true, lat: 0, local: true
+    lang: window.I18N.guess(), voiceLang: 'auto', art: 'ai', theme: 'modern', voice: 'male', radio: false, voiceVol: 100, vol: 80, vibrate: true, fs: true, lat: 0, local: true
   };
   /* Settings and time cards of the other game modes live in modes.js. */
   const MD = window.MODES || { DEF: {}, TIME: {} };
@@ -223,8 +223,9 @@
   }
   /* The clock flashes with every bomb beep. */
   function flash() {
-    const c = $('cClock'); if (!c) return;
-    c.classList.add('blink'); setTimeout(() => c.classList.remove('blink'), 90);
+    const c = $('cClock'), led = $('led');
+    led.classList.add('on'); if (c) c.classList.add('blink');
+    setTimeout(() => { led.classList.remove('on'); if (c) c.classList.remove('blink'); }, 90);
   }
   function buzz(p) { if (!S.vibrate) return; try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} }
   UI.setVibrate(buzz);
@@ -463,6 +464,7 @@
     }
     paintLobbySess();
     paintRemote();
+    if (classic()) placeBodies();
     render();
   }
   function paintMembers() {
@@ -561,6 +563,7 @@
     isRemote, role: () => NET.role, members: () => NET.members,
     sendPrivate: (to, data) => wsSend({ t: 'private', to, data }),
     refresh: () => render(),
+    abort: () => toSetup(),
     /* Secrets of the current round (e.g. the VIP target) stay on this phone only. */
     secret(id, v) {
       try {
@@ -646,6 +649,7 @@
   function desiredScreen(g) {
     const phase = g.phase || 'setup';
     if (phase === 'setup') {
+      if (classic()) return isRemote() ? 'remote' : 'lobby';
       if (isRemote()) return UIS.tab === 'settings' ? 'settings' : 'remote';
       if (UIS.tab === 'session') return 'session';
       if (UIS.tab === 'settings') return 'settings';
@@ -716,6 +720,8 @@
     if (glint) { const c = el.closest('.tc'); c.classList.remove('glint'); void c.offsetWidth; c.classList.add('glint'); setTimeout(() => c.classList.remove('glint'), 1400); }
   }
   function renderLobby(morph) {
+    parkBodies();
+    if (classic()) return renderClassic();
     const id = S.mode, m = M.info(id) || M.info('bomb');
     let h = '<div class="lb-top" data-st><button class="backbtn press" type="button" data-act="back">' + ic('back') + '<span>' + esc(tr('lobby.back')) + '</span></button><span class="lb-num">' + esc(tr('lobby.arcanum', { n: m.num })) + '</span></div>' +
       '<div class="hero ' + (morph ? '' : 'pop') + '">' + UI.heroRunes() + '<span class="hero-art aslot" data-art="' + m.id + '"></span></div>' +
@@ -735,6 +741,54 @@
     M.bindLobby(m.id, el);
     paintLobbySess();
   }
+  /* Classic design: one setup screen like the original bomb timer. Mode buttons with names only,
+     the settings of the chosen mode, start, the session and the advanced settings below. */
+  function renderClassic() {
+    const id = M.info(S.mode) ? S.mode : 'bomb', m = M.info(id);
+    let h = '<div class="intro"><h1>' + esc(tr('cl.title')) + '</h1><p>' + esc(tr('cl.sub')) + '</p></div>' +
+      '<button class="btn ghost" type="button" data-act="test">' + esc(tr('set.test')) + '</button><p class="testmsg" id="clTestMsg" hidden></p>' +
+      '<div class="cmodes" role="radiogroup" aria-label="' + esc(tr('cl.modes')) + '">' + M.list.map((x) => '<button class="cmode" type="button" role="radio" data-cmode="' + x.id + '" aria-checked="' + (x.id === id) + '">' + esc(tr('m.' + x.id + '.name')) + '</button>').join('') + '</div>' +
+      '<p class="mdesc">' + esc(tr('m.' + id + '.desc')) + '</p>' +
+      '<div class="tgrid">' + m.keys.map(tcHTML).join('') + '</div>';
+    if (m.toggles) h += '<div class="group">' + m.toggles.map((x) => '<label class="row"><div class="txt"><div class="lbl">' + esc(tr(x[1])) + '</div><div class="desc">' + esc(tr(x[2])) + '</div></div><span class="switch"><input type="checkbox" role="switch" data-lopt="' + x[0] + '"' + (S[x[0]] ? ' checked' : '') + ' aria-label="' + esc(tr(x[1])) + '"><span></span></span></label>').join('') + '</div>';
+    h += M.lobbyExtra(id) +
+      '<p class="errmsg" id="lbErr" role="alert"></p><button class="btn primary big" type="button" id="btnStart" data-act="start">' + esc(tr(id === 'murder' ? 'lobby.startMurder' : id === 'bomb' ? 'lobby.startBomb' : 'lobby.start')) + '</button>' +
+      '<p class="fine" id="lobbyFine"></p>' +
+      '<h3 class="sec">' + esc(tr('cl.sess')) + '</h3><div id="clSess"></div>' +
+      '<details class="adv" id="clAdvD"><summary>' + esc(tr('cl.adv')) + '</summary><div id="clAdv"></div></details>';
+    const el = $('s-lobby'), y = el.scrollTop, open = $('clAdvD') && $('clAdvD').open;
+    el.innerHTML = h;
+    m.keys.forEach((k) => paintTC(k[0]));
+    M.bindLobby(id, el);
+    if (open) $('clAdvD').open = true;
+    el.scrollTop = y;
+    placeBodies(); paintLobbySess();
+  }
+  /* The session and settings blocks live on their own tabs in the modern design and inside the
+     setup screen (or the remote screen) in the classic design. */
+  function parkBodies() {
+    const sb = $('setBody'), ss = $('sessBody');
+    if (sb.parentElement.id !== 's-settings') $('s-settings').insertBefore(sb, $('s-settings').querySelector('.set-ver'));
+    if (ss.parentElement.id !== 's-session') $('s-session').appendChild(ss);
+  }
+  function placeBodies() {
+    if (!classic()) return parkBodies();
+    const sb = $('setBody'), ss = $('sessBody');
+    const adv = isRemote() ? $('remAdv') : $('clAdv');
+    if (adv && sb.parentElement !== adv) adv.appendChild(sb);
+    const sess = $('clSess');
+    if (sess && ss.parentElement !== sess) sess.appendChild(ss);
+  }
+  const classic = () => S.theme === 'classic';
+  function applyTheme() {
+    $('app').classList.toggle('classic', classic());
+    UI.setPlain(classic());
+    renderLobby(false);
+    placeBodies();
+    view = null;
+    render();
+    requestAnimationFrame(() => { UI.placeTabInd(); if (view === 'home') UI.deck.size(); });
+  }
   function paintLobbySess() {
     const b = $('lobbySess'), f = $('lobbyFine');
     if (b) {
@@ -742,9 +796,12 @@
       b.querySelector('span').textContent = tr('lobby.sessOn', { code: NET.code || '…' });
       b.querySelector('b').textContent = NET.members.length + ' ' + tr('u.players');
     }
-    if (f) f.textContent = ('wakeLock' in navigator ? tr('lobby.wake') : tr('lobby.wakeNo')) + (isHost() ? '' : ' ' + tr('lobby.sessHint'));
+    if (f) f.textContent = ('wakeLock' in navigator ? tr('lobby.wake') : tr('lobby.wakeNo')) + (isHost() || classic() ? '' : ' ' + tr('lobby.sessHint'));
   }
   $('s-lobby').addEventListener('click', (e) => {
+    const cm = e.target.closest('[data-cmode]');
+    if (cm) { if (S.mode !== cm.dataset.cmode) { S.mode = cm.dataset.cmode; save(); renderLobby(false); } return; }
+    if (e.target.closest('#setBody, #sessBody')) return;
     const t = e.target.closest('[data-act],[data-k]'); if (!t) return;
     if (t.dataset.k) {
       const k = t.dataset.k, T = TIME[k];
@@ -756,12 +813,13 @@
       return;
     }
     const a = t.dataset.act;
-    if (a === 'back') backToDeck();
+    if (a === 'test') testSound(t, $('clTestMsg'));
+    else if (a === 'back') backToDeck();
     else if (a === 'sess') { UIS.tab = 'session'; render(); }
     else if (a === 'how') { const how = t.closest('.how'); how.classList.toggle('open'); t.setAttribute('aria-expanded', String(how.classList.contains('open'))); }
     else if (a === 'start') startRound();
   });
-  $('s-lobby').addEventListener('change', (e) => { const k = e.target.dataset.lopt; if (k) { S[k] = e.target.checked; save(); } });
+  $('s-lobby').addEventListener('change', (e) => { if (e.target.closest('#setBody, #sessBody')) return; const k = e.target.dataset.lopt; if (k) { S[k] = e.target.checked; save(); } });
 
   /* ---------- Bomb screens ---------- */
   let bombBuilt = null, holds = {};
@@ -833,7 +891,9 @@
   /* ---------- Game bar in the header ---------- */
   let barFor = null;
   function paintChrome(g, phase) {
+    const mc = $('chip');
     if (phase === 'setup') {
+      if (mc.className !== 'chip') mc.className = 'chip';
       if (!isRemote()) $('chipT').textContent = tr('chip.ready');
       return;
     }
@@ -846,6 +906,8 @@
     const chip = phase === 'end' ? ['chip.end', 'over'] : phase === 'planted' ? ['chip.planted', 'hot'] : [mode === 'bomb' ? 'chip.round' : 'chip.game', 'live'];
     const c = $('gbChip'); if (c.className !== 'chip ' + chip[1]) c.className = 'chip ' + chip[1];
     const txt = tr(chip[0]); if ($('gbChipT').textContent !== txt) $('gbChipT').textContent = txt;
+    if (mc.className !== 'chip ' + chip[1]) mc.className = 'chip ' + chip[1];
+    if ($('chipT').textContent !== txt) $('chipT').textContent = txt;
     $('btnQuit').hidden = isRemote();
   }
   /* "Beenden" in the game bar: two taps end the round; on the result screen one tap goes back. */
@@ -1079,6 +1141,7 @@
   setInterval(tick, 40);
 
   $('btnAgain').addEventListener('click', startRound);
+  UI.twoTap($('btnAbort'), () => tr('game.abortConfirm'), toSetup);
   $('btnBackMode').addEventListener('click', toSetup);
 
   /* ---------- Settings ---------- */
@@ -1101,12 +1164,13 @@
     const o = document.querySelector('[data-out="' + r.dataset.range + '"]'); if (o) o.textContent = r.value + ' ' + o.dataset.unit;
   }
   function paintSettings() {
-    $$('#s-settings [data-seg]').forEach((seg) => paintSeg(seg, S[seg.dataset.seg]));
-    $$('#s-settings [data-opt]').forEach((el) => { el.checked = !!S[el.dataset.opt]; });
-    $$('#s-settings [data-range]').forEach((el) => { el.value = S[el.dataset.range]; paintRange(el); });
+    $$('#setBody [data-seg]').forEach((seg) => paintSeg(seg, S[seg.dataset.seg]));
+    $$('#setBody [data-opt]').forEach((el) => { el.checked = !!S[el.dataset.opt]; });
+    $$('#setBody [data-range]').forEach((el) => { el.value = S[el.dataset.range]; paintRange(el); });
+    $('rowArt').hidden = classic();
     $('voiceDesc').textContent = tr(S.voice === 'male' ? 'set.voiceMaleDesc' : 'set.voiceDeviceDesc');
   }
-  $('s-settings').addEventListener('click', (e) => {
+  $('setBody').addEventListener('click', (e) => {
     const b = e.target.closest('[data-seg] button'); if (!b) return;
     const key = b.parentElement.dataset.seg, v = b.dataset.v;
     if (S[key] === v) return;
@@ -1114,14 +1178,15 @@
     if (key === 'lang') { applyLang(); loadLines(); }
     if (key === 'voiceLang') loadLines();
     if (key === 'art') { applyArt(true); toast(tr(v === 'ai' ? 'art.ai' : 'art.vec')); }
+    if (key === 'theme') applyTheme();
   });
-  $('s-settings').addEventListener('change', (e) => { const k = e.target.dataset.opt; if (k) { S[k] = e.target.checked; save(); } });
-  $('s-settings').addEventListener('input', (e) => {
+  $('setBody').addEventListener('change', (e) => { const k = e.target.dataset.opt; if (k) { S[k] = e.target.checked; save(); } });
+  $('setBody').addEventListener('input', (e) => {
     const k = e.target.dataset.range; if (!k) return;
     S[k] = +e.target.value; paintRange(e.target); applyGains(); save();
   });
   UI.twoTap($('btnReset'), () => tr('set.sure'), () => {
-    S = clone(DEF); save(); applyArt(true); applyLang(); applyGains(); loadLines();
+    S = clone(DEF); save(); applyArt(true); applyTheme(); applyLang(); applyGains(); loadLines();
     toast(tr('set.resetDesc'));
   });
 
@@ -1138,7 +1203,7 @@
     $('btnLang').textContent = S.lang.toUpperCase();
     UI.deck.relabel(deckItems());
     paintRole(); paintSettings();
-    if ($('s-lobby').childElementCount) renderLobby(false);
+    if ($('s-lobby').childElementCount || classic()) renderLobby(false);
     if (M) M.invalidate();
     bombBuilt = null; barFor = null;
     paintSession(); paintMembers();
@@ -1155,6 +1220,7 @@
   });
 
   applyArt(false);
+  $('app').classList.toggle('classic', classic()); UI.setPlain(classic());
   applyLang();
   loadLines();
   /* Announcer texts of all modes (also the phone-voice fallback) come from audio/lines.json. */
@@ -1182,7 +1248,10 @@
     UI.V.resize();
     paintSession();
     render();
-    requestAnimationFrame(() => { UI.deck.size(); UI.placeTabInd(); if (view === 'home') UI.deck.deal(); });
+    requestAnimationFrame(() => {
+      UI.deck.size(); UI.placeTabInd(); if (view === 'home') UI.deck.deal();
+      if (linkCode && classic() && !isRemote()) $('joinF').scrollIntoView({ block: 'center' });
+    });
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => UI.placeTabInd());
   })();
 

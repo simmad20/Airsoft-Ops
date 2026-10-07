@@ -1,0 +1,223 @@
+/* Classic design: the look of the original Airsoft Bomb Timer.
+   Flat dark grey panels, one amber accent, no pictures, no icons, no glow, no animations.
+   Everything is scoped to #app.classic so the modern design stays untouched. */
+#app:not(.classic) .classic-only { display: none !important; }
+.led { display: none; }
+
+#app.classic {
+  --bg: #111417; --bg-2: #111417; --bg-deep: #111417;
+  --panel: #1a1f24; --panel-2: #222830; --glass: #1a1f24; --glass-2: #1a1f24;
+  --line: #2e363e; --line-2: #2e363e;
+  --fg: #e8ebe6; --muted: #8e979e; --dim: #8e979e;
+  --amber: #ffb22e; --amber-soft: rgba(255, 178, 46, .16);
+  --orange: #ffb22e; --pink: #ffb22e; --pink-hi: #ffb22e; --pink-soft: rgba(255, 178, 46, .16);
+  --violet: #8e979e; --violet-hi: #e8ebe6; --violet-soft: rgba(255, 178, 46, .16);
+  --gold: #ffb22e; --gold-hi: #ffb22e; --gold-line: #2e363e;
+  --danger: #ff4a3a; --danger-hi: #ff4a3a; --danger-soft: rgba(255, 74, 58, .22);
+  --good: #3fd98a; --good-soft: rgba(63, 217, 138, .2);
+  --scrim: rgba(5, 7, 9, .66);
+  --grad: linear-gradient(#ffb22e, #ffb22e);
+  --glow: none;
+  background: #111417;
+  max-width: 560px;
+  border: 0; box-shadow: none;
+}
+body:has(#app.classic) { background: #111417; }
+#app.classic *, #app.classic *::before, #app.classic *::after { animation: none !important; transition: none !important; }
+#app.classic .nebula, #app.classic #vortex, #app.classic .tabbar, #app.classic .evt, #app.classic #fx, #app.classic .ripple { display: none !important; }
+#app.classic svg.i { display: none; }
+#app.classic .iconbtn svg.i { display: block; width: 20px; height: 20px; stroke-width: 2; }
+#app.classic .rsym, #app.classic .aslot, #app.classic .hearts, #app.classic .e-emblem, #app.classic .stats, #app.classic .cd svg.cr, #app.classic .cd .cd-ic { display: none !important; }
+
+/* Header: LED, name, chip */
+#app.classic .top { height: auto; padding: calc(env(safe-area-inset-top, 0px) + 12px) 16px 12px; border-bottom: 1px solid var(--line); }
+#app.classic .top::after { display: none; }
+#app.classic .hb { position: static; height: auto; }
+#app.classic .hb-game { display: none; }
+#app.classic.ingame .hb-main { opacity: 1; transform: none; pointer-events: auto; }
+#app.classic .brand { gap: 10px; font-size: 15px; letter-spacing: .12em; }
+#app.classic .brand b { background: none; color: var(--amber); -webkit-text-fill-color: currentColor; }
+#app.classic.insession .bname { display: inline; }
+#app.classic .logo { display: none; }
+#app.classic .led { display: block; width: 12px; height: 12px; border-radius: 50%; background: #3a2220; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08); flex: none; }
+#app.classic .led.on { background: var(--danger); box-shadow: 0 0 14px 3px var(--danger); }
+#app.classic .langbtn { display: none; }
+#app.classic .chip { height: auto; padding: 4px 10px; font-size: 12px; background: none; border: 1px solid var(--line); color: var(--muted); }
+#app.classic .chip .cdot { display: none; }
+#app.classic .chip.live { color: var(--amber); border-color: var(--amber); }
+#app.classic .chip.hot { color: var(--danger); border-color: var(--danger); background: none; }
+#app.classic .chip.over { color: var(--fg); }
+#app.classic .net { background: none; border-color: var(--line); color: var(--muted); }
+#app.classic .net i { background: var(--danger); box-shadow: 0 0 6px var(--danger); }
+#app.classic .net.on i { background: var(--good); box-shadow: 0 0 6px var(--good); }
+#app.classic .iconbtn { width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel-2); }
+
+/* Screens: plain column, no tab bar */
+#app.classic .screen { padding: 16px 16px calc(24px + env(safe-area-inset-bottom, 0px)); gap: 16px; }
+#app.classic h1 { font-size: 24px; text-shadow: none; }
+#app.classic .intro p { color: var(--muted); }
+#app.classic h3.sec { color: var(--muted); }
+#app.classic h3.sec::after { background: var(--line); }
+
+/* Controls */
+#app.classic .btn { border-radius: 10px; border: 1px solid var(--line); background: var(--panel); padding: 14px 16px; min-height: 0; box-shadow: none; text-shadow: none; color: var(--fg); }
+#app.classic .btn::before { display: none; }
+#app.classic .btn:active { transform: translateY(1px); }
+#app.classic .btn.primary { background: var(--amber); border-color: var(--amber); color: #1a1205; }
+#app.classic .btn.big { padding: 18px 16px; font-size: 18px; min-height: 0; }
+#app.classic .btn.small { padding: 10px 14px; font-size: 13px; }
+#app.classic .btn.ghost { background: transparent; }
+#app.classic .btn.danger { color: var(--muted); }
+#app.classic .btn.armed { color: var(--danger); border-color: var(--danger); background: transparent; }
+#app.classic .btn.hit { background: var(--danger-soft); border-color: var(--danger); color: var(--fg); font-size: 20px; padding: 22px 16px; }
+#app.classic .backbtn { background: var(--panel); border-color: var(--line); }
+#app.classic .group, #app.classic .card, #app.classic .how { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; backdrop-filter: none; -webkit-backdrop-filter: none; }
+#app.classic .card-ico { display: none; }
+#app.classic .seg { border: 1px solid var(--line); border-radius: 8px; padding: 0; background: var(--panel-2); overflow: hidden; }
+#app.classic .seg-ind { display: none; }
+#app.classic .seg button { min-height: 0; padding: 10px 14px; color: var(--fg); text-shadow: none; }
+#app.classic .seg button + button { border-left: 1px solid var(--line); }
+#app.classic .seg button[aria-pressed="true"] { background: var(--amber); color: #1a1205; }
+#app.classic .seg.tall button { min-height: 0; }
+#app.classic .switch span { background: var(--panel-2); border-color: var(--line); box-shadow: none; }
+#app.classic .switch span::after { background: var(--muted); box-shadow: none; }
+#app.classic .switch input:checked + span { background: var(--amber-soft); border-color: var(--amber); box-shadow: none; }
+#app.classic .switch input:checked + span::after { background: var(--amber); box-shadow: none; }
+#app.classic input[type=range]::-webkit-slider-runnable-track { background: linear-gradient(90deg, var(--amber) 0 var(--p), var(--panel-2) var(--p) 100%); border-color: var(--line); }
+#app.classic input[type=range]::-webkit-slider-thumb { border-color: var(--amber); box-shadow: 0 2px 10px rgba(0, 0, 0, .5); }
+#app.classic input[type=range]::-moz-range-progress { background: var(--amber); }
+#app.classic input[type=range]::-moz-range-thumb { border-color: var(--amber); }
+#app.classic .rangebox output, #app.classic .val { color: var(--amber); }
+#app.classic .inp { background: var(--panel-2); border-color: var(--line); border-radius: 8px; box-shadow: none; }
+#app.classic .inp:focus { border-color: var(--amber); }
+#app.classic .codein { background: var(--panel); color: var(--amber); }
+#app.classic :focus-visible { outline-color: var(--amber); }
+
+/* Setup screen: mode buttons with names only, settings below */
+#app.classic .cmodes { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; }
+#app.classic .cmode { display: flex; align-items: center; justify-content: center; min-height: 52px; padding: 10px 6px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); text-align: center; font-family: var(--display); font-size: 13px; font-weight: 600; letter-spacing: .04em; line-height: 1.2; color: var(--fg); cursor: pointer; }
+#app.classic .cmode[aria-checked="true"] { border-color: var(--amber); background: var(--amber-soft); box-shadow: inset 0 0 0 1px var(--amber); }
+#app.classic .mdesc { margin: -6px 0 0; color: var(--muted); font-size: 14px; }
+#app.classic .tc { border-radius: 14px; border-color: var(--line); background: linear-gradient(180deg, var(--panel-2), var(--panel)); min-height: 0; }
+#app.classic .tc .gl { display: none; }
+#app.classic .tc.glint { border-color: var(--line); box-shadow: none; }
+#app.classic .tv { text-shadow: 0 0 18px var(--amber-soft); }
+#app.classic .rolepick button { min-height: 0; padding: 8px 12px; background: var(--panel-2); border-color: var(--line); box-shadow: none; }
+#app.classic .rolepick button[aria-pressed="true"] { background: var(--amber); border-color: var(--amber); color: #1a1205; }
+#app.classic .pchips { display: none; }
+#app.classic .hintc { border: 0; background: none; padding: 0; font-size: 13px; }
+#app.classic .count.bad b.err { color: var(--danger); }
+#app.classic .adv { border-top: 1px solid var(--line); padding-top: 8px; }
+#app.classic .adv summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 12px 2px; font-family: var(--display); font-weight: 600; letter-spacing: .08em; text-transform: uppercase; font-size: 15px; color: var(--muted); }
+#app.classic .adv summary::-webkit-details-marker { display: none; }
+#app.classic .adv summary::after { content: ""; width: 8px; height: 8px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg); margin-right: 6px; }
+#app.classic .adv[open] summary { color: var(--fg); }
+#app.classic .adv[open] summary::after { transform: rotate(-135deg); }
+#app.classic .setbody { display: grid; gap: 12px; }
+#app.classic .syncnote .btn { display: none; }
+#app.classic #sessBody .stack, #app.classic #sessBody { gap: 12px; }
+#app.classic .card.host { background: var(--panel); border-color: var(--good); }
+#app.classic .code { gap: 0; margin: 0; }
+#app.classic .code span { width: auto; height: auto; border: 0; background: none; box-shadow: none; text-shadow: none; font-size: 48px; letter-spacing: .14em; display: inline; }
+#app.classic .qr { box-shadow: none; padding: 4px; border-radius: 10px; background: #fff; }
+#app.classic .qr .gl { display: none; }
+#app.classic .linkrow { background: var(--panel-2); border-color: var(--line); }
+#app.classic .devs li { background: var(--panel-2); border-color: var(--line); min-height: 0; }
+#app.classic .av { display: none; }
+#app.classic .badge { border-color: var(--line); }
+#app.classic .set-ver { display: none; }
+
+/* Remote screen */
+#app.classic .remote-card { background: var(--panel); border-color: var(--line); box-shadow: none; padding: 24px 16px; }
+#app.classic .rem-ico { display: none; }
+#app.classic .rem-conn i { box-shadow: none; }
+#app.classic .rem-status { color: var(--amber); }
+
+/* Game screens */
+#app.classic .g-pulse { display: none; }
+#app.classic .clock { color: var(--amber); text-shadow: 0 0 24px var(--amber-soft); }
+#app.classic .clock.red { color: var(--danger); text-shadow: 0 0 28px var(--danger-soft); }
+#app.classic .clock.blink { filter: none; text-shadow: 0 0 40px var(--danger); }
+#app.classic .game.danger { background: radial-gradient(ellipse at 50% 30%, rgba(255, 74, 58, .08), transparent 70%); }
+#app.classic .hold.pad { border: 2px solid var(--line); border-radius: 14px; background: var(--panel); box-shadow: none; }
+#app.classic .hold.pad.holding { border-color: var(--c); transform: none; }
+#app.classic .hold.pad.grace { border-color: var(--c); filter: none; }
+#app.classic .pad-fill { background: var(--cs); opacity: 1; }
+#app.classic .pad-edge, #app.classic .pad-pct { display: none; }
+#app.classic .pad-mark { border-top-color: var(--muted); opacity: .7; }
+#app.classic .hold.pad .hold-big { color: var(--c); text-shadow: none; }
+#app.classic .hold.pad .hold-sub { color: var(--muted); font-size: 13px; }
+#app.classic .hold.pad.off { opacity: .35; }
+#app.classic .hold.pad.done { border-color: var(--danger); opacity: .8; }
+#app.classic .sitebadge { border-radius: 8px; box-shadow: none; }
+#app.classic .bar span { background: var(--danger); }
+#app.classic .pill { background: none; border-color: var(--line); }
+#app.classic .pill .sd { box-shadow: none; }
+#app.classic .cd { background: var(--panel); border-color: var(--line); grid-template-columns: 1fr; }
+#app.classic .team, #app.classic .pl, #app.classic .cnt, #app.classic .pnd { background: var(--panel); border-color: var(--line); }
+#app.classic .team i, #app.classic .rank li i { box-shadow: none; }
+#app.classic .cnt b { text-shadow: none; }
+#app.classic .score b { text-shadow: none; }
+#app.classic .secret { border-color: var(--amber); background: none; }
+#app.classic .secret i { display: none; }
+#app.classic .ph b, #app.classic .ph.on b { box-shadow: none; }
+#app.classic .pips i.on { box-shadow: none; }
+#app.classic #btnAbort { margin-top: auto; }
+#app.classic.remote #btnAbort { display: none !important; }
+
+/* Pass the phone: plain name tiles */
+#app.classic .pgrid { grid-template-columns: 1fr 1fr; gap: 8px; }
+#app.classic .pcard { flex-direction: row; justify-content: space-between; align-items: center; gap: 8px; padding: 14px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); }
+#app.classic .pc-img { display: none; }
+#app.classic .pc-n { font-family: var(--body); font-size: 16px; }
+#app.classic .pc-s { font-size: 12px; min-height: 0; }
+#app.classic .pcard.seen .pc-s { color: var(--good); }
+#app.classic .pp-bar i { background: var(--amber); }
+#app.classic .cta { position: static; padding-top: 0; }
+#app.classic .cta::before { display: none; }
+
+/* Role card: a plain panel that opens on tap */
+#app.classic .cardov { background: #111417; }
+#app.classic .cv-aura, #app.classic .cv-sparks, #app.classic .cv-glint { display: none; }
+#app.classic .face img, #app.classic .fv { display: none; }
+#app.classic .face { border-radius: 16px; background: var(--panel-2); border: 2px dashed var(--line); }
+#app.classic .face.front { border: 2px solid var(--amber); }
+#app.classic .cv-content { inset: 8%; font-size: calc(var(--cvw) * .05); }
+#app.classic .cv-role { background: none; color: var(--amber); -webkit-text-fill-color: currentColor; }
+#app.classic .cv-team, #app.classic .cv-team.evil, #app.classic .cv-team.good, #app.classic .cv-team.own { color: var(--muted); }
+#app.classic .cv-line { background: var(--line); }
+#app.classic .cv-pill { background: var(--amber-soft); border-color: var(--amber); }
+#app.classic .cv-pill.note { background: var(--good-soft); border-color: var(--good); }
+#app.classic .cv-hint { color: var(--muted); }
+#app.classic .cv-foot > .btn { opacity: 1; transform: none; pointer-events: auto; }
+#app.classic .cardov:not(.revealed) .cv-foot > .btn { visibility: hidden; }
+
+/* Result */
+#app.classic .result { background: var(--panel); border: 2px solid var(--line); border-radius: 14px; box-shadow: none; padding: 32px 16px; }
+#app.classic .result::before { display: none; }
+#app.classic .result.def { border-color: var(--good); }
+#app.classic .result.att { border-color: var(--danger); }
+#app.classic .result.none { border-color: var(--line); }
+#app.classic .result h2 { text-shadow: none; }
+#app.classic .result.none h2 { color: var(--fg); }
+#app.classic .rank li, #app.classic .reveal-list li { background: var(--panel); border-color: var(--line); min-height: 0; }
+#app.classic .reveal-list li { grid-template-columns: 1fr auto; }
+#app.classic .reveal-list .ri { display: none; }
+
+/* Sheets */
+#app.classic .backdrop { background: var(--scrim); }
+#app.classic .sheet { background: var(--panel); border-color: var(--line); box-shadow: 0 -12px 40px rgba(0, 0, 0, .5); }
+#app.classic .grab { display: none; }
+#app.classic .rbtn { background: var(--panel-2); border-color: var(--line); }
+#app.classic .rbtn::before { font-size: 30px; line-height: 1; color: var(--fg); }
+#app.classic #vsMinus::before { content: "\2212"; }
+#app.classic #vsPlus::before { content: "+"; }
+#app.classic .rbtn:active, #app.classic .rbtn.rep { background: var(--amber); }
+#app.classic .rbtn:active::before, #app.classic .rbtn.rep::before { color: #1a1205; }
+#app.classic .sh-out { text-shadow: 0 0 24px var(--amber-soft); }
+#app.classic .sh-presets button { background: var(--panel-2); border-color: var(--line); }
+#app.classic .sh-presets button[aria-pressed="true"] { background: var(--amber); border-color: var(--amber); color: #1a1205; }
+#app.classic .wingrid button { min-height: 60px; background: var(--panel-2); border-color: var(--line); }
+#app.classic .pickrow button { background: var(--panel-2); border-color: var(--line); }
+#app.classic .pickrow button[aria-pressed="true"] { background: var(--amber); border-color: var(--amber); color: #1a1205; }
+#app.classic .toast { border-color: var(--amber); background: var(--panel-2); box-shadow: 0 8px 24px rgba(0, 0, 0, .5); bottom: calc(24px + env(safe-area-inset-bottom, 0px)); }

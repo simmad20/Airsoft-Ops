@@ -18,6 +18,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Chakra+Petch:wght@500;600;700&family=Share+Tech+Mono&display=swap">
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="classic.css">
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
@@ -77,7 +78,7 @@
 
   <header class="top" id="top">
     <div class="hb hb-main">
-      <div class="brand"><span class="logo aslot" id="logo" data-art="logo" aria-hidden="true"></span><span class="bname">AIRSOFT <b>OPS</b></span></div>
+      <div class="brand"><span class="logo aslot" id="logo" data-art="logo" aria-hidden="true"></span><span class="led" id="led" aria-hidden="true"></span><span class="bname">AIRSOFT <b>OPS</b></span></div>
       <div class="topr">
         <span class="net" id="net" hidden><i></i><b id="netCode"></b></span>
         <span class="chip" id="chip"><i class="cdot"></i><span id="chipT"></span></span>
@@ -124,6 +125,7 @@
     <section class="screen notab game" id="s-game" hidden>
       <div class="g-pulse" aria-hidden="true"></div>
       <div class="g-wrap" id="gWrap"></div>
+      <button class="btn ghost danger wide classic-only" id="btnAbort" type="button" data-i18n="game.abort"></button>
     </section>
 
     <!-- Result -->
@@ -145,6 +147,7 @@
     <!-- Session: start one or join one -->
     <section class="screen" id="s-session" hidden>
       <div class="intro" data-st><h1 data-i18n="sess.title">Session</h1><p data-i18n="sess.sub"></p></div>
+      <div id="sessBody" class="stack">
       <div id="sessIdle" class="stack">
         <div class="card" data-st>
           <div class="card-h"><span class="card-ico"><svg class="i"><use href="#i-session"/></svg></span><div><div class="lbl" data-i18n="sess.hostTitle"></div><div class="desc" data-i18n="sess.hostDesc"></div></div></div>
@@ -178,6 +181,7 @@
         </div>
         <p class="fine" data-st data-i18n="sess.hostNote"></p>
       </div>
+      </div>
     </section>
 
     <!-- This phone joined as speaker / player / viewer -->
@@ -192,12 +196,14 @@
       </div>
       <button class="btn primary big" type="button" id="btnMyRole" hidden data-st><svg class="i"><use href="#i-cards"/></svg><span data-i18n="rem.myRole"></span></button>
       <button class="btn ghost wide" type="button" id="btnRemTest" data-st><svg class="i"><use href="#i-volume"/></svg><span data-i18n="rem.test"></span></button>
+      <details class="adv classic-only" id="remAdvD"><summary data-i18n="cl.adv"></summary><div id="remAdv"></div></details>
       <button class="btn ghost danger wide" type="button" id="btnLeave" data-st><svg class="i"><use href="#i-leave"/></svg><span data-i18n="sess.leave"></span></button>
     </section>
 
     <!-- Settings -->
     <section class="screen" id="s-settings" hidden>
       <div class="intro" data-st><h1 data-i18n="set.title">Einstellungen</h1></div>
+      <div id="setBody" class="setbody">
       <h3 class="sec" data-st data-i18n="set.lang"></h3>
       <div class="group" data-st>
         <div class="row"><div class="txt"><div class="lbl" data-i18n="set.appLang"></div></div>
@@ -233,7 +239,9 @@
 
       <h3 class="sec" data-st data-i18n="set.display"></h3>
       <div class="group" data-st>
-        <div class="row stack"><div class="txt"><div class="lbl" data-i18n="set.art"></div><div class="desc" data-i18n="set.artDesc"></div></div>
+        <div class="row stack"><div class="txt"><div class="lbl" data-i18n="set.theme"></div><div class="desc" data-i18n="set.themeDesc"></div></div>
+          <div class="seg wide" data-seg="theme" style="--n:2" role="group" data-i18n-aria="set.theme"><span class="seg-ind"></span><button type="button" data-v="modern" data-i18n="set.themeModern"></button><button type="button" data-v="classic" data-i18n="set.themeClassic"></button></div></div>
+        <div class="row stack" id="rowArt"><div class="txt"><div class="lbl" data-i18n="set.art"></div><div class="desc" data-i18n="set.artDesc"></div></div>
           <div class="seg wide" data-seg="art" style="--n:2" role="group" data-i18n-aria="set.art"><span class="seg-ind"></span><button type="button" data-v="ai" data-i18n="set.artAi"></button><button type="button" data-v="vector" data-i18n="set.artVec"></button></div></div>
         <label class="row" id="rowFs" hidden><div class="txt"><div class="lbl" data-i18n="set.fs"></div><div class="desc" data-i18n="set.fsDesc"></div></div><span class="switch"><input type="checkbox" role="switch" data-opt="fs" data-i18n-aria="set.fs"><span></span></span></label>
       </div>
@@ -241,6 +249,7 @@
       <h3 class="sec" data-st data-i18n="set.resetHead"></h3>
       <div class="group" data-st>
         <div class="row"><div class="txt"><div class="lbl" data-i18n="set.reset"></div><div class="desc" data-i18n="set.resetDesc"></div></div><button class="btn small" type="button" id="btnReset"><svg class="i"><use href="#i-refresh"/></svg><span data-i18n="set.resetBtn"></span></button></div>
+      </div>
       </div>
       <p class="set-ver" data-st>Airsoft Ops</p>
     </section>

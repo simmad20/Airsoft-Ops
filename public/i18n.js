@@ -241,7 +241,10 @@
       'hos.phase1': 'Befreien', 'hos.phase2': 'Evakuieren', 'hos.carry': 'Die Geisel trägt das Handy.',
       'snd.carry': 'Die Angreifer tragen das Handy und halten am Ziel dessen Feld gedrückt.',
       'rem.connectedTo': 'Verbunden mit {c}', 'rem.as': 'Als „{n}“', 'rem.noName': 'Ohne Namen', 'rem.running': 'Spiel läuft',
-      'art.ai': 'Bilder: KI-Bilder', 'art.vec': 'Bilder: Eigene Grafik'
+      'art.ai': 'Bilder: KI-Bilder', 'art.vec': 'Bilder: Eigene Grafik',
+      'set.theme': 'Design', 'set.themeDesc': 'Modern mit Bildern und Animationen oder Classic wie der ursprüngliche Bomb Timer', 'set.themeModern': 'Modern', 'set.themeClassic': 'Classic',
+      'cl.title': 'Runde einstellen', 'cl.sub': 'Bluetooth-Box mit diesem Handy koppeln, Lautstärke aufdrehen und einmal testen.', 'cl.modes': 'Spielmodus',
+      'cl.sess': 'Mehrere Handys & Boxen', 'cl.adv': 'Erweiterte Einstellungen'
     },
 
     en: {
@@ -477,7 +480,10 @@
       'hos.phase1': 'Free', 'hos.phase2': 'Evacuate', 'hos.carry': 'The hostage carries the phone.',
       'snd.carry': 'The attackers carry the phone and hold the target’s pad at the target.',
       'rem.connectedTo': 'Connected to {c}', 'rem.as': 'As “{n}”', 'rem.noName': 'No name', 'rem.running': 'Game running',
-      'art.ai': 'Pictures: AI pictures', 'art.vec': 'Pictures: own graphics'
+      'art.ai': 'Pictures: AI pictures', 'art.vec': 'Pictures: own graphics',
+      'set.theme': 'Design', 'set.themeDesc': 'Modern with pictures and animations, or Classic like the original bomb timer', 'set.themeModern': 'Modern', 'set.themeClassic': 'Classic',
+      'cl.title': 'Set up the round', 'cl.sub': 'Pair a Bluetooth speaker with this phone, turn the volume up and run a test.', 'cl.modes': 'Game mode',
+      'cl.sess': 'Several phones & speakers', 'cl.adv': 'Advanced settings'
     }
   };
 

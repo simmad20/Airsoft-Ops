@@ -12,7 +12,9 @@ Die App hat unten eine Leiste mit drei Tabs:
 
 - **Modi:** Die Spielmodi liegen als Tarotkarten (I–VII) in einem Kartenfächer vor einem drehenden Runen-Portal. Wischen, die Pfeile oder ein Tipp auf eine Karte wechseln den Modus, **„Wählen“** öffnet die **Lobby**: Das Bild fliegt aus der Karte an seinen Platz, darunter die Einstellungen des Modus, „So läuft es“ (aufklappbar) und der Start-Knopf. „Alle Modi“ bringt das Bild zurück in seine Karte.
 - **Session:** Mehrere Handys verbinden. Entweder dieses Handy steuert („Session starten“, mit Code und QR-Code), oder man tritt einer Session bei (Code, Rolle, Name).
-- **Einstellungen:** App-Sprache und Ansager-Sprache, Ansager (Stimme, Funkgerät-Effekt, Lautstärke), Sounds (Lautstärke, Vibration), Synchronisation (nur in einer Session), Anzeige (**Bilder: KI-Bilder / Eigene Grafik**, Vollbild), Zurücksetzen.
+- **Einstellungen:** App-Sprache und Ansager-Sprache, Ansager (Stimme, Funkgerät-Effekt, Lautstärke), Sounds (Lautstärke, Vibration), Synchronisation (nur in einer Session), Anzeige (**Design: Modern / Classic**, **Bilder: KI-Bilder / Eigene Grafik**, Vollbild), Zurücksetzen.
+
+**Design Classic:** Unter *Einstellungen → Anzeige → Design* lässt sich auf den Look des ursprünglichen Bomb Timers umschalten: dunkelgraue, flache Flächen mit Bernstein-Akzent, ohne Bilder, Symbole und Animationen. Alles liegt dann wie früher auf einem Bildschirm: „Runde einstellen“ mit den Modus-Knöpfen (nur Namen), darunter die Einstellungen des Modus, „Runde starten“, die Session und „Erweiterte Einstellungen“. Zurück geht es dort unter *Erweiterte Einstellungen → Anzeige → Design → Modern*. Die Einstellung gilt pro Handy.
 
 Oben rechts schaltet **DE/EN** die Sprache der ganzen App um. Die Ansager-Sprache folgt der App-Sprache oder lässt sich unter *Einstellungen* getrennt festlegen. In einer Session kann jedes Handy seine eigene Sprache haben, Ergebnisse und Rollenkarten erscheinen auf jedem Handy in dessen Sprache.
 
@@ -81,7 +83,8 @@ Das Handy, das das Spiel startet, ist der **Spielleiter**. Es sieht alle Rollen,
 .
 ├── public/                 # Die eigentliche Web-App (statische Dateien)
 │   ├── index.html
-│   ├── style.css
+│   ├── style.css           # Design Modern
+│   ├── classic.css         # Design Classic (Look des ursprünglichen Bomb Timers)
 │   ├── app.js              # Spielschleife, Bomben-Modus, Sessions, Sound, Sprachausgabe, Bildschirme
 │   ├── ui.js               # Design-Bausteine: Bildschirmwechsel, Kartenfächer und Portal, Halte-Flächen, Effekte
 │   ├── modes.js            # Weitere Spielmodi und Murder-Mystery-Rollen

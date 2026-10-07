@@ -14,6 +14,8 @@
   const ic = (n, cls) => '<svg class="i ' + (cls || '') + '" aria-hidden="true"><use href="#i-' + n + '"/></svg>';
   const pick = (a) => a[Math.floor(Math.random() * a.length)];
   let vibrate = () => {};
+  /* Classic design: no transitions, effects or particles. */
+  let plain = false;
   const buzz = (p) => vibrate(p);
 
   /* ---------- Rolling digits: changed characters slide in, the old ones slide out ---------- */
@@ -74,7 +76,7 @@
   /* ---------- Tap ripple ---------- */
   document.addEventListener('pointerdown', (e) => {
     const t = e.target.closest('.btn, .tc, .team, .pl, .banner, .backbtn, .wingrid button, .pickrow button, .rolepick button, .sh-presets button, .nav-b, .iconbtn, .gb-end');
-    if (!t || RM || t.disabled) return;
+    if (!t || RM || plain || t.disabled) return;
     const r = t.getBoundingClientRect(), d = Math.max(r.width, r.height) * 2;
     if (getComputedStyle(t).position === 'static') t.style.position = 'relative';
     t.style.overflow = 'hidden';
@@ -157,7 +159,7 @@
       const dt = (now - last) / 1000; if (dt < 0.03) return; /* about 30 fps is plenty */
       last = now; draw(Math.min(dt, 0.05), now);
     }
-    function start() { if (running || RM || document.hidden) return; running = true; last = performance.now(); requestAnimationFrame(frame); }
+    function start() { if (running || RM || plain || document.hidden) return; running = true; last = performance.now(); requestAnimationFrame(frame); }
     function stop() { running = false; }
     document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); else if (router.cur === 'home') start(); });
     return { resize, start, stop, center(x, y, snap) { cT.x = x; cT.y = y; if (snap) { c.x = x; c.y = y; } } };
@@ -267,6 +269,12 @@
       router.busy = true; router.cur = id;
       if (router.hooks.enter) router.hooks.enter(id, prev);
       to.hidden = false; if (kind !== 'keep') to.scrollTop = 0;
+      if (plain) {
+        from.hidden = true; setChrome(id); router.busy = false;
+        V.stop(); $('#vortex').classList.add('off');
+        if (router.hooks.after) router.hooks.after(id, prev);
+        return true;
+      }
       from.style.zIndex = 1; to.style.zIndex = 2;
       stagger(to); setChrome(id);
       if (id === 'home') { $('#vortex').classList.remove('off'); V.start(); }
@@ -292,7 +300,7 @@
     show(id) {
       $$('.screen').forEach((s) => { s.hidden = s.id !== 's-' + id; });
       router.cur = id; setChrome(id); stagger(SCR(id));
-      if (id === 'home') { $('#vortex').classList.remove('off'); V.start(); } else { V.stop(); $('#vortex').classList.add('off'); }
+      if (id === 'home' && !plain) { $('#vortex').classList.remove('off'); V.start(); } else { V.stop(); $('#vortex').classList.add('off'); }
     }
   };
   addEventListener('resize', () => { placeTabInd(); V.resize(); if (router.cur === 'home') deck.size(); });
@@ -571,7 +579,7 @@
     }
   }
   function endFx(kind, anchor) {
-    if (RM || !kind) return;
+    if (RM || plain || !kind) return;
     const box = $('#fx'), A = app.getBoundingClientRect(), er = anchor.getBoundingClientRect();
     const x = er.left - A.left + er.width / 2, y = er.top - A.top + er.height / 2, H = A.height;
     if (kind === 'win') {
@@ -592,7 +600,7 @@
     } else fxBurst(x, y, 20, ['#c3a6ff', '#8b5cff', '#ff9ad6'], 150);
   }
   function boomFx() {
-    if (RM) return;
+    if (RM || plain) return;
     const box = $('#fx');
     const fl = document.createElement('div'); fl.className = 'flash'; box.appendChild(fl);
     fl.animate([{ opacity: 0 }, { opacity: 1, offset: 0.1 }, { opacity: 0.85, offset: 0.35 }, { opacity: 0 }], { duration: 1300, easing: 'ease-out' }).onfinish = () => fl.remove();
@@ -620,6 +628,8 @@
     roll, toast, evt, evtOff, twoTap, disarm, stagger, placeTabInd, heroRunes,
     sheet, valueSheet, router, deck, V, makePad, padHTML, padShow, fxBurst, endFx, boomFx, sparksAt,
     setArt(fn) { artHTML = fn; },
+    setPlain(v) { plain = !!v; if (plain) { V.stop(); $('#vortex').classList.add('off'); } },
+    get plain() { return plain; },
     setVibrate(fn) { vibrate = fn; }
   };
 })();
