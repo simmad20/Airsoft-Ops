@@ -705,8 +705,9 @@
     if (isRemote() || G.phase !== 'setup') return;
     S.mode = M.list[i].id; save();
     renderLobby(true);
-    UIS.lobby = true;
-    UI.deck.morphIn((kind) => { UIS.kind = kind; render(); return true; });
+    /* Switch to the lobby only inside morphIn: a render() in between would slide it in from the side
+       and the picture would fly to the wrong place. */
+    UI.deck.morphIn((kind) => { UIS.lobby = true; UIS.kind = kind; render(); return true; });
   });
   UI.deck.setIndex(Math.max(0, M.list.findIndex((m) => m.id === S.mode)));
 
@@ -732,8 +733,8 @@
     h += M.lobbyExtra(m.id);
     h += '<div class="how" data-st><button class="how-h" type="button" data-act="how" aria-expanded="false"><span>' + esc(tr('lobby.how')) + '</span>' + ic('down') + '</button><div class="how-b"><div><p class="how-desc">' + esc(tr('m.' + m.id + '.desc')) + '</p><ol>' +
       tr('m.' + m.id + '.how').split('|').map((x) => '<li>' + esc(x) + '</li>').join('') + '</ol></div></div></div>';
-    h += '<div class="cta"><p class="errmsg" id="lbErr" role="alert"></p><button class="btn primary big" type="button" id="btnStart" data-act="start">' + ic(m.id === 'murder' ? 'cards' : 'play') + '<span>' + esc(tr(m.id === 'murder' ? 'lobby.startMurder' : m.id === 'bomb' ? 'lobby.startBomb' : 'lobby.start')) + '</span></button></div>' +
-      '<p class="fine" data-st id="lobbyFine"></p>';
+    h += '<p class="fine" data-st id="lobbyFine"></p>';
+    h += '<div class="cta"><p class="errmsg" id="lbErr" role="alert"></p><button class="btn primary big" type="button" id="btnStart" data-act="start">' + ic(m.id === 'murder' ? 'cards' : 'play') + '<span>' + esc(tr(m.id === 'murder' ? 'lobby.startMurder' : m.id === 'bomb' ? 'lobby.startBomb' : 'lobby.start')) + '</span></button></div>';
     const el = $('s-lobby');
     el.innerHTML = h;
     M.fillArt(el);

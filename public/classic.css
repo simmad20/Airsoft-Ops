@@ -84,7 +84,7 @@ body:has(#app.classic) { background: #111417; }
 #app.classic .card-ico { display: none; }
 #app.classic .seg { border: 1px solid var(--line); border-radius: 8px; padding: 0; background: var(--panel-2); overflow: hidden; }
 #app.classic .seg-ind { top: 0; bottom: 0; left: 0; width: calc(100% / var(--n)); border-radius: 0; background: var(--amber); box-shadow: none; }
-#app.classic .seg button { min-height: 0; padding: 10px 14px; color: var(--fg); text-shadow: none; }
+#app.classic .seg button { min-width: 0; min-height: 0; padding: 10px 6px; color: var(--fg); text-shadow: none; overflow: hidden; text-overflow: ellipsis; }
 #app.classic .seg button + button { box-shadow: -1px 0 0 var(--line); }
 #app.classic .seg button[aria-pressed="true"] { color: #1a1205; }
 #app.classic .seg.tall button { min-height: 0; }

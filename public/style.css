@@ -135,7 +135,7 @@ svg.i { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-widt
 @keyframes shakeX { 25% { transform: translateX(-4px); } 50% { transform: translateX(4px); } 75% { transform: translateX(-2px); } }
 
 /* ---------- Generic bits ---------- */
-h3.sec { font-size: 12px; font-weight: 600; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); margin: 6px 2px -4px; display: flex; align-items: center; gap: 10px; }
+h3.sec { font-size: 12px; font-weight: 600; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); margin: 14px 4px 2px; display: flex; align-items: center; gap: 10px; }
 h3.sec::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, var(--line-2), transparent); }
 .intro h1 { font-size: 26px; }
 .intro p { margin-top: 6px; color: var(--muted); max-width: 60ch; }
@@ -197,7 +197,7 @@ label.row { cursor: pointer; }
 .switch input:focus-visible + span { outline: 2px solid var(--pink); outline-offset: 3px; }
 
 /* segmented control with sliding indicator */
-.seg { --n: 2; --k: 0; position: relative; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; border: 1px solid var(--line-2); border-radius: 12px; padding: 3px; background: rgba(5, 10, 38, .55); flex-shrink: 0; }
+.seg { --n: 2; --k: 0; position: relative; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); border: 1px solid var(--line-2); border-radius: 12px; padding: 3px; background: rgba(5, 10, 38, .55); flex-shrink: 0; }
 .seg-ind { position: absolute; top: 3px; bottom: 3px; left: 3px; width: calc((100% - 6px) / var(--n)); transform: translateX(calc(var(--k) * 100%)); transition: transform .55s var(--spring); background: var(--grad); border-radius: 9px; box-shadow: 0 0 14px rgba(255, 61, 154, .35); }
 .seg button { position: relative; z-index: 1; min-height: 40px; padding: 0 12px; border: 0; background: none; font-family: var(--display); font-weight: 600; font-size: 13.5px; letter-spacing: .04em; color: var(--muted); transition: color .3s; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
 .seg button[aria-pressed="true"] { color: #fff; text-shadow: 0 1px 2px rgba(60, 0, 40, .4); }
@@ -340,8 +340,17 @@ select.inp { appearance: none; -webkit-appearance: none; background-image: linea
 .tc.glint .gl { animation: glintOnce .9s var(--ease-out); }
 .tc.glint { border-color: rgba(255, 178, 46, .7); box-shadow: 0 0 22px rgba(255, 178, 46, .2); }
 @keyframes glintOnce { from { transform: translateX(-80%); } to { transform: translateX(80%); } }
-.cta { position: sticky; bottom: calc(var(--tabh) + env(safe-area-inset-bottom, 0px) + 6px); z-index: 5; padding-top: 18px; margin-top: 2px; }
+/* Sticky offsets count from inside the screen's bottom padding, which already reserves the tab bar plus 28px:
+   -18px puts the button 10px above the tab bar. */
+.cta { position: sticky; bottom: -18px; z-index: 5; padding-top: 18px; margin-top: 2px; }
 .notab .cta { bottom: 8px; }
+/* Lobby: the start button is the last element, so it sits just above the tab bar even when scrolled to the end. */
+#s-lobby { padding-bottom: calc(var(--tabh) + env(safe-area-inset-bottom, 0px) + 10px); }
+#s-lobby .cta { bottom: 0; }
+#s-lobby .cta::before { bottom: calc(-1 * (var(--tabh) + env(safe-area-inset-bottom, 0px) + 10px)); }
+.setbody { display: grid; gap: 12px; }
+.setbody > h3.sec { margin: 16px 4px 0; }
+.setbody > h3.sec:first-child { margin-top: 4px; }
 .cta::before { content: ""; position: absolute; left: -16px; right: -16px; top: 0; bottom: calc(-1 * (var(--tabh) + 30px)); background: linear-gradient(rgba(5, 10, 38, 0), rgba(5, 10, 38, .92) 40%); z-index: -1; pointer-events: none; }
 .errmsg { color: var(--danger-hi); font-size: 14px; text-align: center; min-height: 0; }
 .rolepick { display: flex; flex-wrap: wrap; gap: 7px; }
