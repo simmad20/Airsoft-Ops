@@ -5,7 +5,7 @@
   /* ---------- Settings ---------- */
   const DEF = {
     roundTime: 10, bombTime: 45, plantTime: 4, defuseTime: 7, half: true,
-    lang: window.I18N.guess(), voiceLang: 'auto', voice: 'male', radio: false, voiceVol: 100, vol: 80, vibrate: true, fs: true, lat: 0, local: true,
+    lang: window.I18N.guess(), voiceLang: 'auto', art: 'ai', voice: 'male', radio: false, voiceVol: 100, vol: 80, vibrate: true, fs: true, lat: 0, local: true,
     say: { start: true, planted: true, min1: true, bomb: true, result: true },
     snd: { tick: true, hold: true, signal: true, boom: true, jingle: true }
   };
@@ -151,6 +151,7 @@
   document.querySelectorAll('[data-seg]').forEach((seg) => seg.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
     S[seg.dataset.seg] = b.dataset.v; save();
     if (seg.dataset.seg === 'lang') applyLang(); else bindAll();
+    if (seg.dataset.seg === 'art') applyArt();
     if (seg.dataset.seg === 'lang' || seg.dataset.seg === 'voiceLang') loadLines();
   })));
 
@@ -1085,8 +1086,14 @@
       return;
     }
     clearTimeout(resetT); b.classList.remove('armed'); b.textContent = tr('set.resetBtn');
-    S = clone(DEF); save(); applyLang(); applyGains(); loadLines();
+    S = clone(DEF); save(); applyArt(); applyLang(); applyGains(); loadLines();
   });
+
+  /* Picture style: AI pictures or the hand-built vector art (art.js). */
+  function applyArt() {
+    document.body.dataset.art = S.art === 'vector' ? 'vector' : 'ai';
+    if (M) M.fillArt();
+  }
 
   /* Language switch: static text via data-i18n, everything painted from code gets repainted. */
   function applyLang() {
@@ -1107,6 +1114,7 @@
     applyLang(); loadLines();
   });
 
+  applyArt();
   applyLang();
   loadLines();
   /* Announcer texts of all modes (also the phone-voice fallback) come from audio/lines.json. */

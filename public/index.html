@@ -24,7 +24,7 @@
 <div class="app">
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
   <header class="top">
-    <div class="brand"><span class="led" id="led" aria-hidden="true"></span><span class="bname">AIRSOFT <b>OPS</b></span></div>
+    <div class="brand"><span class="logo" id="logoSlot" aria-hidden="true"></span><span class="led" id="led" aria-hidden="true"></span><span class="bname">AIRSOFT <b>OPS</b></span></div>
     <div class="topr">
       <span class="net" id="net" hidden><i></i><b id="netCode"></b></span>
       <span class="chip" id="chip" data-i18n="chip.ready">Bereit</span>
@@ -209,6 +209,10 @@
 
     <h3 data-i18n="set.display">Anzeige</h3>
     <div class="group">
+      <div class="row">
+        <div class="txt"><div class="lbl" data-i18n="set.art"></div><div class="desc" data-i18n="set.artDesc"></div></div>
+        <div class="seg" data-seg="art"><button type="button" data-v="ai" data-i18n="set.artAi"></button><button type="button" data-v="vector" data-i18n="set.artVec"></button></div>
+      </div>
       <label class="row check" id="rowFs" hidden><div class="txt"><div class="lbl" data-i18n="set.fs"></div><div class="desc" data-i18n="set.fsDesc"></div></div><span class="switch"><input type="checkbox" data-opt="fs"><span></span></span></label>
       <div class="row">
         <div class="txt"><div class="lbl" data-i18n="set.reset"></div><div class="desc" data-i18n="set.resetDesc"></div></div>
@@ -297,7 +301,8 @@
       <button class="iconbtn" id="cardClose" type="button" data-i18n-aria="sheet.close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     </div>
     <button class="reveal" id="cardReveal" type="button">
-      <span class="rv-cover" data-i18n="card.tap"></span>
+      <span class="rv-frame" id="cardFrame" aria-hidden="true"></span>
+      <span class="rv-cover"><span class="rv-back" id="cardBack"></span><span class="rv-tap" data-i18n="card.tap"></span></span>
       <span class="rv-body" id="cardBody"></span>
     </button>
     <div class="card-acts" id="cardActs"></div>
@@ -307,6 +312,7 @@
 
 <script src="vendor/qrcode.js"></script>
 <script src="i18n.js"></script>
+<script src="art.js"></script>
 <script src="modes.js"></script>
 <script src="app.js"></script>
 </body>

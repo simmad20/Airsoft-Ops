@@ -73,7 +73,6 @@
   const COPYCAT_DRAW = ['innocent', 'medic', 'amok'];
   const realRole = (p) => (p.role === 'copycat' ? p.drawn : p.role);
   const roleLabel = (p) => (p.role === 'copycat' ? tr('r.copycat') + ' → ' + tr('r.' + p.drawn) : tr('r.' + p.role));
-  const roleIcon = (p) => ROLES[realRole(p)].icon;
 
   /* players: [{ name, mid }] → same objects with role and a private card each, or { error }. */
   function assignRoles(players, S) {
@@ -145,9 +144,9 @@
       setup: '<div class="tgrid">' + tcard('brTeams', 'br.teams', 'br.teamsSub') + tcard('brTime', 'br.time', 'br.timeSub') + tcard('brZone', 'br.zone', 'br.zoneSub') + tcard('brDrop', 'br.drop', 'br.dropSub') + tcard('brPts', 'br.pts', 'br.ptsSub') + '</div>' },
     { id: 'hostage', icon: '🆘', img: 'img/modes/hostage.webp',
       setup: '<div class="tgrid">' + tcard('hosTime', 'hos.time', 'hos.timeSub') + tcard('hosFree', 'hos.free', 'hos.freeSub') + tcard('hosEvac', 'hos.evac', 'hos.evacSub') + '</div>' },
-    { id: 'inf', icon: '🧟', img: null,
+    { id: 'inf', icon: '🧟', img: 'img/modes/inf.webp',
       setup: '<div class="tgrid">' + tcard('infPlayers', 'inf.players', 'inf.playersSub') + tcard('infStart', 'inf.start', 'inf.startSub') + tcard('infDelay', 'inf.delay', 'inf.delaySub') + tcard('infTime', 'inf.time', 'inf.timeSub') + '</div>' },
-    { id: 'murder', icon: '🔪', img: null,
+    { id: 'murder', icon: '🔪', img: 'img/modes/murder.webp',
       setup: '<div class="tgrid">' + tcard('muMurderers', 'mu.murderers', 'mu.murderersSub') + tcard('muTime', 'mu.time', 'mu.timeSub') + '</div>' +
         '<div class="group"><div class="row stack"><div class="txt"><div class="lbl" data-i18n="mu.special"></div><div class="desc" data-i18n="mu.specialDesc"></div></div><div class="rolepick" id="muRolePick"></div></div></div>' +
         '<div class="group"><div class="row stack"><div class="txt"><div class="lbl" data-i18n="mu.names"></div><div class="desc" data-i18n="mu.namesDesc"></div></div>' +
@@ -156,12 +155,23 @@
   const BY_ID = {};
   LIST.forEach((m) => { BY_ID[m.id] = m; });
 
-  /* Mode art: the generated picture if it loads, else the emoji on a glowing disc. */
+  /* Mode art: the AI picture, or the hand-built vector version (setting "Bilder", body[data-art]).
+     Slots (.artslot[data-art]) are refilled when the setting changes. */
+  const artStyle = () => document.body.dataset.art || 'ai';
   function art(id, cls) {
     const m = BY_ID[id];
-    return '<span class="art ' + (cls || '') + '"><span class="art-emoji">' + m.icon + '</span>' +
-      (m.img ? '<img src="' + m.img + '" alt="" onerror="this.remove()">' : '') + '</span>';
+    const inner = artStyle() === 'vector' && window.ART ? window.ART.mode(id)
+      : '<span class="art-emoji">' + m.icon + '</span>' + (m.img ? '<img src="' + m.img + '" alt="" onerror="this.remove()">' : '');
+    return '<span class="art ' + (cls || '') + '">' + inner + '</span>';
   }
+  const slot = (id, cls) => '<span class="artslot" data-art="' + id + '" data-cls="' + (cls || '') + '">' + art(id, cls) + '</span>';
+  function fillArt() {
+    document.querySelectorAll('.artslot').forEach((el) => { el.innerHTML = art(el.dataset.art, el.dataset.cls); });
+    const logo = document.getElementById('logoSlot');
+    if (logo) logo.innerHTML = artStyle() === 'vector' && window.ART ? window.ART.logo() : '<img src="img/logo.webp" alt="">';
+  }
+  /* Role symbol: hand-drawn neon glyph (never an emoji). */
+  const sym = (role, cls) => (window.ART ? window.ART.role(role, cls) : '');
 
   /* Home cards and lobby setup markup go in before app.js runs, so its time-card code picks up these cards too. */
   (function buildSetup() {
@@ -177,7 +187,7 @@
     LIST.forEach((m) => {
       const b = document.createElement('button');
       b.type = 'button'; b.className = 'modecard'; b.dataset.mode = m.id;
-      b.innerHTML = art(m.id) + '<span class="mc-name" data-i18n="m.' + m.id + '.name"></span><span class="mc-tag" data-i18n="m.' + m.id + '.tag"></span>';
+      b.innerHTML = slot(m.id) + '<span class="mc-name" data-i18n="m.' + m.id + '.name"></span><span class="mc-tag" data-i18n="m.' + m.id + '.tag"></span>';
       grid.appendChild(b);
     });
   })();
@@ -545,7 +555,7 @@
       $('muNames').placeholder = tr('mu.namesPh');
       pickEl.querySelectorAll('button').forEach((b) => {
         const k = b.dataset.role;
-        b.textContent = (k === 'twins' ? ROLES.twin.icon : ROLES[k].icon) + ' ' + tr(k === 'twins' ? 'r.twins' : 'r.' + k);
+        b.innerHTML = sym(k, 'mini') + '<span>' + esc(tr(k === 'twins' ? 'r.twins' : 'r.' + k)) + '</span>';
         b.setAttribute('aria-pressed', String(!!R[k]));
       });
       const sp = sessionPlayers().length, mn = manualNames().length;
@@ -618,7 +628,7 @@
           const showRoles = !ctx.isRemote() && murder.showRoles && MU;
           const html = g.players.map((p, i) => {
             const r = showRoles ? MU.players.find((q) => q.name === p.name) : null;
-            return '<button class="pl' + (p.out ? ' out' : '') + '" type="button" data-act="muToggle" data-i="' + i + '"' + (ctx.isRemote() ? ' disabled' : '') + '><span>' + esc(p.name) + (r ? ' <small>' + roleIcon(r) + ' ' + esc(roleLabel(r)) + '</small>' : '') + '</span><em>' + tr(p.out ? 'mu.out' : 'mu.in') + '</em></button>';
+            return '<button class="pl' + (p.out ? ' out' : '') + '" type="button" data-act="muToggle" data-i="' + i + '"' + (ctx.isRemote() ? ' disabled' : '') + '><span>' + esc(p.name) + (r ? ' <small>' + sym(realRole(r), 'mini') + esc(roleLabel(r)) + '</small>' : '') + '</span><em>' + tr(p.out ? 'mu.out' : 'mu.in') + '</em></button>';
           }).join('');
           if (list._html !== html && !list.querySelector('.armed')) { list.innerHTML = html; list._html = html; }
         }
@@ -668,7 +678,7 @@
       },
       endExtra(g) {
         const r = (g.result && g.result.reveal) || [];
-        return r.length ? '<ul class="reveal-list">' + r.map((p) => '<li><span class="ri">' + roleIcon(p) + '</span><b>' + esc(p.name) + '</b><span>' + esc(roleLabel(p)) + '</span></li>').join('') + '</ul>' : '';
+        return r.length ? '<ul class="reveal-list">' + r.map((p) => '<li><span class="ri">' + sym(realRole(p)) + '</span><b>' + esc(p.name) + '</b><span>' + esc(roleLabel(p)) + '</span></li>').join('') + '</ul>' : '';
       },
       again: () => tr('mu.again')
     };
@@ -682,7 +692,7 @@
       $('cardWho').textContent = c.name ? tr('card.for', { n: c.name }) : tr('card.yours');
       const drawn = c.act && c.act.type === 'draw' && c.act.used ? c.act.drawn : null;
       const role = drawn || c.role, team = ROLES[role].team;
-      $('cardBody').innerHTML = '<span class="ci">' + ROLES[role].icon + '</span><span class="cr">' + esc(tr('r.' + role)) + '</span>' +
+      $('cardBody').innerHTML = '<span class="ci">' + sym(role, 'big') + '</span><span class="cr">' + esc(tr('r.' + role)) + '</span>' +
         (team !== 'draw' ? '<span class="ct">' + esc(tr('team.' + team)) + '</span>' : '') +
         (drawn ? '<span class="cx">' + esc(tr('card.drawn')) + '</span>' : '') +
         '<span class="cx">' + esc(tr('rt.' + role)) + '</span>' + (c.info || []).map((x) => '<span class="cinfo">' + esc(trv(x)) + '</span>').join('') +
@@ -697,6 +707,7 @@
     }
     function openCard(card, onDone, onChange) {
       cardState = { card, onDone, onChange };
+      if (window.ART) { $('cardFrame').innerHTML = window.ART.cardFrame(); $('cardBack').innerHTML = window.ART.cardBack(); }
       $('cardReveal').classList.remove('open');
       paintCard();
       $('cardBg').hidden = false;
@@ -752,7 +763,7 @@
       art,
       /* Lobby for one mode: picture, text, rules, its settings and the start button label. */
       paintSetup(mode) {
-        $('lobbyArt').innerHTML = art(mode, 'big');
+        $('lobbyArt').innerHTML = slot(mode, 'big');
         $('lobbyName').textContent = tr('m.' + mode + '.name');
         $('lobbyDesc').textContent = tr('m.' + mode + '.desc');
         $('lobbyHow').innerHTML = tr('m.' + mode + '.how').split('|').map((x) => '<li>' + esc(x) + '</li>').join('');
@@ -777,7 +788,7 @@
       layoutKey(g) { const m = MODES[g.mode]; return g.id + ':' + (m && m.layout ? m.layout(g) : ''); },
       build(g) {
         const m = MODES[g.mode];
-        $('mIcon').innerHTML = art(g.mode, 'tiny');
+        $('mIcon').innerHTML = slot(g.mode, 'tiny');
         $('mName').textContent = tr('m.' + g.mode + '.name');
         root().innerHTML = m.body(g, ctx.isRemote());
         if (!ctx.isRemote() && m.bind) m.bind(root(), g);
@@ -815,7 +826,8 @@
       paintRemote: paintMyRoleBtn,
       refreshSetup: paintMuSetup,
       /* Language switch: things built with T() at paint time. */
-      relabel() { built = null; paintMuSetup(); }
+      relabel() { built = null; paintMuSetup(); },
+      fillArt
     };
   }
 

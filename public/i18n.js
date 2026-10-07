@@ -81,6 +81,7 @@
       'set.sync': 'Synchronisation', 'set.lat': 'Box-Verzögerung', 'set.latDesc': 'Bluetooth-Boxen hinken hinterher. Erhöhen, wenn diese Box später klingt als die anderen.',
       'set.syncBeep': 'Abgleich-Piepen', 'set.syncBeepDesc': 'Piept jede Sekunde, auf allen Handys gleichzeitig. Auf zwei Handys einschalten und die Verzögerung angleichen, bis beide Boxen zusammen piepen.',
       'set.local': 'Ton auf diesem Handy', 'set.localDesc': 'Aus, wenn nur die Lautsprecher-Handys Ton machen sollen',
+      'set.art': 'Bilder', 'set.artDesc': 'KI-Bilder oder die nachgebauten Vektor-Grafiken', 'set.artAi': 'KI-Bilder', 'set.artVec': 'Eigene Grafik',
       'set.display': 'Anzeige', 'set.fs': 'Vollbild in der Runde', 'set.fsDesc': 'Blendet die Browserleiste beim Start aus',
       'set.reset': 'Alles zurücksetzen', 'set.resetDesc': 'Alle Einstellungen auf Standard', 'set.resetBtn': 'Zurücksetzen', 'set.sure': 'Sicher?',
 
@@ -203,7 +204,7 @@
       'mu.errFew': 'Mindestens 3 Spieler nötig.', 'mu.errRoles': 'Zu wenige Spieler: {r} Rollen gewählt, aber nur {n} Spieler. Rollen abwählen oder Spieler hinzufügen.',
       'mu.roleArrives': 'Deine Rolle ist da. Geheim ansehen!', 'mu.newMsg': 'Neue Nachricht vom Spielleiter', 'mu.noCard': 'Noch keine Rolle erhalten.', 'mu.gm': 'Spielleiter: {m}',
       'card.yours': 'Deine Rolle', 'card.for': 'Rolle für {n}', 'card.secret': 'Nur du darfst hinschauen.', 'card.tap': 'Tippen zum Aufdecken', 'card.done': 'Fertig & verdecken',
-      'card.draw': '🎲 Rolle ziehen', 'card.drawn': 'Gezogen als Trittbrettfahrer', 'card.once': '{a} (einmalig)', 'card.check': 'Überprüfen', 'card.study': 'Untersuchen',
+      'card.draw': 'Rolle ziehen', 'card.drawn': 'Gezogen als Trittbrettfahrer', 'card.once': '{a} (einmalig)', 'card.check': 'Überprüfen', 'card.study': 'Untersuchen',
       'team.good': 'Gut (Unschuldige)', 'team.evil': 'Böse (Mörder)', 'team.own': 'Eigenes Ziel',
       'r.murderer': 'Mörder', 'r.innocent': 'Unschuldiger', 'r.medic': 'Medic', 'r.bounty': 'Kopfgeldjäger', 'r.copycat': 'Trittbrettfahrer', 'r.amok': 'Amok-Mörder',
       'r.twin': 'Zwilling', 'r.twins': '2× Zwillinge', 'r.detective': 'Detektiv', 'r.informant': 'Informant', 'r.bodyguard': 'Bodyguard', 'r.double': 'Doppelagent',
@@ -310,6 +311,7 @@
       'set.sync': 'Sync', 'set.lat': 'Speaker delay', 'set.latDesc': 'Bluetooth speakers lag behind. Increase it if this speaker sounds later than the others.',
       'set.syncBeep': 'Sync beep', 'set.syncBeepDesc': 'Beeps every second on all phones at once. Turn it on on two phones and adjust the delay until both speakers beep together.',
       'set.local': 'Sound on this phone', 'set.localDesc': 'Turn off if only the speaker phones should make sound',
+      'set.art': 'Pictures', 'set.artDesc': 'AI pictures or the rebuilt vector graphics', 'set.artAi': 'AI pictures', 'set.artVec': 'Own graphics',
       'set.display': 'Display', 'set.fs': 'Fullscreen during the round', 'set.fsDesc': 'Hides the browser bar on start',
       'set.reset': 'Reset everything', 'set.resetDesc': 'All settings back to default', 'set.resetBtn': 'Reset', 'set.sure': 'Sure?',
 
@@ -427,7 +429,7 @@
       'mu.errFew': 'At least 3 players needed.', 'mu.errRoles': 'Not enough players: {r} roles selected but only {n} players. Remove roles or add players.',
       'mu.roleArrives': 'Your role is here. Check it in secret!', 'mu.newMsg': 'New message from the game master', 'mu.noCard': 'No role received yet.', 'mu.gm': 'Game master: {m}',
       'card.yours': 'Your role', 'card.for': 'Role for {n}', 'card.secret': 'Only you may look.', 'card.tap': 'Tap to reveal', 'card.done': 'Done & hide',
-      'card.draw': '🎲 Draw role', 'card.drawn': 'Drawn as copycat', 'card.once': '{a} (once)', 'card.check': 'Check', 'card.study': 'Investigate',
+      'card.draw': 'Draw role', 'card.drawn': 'Drawn as copycat', 'card.once': '{a} (once)', 'card.check': 'Check', 'card.study': 'Investigate',
       'team.good': 'Good (innocents)', 'team.evil': 'Evil (murderers)', 'team.own': 'Own goal',
       'r.murderer': 'Murderer', 'r.innocent': 'Innocent', 'r.medic': 'Medic', 'r.bounty': 'Bounty hunter', 'r.copycat': 'Copycat', 'r.amok': 'Rampage killer',
       'r.twin': 'Twin', 'r.twins': '2× Twins', 'r.detective': 'Detective', 'r.informant': 'Informant', 'r.bodyguard': 'Bodyguard', 'r.double': 'Double agent',

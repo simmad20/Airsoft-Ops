@@ -12,7 +12,7 @@ Die App hat unten eine Leiste mit drei Tabs:
 
 - **Modi:** Alle Spielmodi als Kacheln mit eigenem Bild. Ein Tipp öffnet die **Lobby** des Modus: Bild, Beschreibung, „So läuft es“ (die Regeln in Kürze), die Einstellungen des Modus und der Start-Knopf.
 - **Session:** Mehrere Handys verbinden. Entweder dieses Handy steuert („Session starten“, mit Code und QR-Code), oder man tritt einer Session bei (Code, Rolle, Name).
-- **Einstellungen:** App-Sprache und Ansager-Sprache, Ansager, was angesagt wird, Sounds, Synchronisation (nur in einer Session), Anzeige, Zurücksetzen.
+- **Einstellungen:** App-Sprache und Ansager-Sprache, Ansager, was angesagt wird, Sounds, Synchronisation (nur in einer Session), Anzeige (u. a. **Bilder: KI-Bilder / Eigene Grafik**), Zurücksetzen.
 
 Oben rechts schaltet **DE/EN** die Sprache der ganzen App um. Die Ansager-Sprache folgt der App-Sprache oder lässt sich unter *Einstellungen* getrennt festlegen. In einer Session kann jedes Handy seine eigene Sprache haben, Ergebnisse und Rollenkarten erscheinen auf jedem Handy in dessen Sprache.
 
@@ -26,6 +26,7 @@ Während eines Spiels ist die Leiste ausgeblendet. Zeiten stellt man über Kache
 - **Vollbild:** Beim Spielstart blendet die App die Browserleiste aus (abschaltbar), oben rechts gibt es zusätzlich einen Vollbild-Knopf.
 - **Schutz vor versehentlichem Verlassen:** Während einer Runde führt die Zurück-Geste nicht aus der App, beim Neuladen fragt der Browser nach.
 - **Offline:** Nach dem ersten Öffnen funktioniert der Allein-Modus auch ohne Netz.
+- **Zwei Bild-Stile:** Unter *Einstellungen → Anzeige → Bilder* wechselt man zwischen den KI-Bildern und eigenen, nachgebauten Vektor-Grafiken (Modi und Logo). Die Rollenkarten bei Murder Mystery haben immer einen gezeichneten Rahmen, eine Rückseite mit Auge und für jede Rolle ein eigenes Neon-Symbol.
 - **Zum Startbildschirm hinzufügbar (PWA):** Über das Browsermenü startet die App ohne Browserleiste wie eine normale App.
 
 ## Spielmodi
@@ -84,7 +85,8 @@ Das Handy, das das Spiel startet, ist der **Spielleiter**. Es sieht alle Rollen,
 │   ├── app.js              # Spielschleife, Bomben-Modus, Sessions, Sound, Sprachausgabe
 │   ├── modes.js            # Weitere Spielmodi und Murder-Mystery-Rollen
 │   ├── i18n.js             # Alle Texte auf Deutsch und Englisch
-│   ├── img/modes/          # Bilder der Spielmodi
+│   ├── art.js              # Nachgebaute Vektor-Grafiken: Modi, Logo, Rollen-Symbole, Kartenrahmen
+│   ├── img/modes/, img/logo.webp  # KI-Bilder der Spielmodi und das Logo
 │   ├── audio/de, audio/en  # Ansagen als MP3, Liste in audio/lines.json
 │   ├── vendor/qrcode.js    # QR-Code-Generator (MIT, Kazuhiko Arase)
 │   ├── sw.js               # Service Worker für Offline-Betrieb
