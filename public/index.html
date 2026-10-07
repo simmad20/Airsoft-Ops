@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>Airsoft Ops</title>
   <meta name="description" content="Airsoft game companion: bomb timer, VIP escort, search & destroy, battle royale, hostage rescue, infection and murder mystery with announcer and synced speakers.">
-  <meta name="theme-color" content="#060a26">
+  <meta name="theme-color" content="#050a26">
   <meta name="color-scheme" content="dark">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
@@ -16,303 +16,291 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Chakra+Petch:wght@600;700&family=Share+Tech+Mono&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Chakra+Petch:wght@500;600;700&family=Share+Tech+Mono&display=swap">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="bgfx" aria-hidden="true"></div>
-<div class="app">
-  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
-  <header class="top">
-    <div class="brand"><span class="logo" id="logoSlot" aria-hidden="true"></span><span class="led" id="led" aria-hidden="true"></span><span class="bname">AIRSOFT <b>OPS</b></span></div>
-    <div class="topr">
-      <span class="net" id="net" hidden><i></i><b id="netCode"></b></span>
-      <span class="chip" id="chip" data-i18n="chip.ready">Bereit</span>
-      <button class="iconbtn langbtn" id="btnLang" type="button" data-i18n-aria="lang.switch"><span id="langLabel">DE</span></button>
-      <button class="iconbtn" id="btnFs" type="button" data-i18n-aria="fs.on" hidden>
-        <svg id="icoFsOn" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
-        <svg id="icoFsOff" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>
-      </button>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="gRune" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c3a6ff"/><stop offset=".5" stop-color="#ff3d9a"/><stop offset="1" stop-color="#ffd23f"/></linearGradient>
+    <linearGradient id="gHeart" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff7a9a"/><stop offset=".55" stop-color="#ff3d9a"/><stop offset="1" stop-color="#a35bff"/></linearGradient>
+    <symbol id="corner" viewBox="0 0 24 24"><path d="M1.5 22.5V10A8.5 8.5 0 0 1 10 1.5h12.5" fill="none" stroke="currentColor" stroke-width="1"/><path d="M5 22.5V12.5A7.5 7.5 0 0 1 12.5 5h10" fill="none" stroke="currentColor" stroke-width=".8" opacity=".55"/><path d="M8.5 6.2l2.3 2.3-2.3 2.3-2.3-2.3z" fill="currentColor"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+    <symbol id="i-next" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z"/></symbol>
+    <symbol id="i-fs" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
+    <symbol id="i-fsoff" viewBox="0 0 24 24"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></symbol>
+    <symbol id="i-modes" viewBox="0 0 24 24"><rect x="8" y="3.5" width="11" height="16" rx="2"/><path d="M6.2 6.4l-1.8.5a1.6 1.6 0 0 0-1.1 2l2.8 10.4a1.6 1.6 0 0 0 2 1.1l1.6-.4"/><path d="M13.5 8.3l.8 1.8 1.8.8-1.8.8-.8 1.8-.8-1.8-1.8-.8 1.8-.8z"/></symbol>
+    <symbol id="i-session" viewBox="0 0 24 24"><path d="M12 13a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM7.8 15.8a6 6 0 0 1 0-7.6M16.2 8.2a6 6 0 0 1 0 7.6M5 18.5a10 10 0 0 1 0-13M19 5.5a10 10 0 0 1 0 13"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8M14 4v6M8 14v6"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></symbol>
+    <symbol id="i-speaker" viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="2"/><circle cx="12" cy="14" r="3.2"/><circle cx="12" cy="7" r="1"/></symbol>
+    <symbol id="i-player" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5"/></symbol>
+    <symbol id="i-viewer" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/></symbol>
+    <symbol id="i-eyeoff" viewBox="0 0 24 24"><path d="M3 3l18 18M10.6 6.1A9.7 9.7 0 0 1 12 6c6 0 9.5 6 9.5 6a17 17 0 0 1-3 3.6M6.6 6.6C4 8.3 2.5 12 2.5 12s3.5 6 9.5 6c1.6 0 3-.4 4.3-1M9.9 9.9a3 3 0 0 0 4.2 4.2"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.2"/><path d="M11 18.5h2"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h8"/></symbol>
+    <symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5.5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="18.5" r="2.5"/><path d="M8.2 10.8l7.6-4.1M8.2 13.2l7.6 4.1"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l7 3v5.5c0 4.4-3 8-7 9.5-4-1.5-7-5.1-7-9.5V6z"/><path d="M8.7 12.2l2.3 2.3 4.4-4.6"/></symbol>
+    <symbol id="i-bomb" viewBox="0 0 24 24"><path d="M10.5 20.5a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13z"/><path d="M15 9l2.2-2.2M16.5 5.5l1 1M19 3.5l-.6 1.8M20.5 6.5l-1.8.4"/><path d="M8 12.5a3 3 0 0 1 2.5-2"/></symbol>
+    <symbol id="i-hour" viewBox="0 0 24 24"><path d="M6.5 3.5h11M6.5 20.5h11M7.5 3.5c0 4.5 4.5 5.5 4.5 8.5s-4.5 4-4.5 8.5M16.5 3.5c0 4.5-4.5 5.5-4.5 8.5s4.5 4 4.5 8.5"/></symbol>
+    <symbol id="i-burst" viewBox="0 0 24 24"><path d="M12 2.5l1.8 5.6 5.3-2.6-2.6 5.3 5.6 1.8-5.6 1.8 2.6 5.3-5.3-2.6L12 21.5l-1.8-5.6-5.3 2.6 2.6-5.3L2 12.6l5.6-1.8L5 5.5l5.3 2.6z"/></symbol>
+    <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></symbol>
+    <symbol id="i-msg" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9.5h8M8 12.5h5"/></symbol>
+    <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4M5 4h12l-2.5 4L17 12H5"/></symbol>
+    <symbol id="i-zone" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke-dasharray="3 3"/><circle cx="12" cy="12" r="4.5"/><path d="M12 3v3.5M21 12h-3.5M12 21v-3.5M3 12h3.5"/></symbol>
+    <symbol id="i-drop" viewBox="0 0 24 24"><path d="M3 11a9 9 0 0 1 18 0c-2-1.5-4-1.5-6 0-2-1.5-4-1.5-6 0-2-1.5-4-1.5-6 0z"/><path d="M3 11l7.5 6.5M21 11l-7.5 6.5M9 11l2 6M15 11l-2 6"/><rect x="10" y="17" width="4" height="4" rx="1"/></symbol>
+    <symbol id="i-unlock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 7.6-1.7M12 15v2"/></symbol>
+    <symbol id="i-evac" viewBox="0 0 24 24"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 16l4-4-4-4M14 12H4"/></symbol>
+    <symbol id="i-virus" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M5.6 18.4l2.8-2.8M15.6 8.4l2.8-2.8"/><circle cx="10.5" cy="11" r=".8"/><circle cx="13.5" cy="13" r=".8"/></symbol>
+    <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3"/></symbol>
+    <symbol id="i-skull" viewBox="0 0 24 24"><path d="M12 3a7 7 0 0 0-7 7c0 2.5 1.2 4 2.5 5v3.5h9V15c1.3-1 2.5-2.5 2.5-5a7 7 0 0 0-7-7z"/><circle cx="9.3" cy="11" r="1.5"/><circle cx="14.7" cy="11" r="1.5"/><path d="M10.5 18.5v2M13.5 18.5v2"/></symbol>
+    <symbol id="i-crown" viewBox="0 0 24 24"><path d="M4 18h16M4.5 8l4 4 3.5-6.5 3.5 6.5 4-4-1.6 10H6.1z"/></symbol>
+    <symbol id="i-volume" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/></symbol>
+    <symbol id="i-leave" viewBox="0 0 24 24"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 8l-4 4 4 4M6 12h10"/></symbol>
+    <symbol id="i-cards" viewBox="0 0 24 24"><rect x="3.5" y="6" width="12" height="15" rx="2"/><path d="M8 3h10.5a2 2 0 0 1 2 2v13"/></symbol>
+    <symbol id="i-swap" viewBox="0 0 24 24"><path d="M7 7h12l-3-3M17 17H5l3 3"/></symbol>
+    <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></symbol>
+    <symbol id="i-sync" viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 14-5.3L20 9M20 4v5h-5M20 12a8 8 0 0 1-14 5.3L4 15M4 20v-5h5"/></symbol>
+  </defs>
+</svg>
+
+<div id="app">
+  <div class="nebula" aria-hidden="true"></div>
+  <canvas id="vortex" aria-hidden="true"></canvas>
+
+  <header class="top" id="top">
+    <div class="hb hb-main">
+      <div class="brand"><span class="logo aslot" id="logo" data-art="logo" aria-hidden="true"></span><span class="bname">AIRSOFT <b>OPS</b></span></div>
+      <div class="topr">
+        <span class="net" id="net" hidden><i></i><b id="netCode"></b></span>
+        <span class="chip" id="chip"><i class="cdot"></i><span id="chipT"></span></span>
+        <button class="iconbtn langbtn" id="btnLang" type="button" data-i18n-aria="lang.switch">DE</button>
+        <button class="iconbtn" id="btnFs" type="button" data-i18n-aria="fs.on" hidden><svg class="i" id="icoFs"><use href="#i-fs"/></svg></button>
+      </div>
+    </div>
+    <div class="hb hb-game">
+      <div class="gb-mode"><span class="gb-art aslot" id="gbArt" aria-hidden="true"></span><span class="gb-name" id="gbName"></span></div>
+      <span class="chip live" id="gbChip"><i class="cdot"></i><span id="gbChipT"></span></span>
+      <button class="gb-end" id="btnQuit" type="button" data-i18n="game.end">Beenden</button>
     </div>
   </header>
 
-  <!-- HOME: choose a mode -->
-  <section class="scr" id="scrHome">
-    <div class="intro">
-      <h1 data-i18n="home.title">Spielmodus wählen</h1>
-      <p data-i18n="home.sub"></p>
-    </div>
-    <button class="banner" id="sessBanner" type="button" hidden><i></i><span id="sessBannerText"></span><b data-i18n="home.sessOpen">Verwalten</b></button>
-    <div class="modegrid" id="modeGrid"></div>
-  </section>
-
-  <!-- LOBBY: one mode, its rules and settings -->
-  <section class="scr" id="scrLobby" hidden>
-    <button class="backbtn" id="btnBack" type="button"><span aria-hidden="true">‹</span> <span data-i18n="lobby.back">Alle Modi</span></button>
-    <div class="hero">
-      <div class="art big" id="lobbyArt"></div>
-      <h1 id="lobbyName"></h1>
-      <p id="lobbyDesc"></p>
-    </div>
-    <details class="how" open>
-      <summary data-i18n="lobby.how">So läuft es</summary>
-      <ol id="lobbyHow"></ol>
-    </details>
-    <h3 data-i18n="lobby.settings">Einstellungen</h3>
-
-    <div class="modeset" data-mode="bomb">
-      <div class="tgrid">
-        <button class="tcard" type="button" data-key="roundTime"><span class="tl" data-i18n="bomb.roundTime"></span><span class="tv"></span><span class="td" data-i18n="bomb.roundTimeSub"></span></button>
-        <button class="tcard" type="button" data-key="bombTime"><span class="tl" data-i18n="bomb.bombTime"></span><span class="tv"></span><span class="td" data-i18n="bomb.bombTimeSub"></span></button>
-        <button class="tcard" type="button" data-key="plantTime"><span class="tl" data-i18n="bomb.plant"></span><span class="tv"></span><span class="td" data-i18n="bomb.plantSub"></span></button>
-        <button class="tcard" type="button" data-key="defuseTime"><span class="tl" data-i18n="bomb.defuse"></span><span class="tv"></span><span class="td" data-i18n="bomb.defuseSub"></span></button>
-      </div>
-      <div class="group">
-        <label class="row check"><div class="txt"><div class="lbl" data-i18n="bomb.half"></div><div class="desc" data-i18n="bomb.halfDesc"></div></div><span class="switch"><input type="checkbox" data-opt="half"><span></span></span></label>
-      </div>
-    </div>
-    <div id="modeSets"></div>
-
-    <button class="btn primary big" id="btnStart" type="button" data-i18n="lobby.start">Spiel starten</button>
-    <p class="fine" id="lobbySess"></p>
-    <p class="fine" id="wakeNote" data-i18n="lobby.wake"></p>
-  </section>
-
-  <!-- SESSION: host or join -->
-  <section class="scr" id="scrSession" hidden>
-    <div class="intro">
-      <h1 data-i18n="sess.title">Session</h1>
-      <p data-i18n="sess.sub"></p>
-    </div>
-
-    <div id="sessIdle" class="stack">
-      <div class="card">
-        <div class="card-h"><span class="card-ico">📡</span><div><div class="lbl" data-i18n="sess.hostTitle"></div><div class="desc" data-i18n="sess.hostDesc"></div></div></div>
-        <button class="btn primary" id="btnHost" type="button" data-i18n="sess.hostBtn">Session starten</button>
-        <p class="msg" id="hostMsg"></p>
-      </div>
-
-      <div class="card">
-        <div class="card-h"><span class="card-ico">🔗</span><div><div class="lbl" data-i18n="sess.joinTitle"></div><div class="desc" data-i18n="sess.joinDesc"></div></div></div>
-        <input class="codein" id="joinCode" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="4" data-i18n-ph="sess.codePh" data-i18n-aria="sess.code">
-        <div class="field">
-          <div class="lbl" data-i18n="sess.role"></div>
-          <div class="seg wide" id="joinRole"><button type="button" data-v="speaker" data-i18n="role.speaker"></button><button type="button" data-v="player" data-i18n="role.player"></button><button type="button" data-v="viewer" data-i18n="role.viewer"></button></div>
-          <div class="desc" id="roleDesc"></div>
+  <main id="screens">
+    <!-- Modes: tarot deck in front of the portal -->
+    <section class="screen" id="s-home" data-i18n-aria="nav.home">
+      <div class="ttl" data-st><h1 data-i18n="home.title">Spielmodus wählen</h1><p data-i18n="home.sub">Ziehe eine Karte</p></div>
+      <button class="banner press" id="homeBanner" type="button" hidden data-st><i></i><span id="homeBannerT"></span><b data-i18n="home.sessOpen">Verwalten</b></button>
+      <div class="deck" id="deck" tabindex="0" role="listbox" data-i18n-aria="home.deckAria">
+        <div class="portal" id="portal" aria-hidden="true">
+          <div class="ring-glow"></div>
+          <svg class="rune rune-o" id="runeO" viewBox="-200 -200 400 400"></svg>
+          <svg class="rune rune-i" id="runeI" viewBox="-200 -200 400 400"></svg>
+          <div class="pcore"><span class="p-aura"></span><span class="p-swirl"></span><span class="p-swirl b"></span><span class="p-core"></span><span class="p-wave"></span><span class="p-wave b"></span></div>
         </div>
-        <div class="field">
-          <div class="lbl" data-i18n="sess.name"></div>
-          <input class="namein wide" id="joinName" type="text" maxlength="24" autocomplete="off" data-i18n-ph="sess.nameDesc" data-i18n-aria="sess.name">
+      </div>
+      <div class="deck-nav">
+        <button class="nav-b press" id="prevB" type="button" data-i18n-aria="home.prev"><svg class="i"><use href="#i-back"/></svg></button>
+        <div class="runes" id="runes" aria-hidden="true"></div>
+        <button class="nav-b press" id="nextB" type="button" data-i18n-aria="home.next"><svg class="i"><use href="#i-next"/></svg></button>
+      </div>
+      <div class="tagline" aria-live="polite"><span class="on" id="tagA"></span><span id="tagB"></span></div>
+      <div class="choose"><button class="btn primary big" id="chooseB" type="button" data-i18n="home.choose">Wählen</button></div>
+    </section>
+
+    <!-- Lobby of the chosen mode (built by app.js) -->
+    <section class="screen" id="s-lobby" hidden></section>
+
+    <!-- Murder Mystery: pass the phone around (built by modes.js) -->
+    <section class="screen notab" id="s-pass" hidden></section>
+
+    <!-- Running game (built by app.js for the bomb, by modes.js for the other modes) -->
+    <section class="screen notab game" id="s-game" hidden>
+      <div class="g-pulse" aria-hidden="true"></div>
+      <div class="g-wrap" id="gWrap"></div>
+    </section>
+
+    <!-- Result -->
+    <section class="screen notab end" id="s-end" hidden>
+      <div class="result" id="result" data-st>
+        <div class="e-emblem" id="eEm"><div class="e-rays"></div><div class="e-ring"></div><span class="e-ic" id="eIc"></span></div>
+        <div class="rk" id="eK"></div>
+        <h2 id="eT"></h2>
+        <p id="eS"></p>
+        <div class="stats" id="eStats"></div>
+      </div>
+      <div class="endextra" id="eX" data-st></div>
+      <div class="endbtns" data-st>
+        <button class="btn primary big" id="btnAgain" type="button"></button>
+        <button class="btn ghost wide" id="btnBackMode" type="button" data-i18n="game.back">Zurück zum Modus</button>
+      </div>
+    </section>
+
+    <!-- Session: start one or join one -->
+    <section class="screen" id="s-session" hidden>
+      <div class="intro" data-st><h1 data-i18n="sess.title">Session</h1><p data-i18n="sess.sub"></p></div>
+      <div id="sessIdle" class="stack">
+        <div class="card" data-st>
+          <div class="card-h"><span class="card-ico"><svg class="i"><use href="#i-session"/></svg></span><div><div class="lbl" data-i18n="sess.hostTitle"></div><div class="desc" data-i18n="sess.hostDesc"></div></div></div>
+          <button class="btn primary wide" id="btnHost" type="button" data-i18n="sess.hostBtn"></button>
+          <p class="errmsg" id="hostMsg"></p>
         </div>
-        <button class="btn primary" id="btnJoin" type="button" data-i18n="sess.joinBtn">Beitreten</button>
-        <p class="msg" id="joinMsg"></p>
+        <form class="card" id="joinF" data-st autocomplete="off">
+          <div class="card-h"><span class="card-ico"><svg class="i"><use href="#i-link"/></svg></span><div><div class="lbl" data-i18n="sess.joinTitle"></div><div class="desc" data-i18n="sess.joinDesc"></div></div></div>
+          <div class="field"><label class="lbl" for="joinCode" data-i18n="sess.code"></label><input class="inp codein" id="joinCode" maxlength="4" data-i18n-ph="sess.codePh" autocapitalize="characters" spellcheck="false" inputmode="text"></div>
+          <div class="field"><span class="lbl" id="roleL" data-i18n="sess.role"></span>
+            <div class="seg wide tall" id="joinRole" style="--n:3" role="group" aria-labelledby="roleL"><span class="seg-ind"></span>
+              <button type="button" data-v="speaker" aria-pressed="true"><svg class="i"><use href="#i-speaker"/></svg><span data-i18n="role.speaker"></span></button>
+              <button type="button" data-v="player" aria-pressed="false"><svg class="i"><use href="#i-player"/></svg><span data-i18n="role.player"></span></button>
+              <button type="button" data-v="viewer" aria-pressed="false"><svg class="i"><use href="#i-viewer"/></svg><span data-i18n="role.viewer"></span></button>
+            </div>
+            <div class="desc" id="roleDesc"></div>
+          </div>
+          <div class="field"><label class="lbl" for="joinName" data-i18n="sess.name"></label><input class="inp" id="joinName" maxlength="24" data-i18n-ph="sess.nameDesc"></div>
+          <button class="btn primary wide" type="submit" data-i18n="sess.joinBtn"></button>
+          <p class="errmsg" id="joinMsg" role="alert"></p>
+        </form>
       </div>
-    </div>
-
-    <div class="card host" id="sessHost" hidden>
-      <div class="mp-top">
-        <div>
-          <div class="label" data-i18n="sess.code"></div>
-          <div class="code" id="hostCode">----</div>
-          <div class="desc" data-i18n="sess.qrHint"></div>
+      <div id="sessHost" class="stack" hidden>
+        <div class="card host" data-st>
+          <div class="mp-top"><div><div class="label" data-i18n="sess.code"></div><div class="code" id="hostCode"></div></div><div class="qr" id="hostQr" role="img" data-i18n-aria="sess.qrAria"></div></div>
+          <p class="desc" data-i18n="sess.qrHint"></p>
+          <div class="linkrow"><span id="hostLink"></span><button class="btn small" type="button" id="btnShare"><svg class="i"><use href="#i-share"/></svg><span data-i18n="sess.share"></span></button></div>
+          <div class="mhead" id="mSum"></div>
+          <ul class="devs" id="devs"></ul>
+          <button class="btn ghost danger wide" type="button" id="btnEndSession"><svg class="i"><use href="#i-leave"/></svg><span data-i18n="sess.end"></span></button>
         </div>
-        <div class="qr" id="hostQr"></div>
+        <p class="fine" data-st data-i18n="sess.hostNote"></p>
       </div>
-      <button class="btn small ghost" id="btnShare" type="button" data-i18n="sess.share">Link teilen</button>
-      <div class="members" id="members"></div>
-      <button class="btn ghost danger" id="btnEndSession" type="button" data-i18n="sess.end">Session beenden</button>
-    </div>
-  </section>
+    </section>
 
-  <!-- REMOTE: speaker / player / viewer between rounds -->
-  <section class="scr" id="scrRemote" hidden>
-    <div class="remote-card">
-      <div class="label" id="remRole"></div>
-      <div class="code" id="remCode">----</div>
-      <div class="rem-status" id="remStatus"></div>
-      <div class="desc" id="remHint"></div>
-    </div>
-    <button class="btn primary big" id="btnMyRole" type="button" data-i18n="rem.myRole" hidden>Meine Rolle ansehen</button>
-    <button class="btn ghost" id="btnRemTest" type="button" data-i18n="rem.test">Ton &amp; Box testen</button>
-    <button class="btn ghost danger" id="btnLeave" type="button" data-i18n="sess.leave">Session verlassen</button>
-  </section>
-
-  <!-- SETTINGS -->
-  <section class="scr" id="scrSettings" hidden>
-    <div class="intro"><h1 data-i18n="set.title">Einstellungen</h1></div>
-
-    <h3 data-i18n="set.lang">Sprache</h3>
-    <div class="group">
-      <div class="row">
-        <div class="txt"><div class="lbl" data-i18n="set.appLang"></div></div>
-        <div class="seg" data-seg="lang"><button type="button" data-v="de">DE</button><button type="button" data-v="en">EN</button></div>
+    <!-- This phone joined as speaker / player / viewer -->
+    <section class="screen" id="s-remote" hidden>
+      <div class="remote-card" data-st>
+        <div class="rem-conn" id="remConn"><i></i><span id="remConnT"></span></div>
+        <div class="rem-ico" id="remIco"><svg class="i"><use id="remIcoUse" href="#i-speaker"/></svg></div>
+        <div class="rem-role" id="remRole"></div>
+        <div class="rem-name" id="remName"></div>
+        <div class="rem-status" id="remStatus"></div>
+        <p class="desc" id="remHint"></p>
       </div>
-      <div class="row">
-        <div class="txt"><div class="lbl" data-i18n="set.voiceLang"></div></div>
-        <div class="seg" data-seg="voiceLang"><button type="button" data-v="auto" data-i18n="set.voiceLangAuto"></button><button type="button" data-v="de">DE</button><button type="button" data-v="en">EN</button></div>
+      <button class="btn primary big" type="button" id="btnMyRole" hidden data-st><svg class="i"><use href="#i-cards"/></svg><span data-i18n="rem.myRole"></span></button>
+      <button class="btn ghost wide" type="button" id="btnRemTest" data-st><svg class="i"><use href="#i-volume"/></svg><span data-i18n="rem.test"></span></button>
+      <button class="btn ghost danger wide" type="button" id="btnLeave" data-st><svg class="i"><use href="#i-leave"/></svg><span data-i18n="sess.leave"></span></button>
+    </section>
+
+    <!-- Settings -->
+    <section class="screen" id="s-settings" hidden>
+      <div class="intro" data-st><h1 data-i18n="set.title">Einstellungen</h1></div>
+      <h3 class="sec" data-st data-i18n="set.lang"></h3>
+      <div class="group" data-st>
+        <div class="row"><div class="txt"><div class="lbl" data-i18n="set.appLang"></div></div>
+          <div class="seg" data-seg="lang" style="--n:2" role="group" data-i18n-aria="set.appLang"><span class="seg-ind"></span><button type="button" data-v="de">DE</button><button type="button" data-v="en">EN</button></div></div>
+        <div class="row stack"><div class="txt"><div class="lbl" data-i18n="set.voiceLang"></div></div>
+          <div class="seg wide" data-seg="voiceLang" style="--n:3" role="group" data-i18n-aria="set.voiceLang"><span class="seg-ind"></span><button type="button" data-v="auto" data-i18n="set.voiceLangAuto"></button><button type="button" data-v="de">Deutsch</button><button type="button" data-v="en">English</button></div></div>
       </div>
-    </div>
+      <button class="btn ghost wide" type="button" id="btnTest" data-st><svg class="i"><use href="#i-volume"/></svg><span data-i18n="set.test"></span></button>
+      <p class="testmsg" id="testMsg" hidden></p>
 
-    <button class="btn ghost" id="btnTest" type="button" data-i18n="set.test">Ton &amp; Box testen</button>
-    <p class="msg" id="testMsg"></p>
-
-    <h3 data-i18n="set.announcer">Ansager</h3>
-    <div class="group">
-      <div class="row">
-        <div class="txt"><div class="lbl" data-i18n="set.voice"></div><div class="desc" id="voiceDesc"></div></div>
-        <div class="seg" data-seg="voice"><button type="button" data-v="male" data-i18n="set.voiceMale"></button><button type="button" data-v="device" data-i18n="set.voiceDevice"></button></div>
+      <h3 class="sec" data-st data-i18n="set.announcer"></h3>
+      <div class="group" data-st>
+        <div class="row stack"><div class="txt"><div class="lbl" data-i18n="set.voice"></div><div class="desc" id="voiceDesc"></div></div>
+          <div class="seg wide" data-seg="voice" style="--n:2" role="group" data-i18n-aria="set.voice"><span class="seg-ind"></span><button type="button" data-v="male"><svg class="i"><use href="#i-mic"/></svg><span data-i18n="set.voiceMale"></span></button><button type="button" data-v="device"><svg class="i"><use href="#i-phone"/></svg><span data-i18n="set.voiceDevice"></span></button></div></div>
+        <label class="row"><div class="txt"><div class="lbl" data-i18n="set.radio"></div><div class="desc" data-i18n="set.radioDesc"></div></div><span class="switch"><input type="checkbox" role="switch" data-opt="radio" data-i18n-aria="set.radio"><span></span></span></label>
+        <div class="row stack"><div class="txt"><div class="lbl" data-i18n="set.voiceVol"></div></div><div class="rangebox"><input type="range" data-range="voiceVol" min="10" max="100" step="5" data-i18n-aria="set.voiceVol"><output data-out="voiceVol" data-unit="%"></output></div></div>
+        <div class="row"><div class="txt"><div class="lbl" data-i18n="set.preview"></div><div class="desc" data-i18n="set.previewDesc"></div></div><button class="btn small" type="button" id="btnVoiceTest"><svg class="i"><use href="#i-play"/></svg><span data-i18n="set.play"></span></button></div>
       </div>
-      <label class="row check"><div class="txt"><div class="lbl" data-i18n="set.radio"></div><div class="desc" data-i18n="set.radioDesc"></div></div><span class="switch"><input type="checkbox" data-opt="radio"><span></span></span></label>
-      <div class="row">
-        <div class="txt"><div class="lbl" data-i18n="set.voiceVol"></div></div>
-        <input type="range" data-range="voiceVol" min="10" max="100" step="5" data-i18n-aria="set.voiceVol">
+
+      <h3 class="sec" data-st data-i18n="set.sounds"></h3>
+      <div class="group" data-st>
+        <div class="row stack"><div class="txt"><div class="lbl" data-i18n="set.vol"></div><div class="desc" data-i18n="set.volDesc"></div></div><div class="rangebox"><input type="range" data-range="vol" min="10" max="100" step="5" data-i18n-aria="set.vol"><output data-out="vol" data-unit="%"></output></div></div>
+        <label class="row"><div class="txt"><div class="lbl" data-i18n="set.vibrate"></div><div class="desc" data-i18n="set.vibrateDesc"></div></div><span class="switch"><input type="checkbox" role="switch" data-opt="vibrate" data-i18n-aria="set.vibrate"><span></span></span></label>
       </div>
-      <div class="row">
-        <div class="txt"><div class="lbl" data-i18n="set.preview"></div><div class="desc" data-i18n="set.previewDesc"></div></div>
-        <button class="btn small" id="btnVoiceTest" type="button" data-i18n="set.play">Abspielen</button>
+
+      <h3 class="sec" data-st data-i18n="set.sync"></h3>
+      <div class="group" data-st id="syncGroup">
+        <div class="syncnote" id="syncNote"><svg class="i"><use href="#i-sync"/></svg><span data-i18n="set.syncOnly"></span><button class="btn small" type="button" id="btnToSess" data-i18n="set.toSess"></button></div>
+        <div class="row stack sx"><div class="txt"><div class="lbl" data-i18n="set.lat"></div><div class="desc" data-i18n="set.latDesc"></div></div><div class="rangebox"><input type="range" data-range="lat" min="0" max="500" step="10" data-i18n-aria="set.lat"><output data-out="lat" data-unit="ms"></output></div></div>
+        <label class="row sx"><div class="txt"><div class="lbl" data-i18n="set.syncBeep"></div><div class="desc" data-i18n="set.syncBeepDesc"></div></div><span class="beep" id="beep" aria-hidden="true"></span><span class="switch"><input type="checkbox" role="switch" id="optSyncBeep" data-i18n-aria="set.syncBeep"><span></span></span></label>
+        <label class="row sx" id="rowLocal"><div class="txt"><div class="lbl" data-i18n="set.local"></div><div class="desc" data-i18n="set.localDesc"></div></div><span class="switch"><input type="checkbox" role="switch" data-opt="local" data-i18n-aria="set.local"><span></span></span></label>
       </div>
-    </div>
 
-    <h3 data-i18n="set.what">Was angesagt wird</h3>
-    <div class="group">
-      <label class="row check"><div class="txt"><div class="lbl" data-i18n="set.sayStart"></div><div class="desc" data-i18n="set.sayStartDesc"></div></div><span class="switch"><input type="checkbox" data-say="start"><span></span></span></label>
-      <label class="row check"><div class="txt"><div class="lbl" data-i18n="set.sayPlanted"></div><div class="desc" data-i18n="set.sayPlantedDesc"></div></div><span class="switch"><input type="checkbox" data-say="planted"><span></span></span></label>
-      <label class="row check"><div class="txt"><div class="lbl" data-i18n="set.sayMin1"></div><div class="desc" data-i18n="set.sayMin1Desc"></div></div><span class="switch"><input type="checkbox" data-say="min1"><span></span></span></label>
-      <label class="row check"><div class="txt"><div class="lbl" data-i18n="set.sayBomb"></div><div class="desc" data-i18n="set.sayBombDesc"></div></div><span class="switch"><input type="checkbox" data-say="bomb"><span></span></span></label>
-      <label class="row check"><div class="txt"><div class="lbl" data-i18n="set.sayEvents"></div><div class="desc" data-i18n="set.sayEventsDesc"></div></div><span class="switch"><input type="checkbox" data-say="events"><span></span></span></label>
-      <label class="row check"><div class="txt"><div class="lbl" data-i18n="set.sayResult"></div><div class="desc" data-i18n="set.sayResultDesc"></div></div><span class="switch"><input type="checkbox" data-say="result"><span></span></span></label>
-    </div>
-
-    <h3 data-i18n="set.sounds">Sounds</h3>
-    <div class="group">
-      <div class="row">
-        <div class="txt"><div class="lbl" data-i18n="set.vol"></div><div class="desc" data-i18n="set.volDesc"></div></div>
-        <input type="range" data-range="vol" min="10" max="100" step="5" data-i18n-aria="set.vol">
+      <h3 class="sec" data-st data-i18n="set.display"></h3>
+      <div class="group" data-st>
+        <div class="row stack"><div class="txt"><div class="lbl" data-i18n="set.art"></div><div class="desc" data-i18n="set.artDesc"></div></div>
+          <div class="seg wide" data-seg="art" style="--n:2" role="group" data-i18n-aria="set.art"><span class="seg-ind"></span><button type="button" data-v="ai" data-i18n="set.artAi"></button><button type="button" data-v="vector" data-i18n="set.artVec"></button></div></div>
+        <label class="row" id="rowFs" hidden><div class="txt"><div class="lbl" data-i18n="set.fs"></div><div class="desc" data-i18n="set.fsDesc"></div></div><span class="switch"><input type="checkbox" role="switch" data-opt="fs" data-i18n-aria="set.fs"><span></span></span></label>
       </div>
-      <label class="row check"><div class="txt"><div class="lbl" data-i18n="set.tick"></div><div class="desc" data-i18n="set.tickDesc"></div></div><span class="switch"><input type="checkbox" data-snd="tick"><span></span></span></label>
-      <label class="row check"><div class="txt"><div class="lbl" data-i18n="set.hold"></div><div class="desc" data-i18n="set.holdDesc"></div></div><span class="switch"><input type="checkbox" data-snd="hold"><span></span></span></label>
-      <label class="row check"><div class="txt"><div class="lbl" data-i18n="set.signal"></div><div class="desc" data-i18n="set.signalDesc"></div></div><span class="switch"><input type="checkbox" data-snd="signal"><span></span></span></label>
-      <label class="row check"><div class="txt"><div class="lbl" data-i18n="set.boom"></div></div><span class="switch"><input type="checkbox" data-snd="boom"><span></span></span></label>
-      <label class="row check"><div class="txt"><div class="lbl" data-i18n="set.jingle"></div><div class="desc" data-i18n="set.jingleDesc"></div></div><span class="switch"><input type="checkbox" data-snd="jingle"><span></span></span></label>
-      <label class="row check"><div class="txt"><div class="lbl" data-i18n="set.vibrate"></div><div class="desc" data-i18n="set.vibrateDesc"></div></div><span class="switch"><input type="checkbox" data-opt="vibrate"><span></span></span></label>
-    </div>
 
-    <h3 id="syncHead" data-i18n="set.sync" hidden>Synchronisation</h3>
-    <div class="group" id="syncGroup" hidden>
-      <div class="row">
-        <div class="txt"><div class="lbl"><span data-i18n="set.lat"></span> <output class="val" id="latVal"></output></div><div class="desc" data-i18n="set.latDesc"></div></div>
-        <input type="range" data-range="lat" min="0" max="500" step="10" data-i18n-aria="set.lat">
+      <h3 class="sec" data-st data-i18n="set.resetHead"></h3>
+      <div class="group" data-st>
+        <div class="row"><div class="txt"><div class="lbl" data-i18n="set.reset"></div><div class="desc" data-i18n="set.resetDesc"></div></div><button class="btn small" type="button" id="btnReset"><svg class="i"><use href="#i-refresh"/></svg><span data-i18n="set.resetBtn"></span></button></div>
       </div>
-      <label class="row check"><div class="txt"><div class="lbl" data-i18n="set.syncBeep"></div><div class="desc" data-i18n="set.syncBeepDesc"></div></div><span class="switch"><input type="checkbox" id="optSyncBeep"><span></span></span></label>
-      <label class="row check" id="rowLocal"><div class="txt"><div class="lbl" data-i18n="set.local"></div><div class="desc" data-i18n="set.localDesc"></div></div><span class="switch"><input type="checkbox" data-opt="local"><span></span></span></label>
-    </div>
+      <p class="set-ver" data-st>Airsoft Ops</p>
+    </section>
+  </main>
 
-    <h3 data-i18n="set.display">Anzeige</h3>
-    <div class="group">
-      <div class="row">
-        <div class="txt"><div class="lbl" data-i18n="set.art"></div><div class="desc" data-i18n="set.artDesc"></div></div>
-        <div class="seg" data-seg="art"><button type="button" data-v="ai" data-i18n="set.artAi"></button><button type="button" data-v="vector" data-i18n="set.artVec"></button></div>
-      </div>
-      <label class="row check" id="rowFs" hidden><div class="txt"><div class="lbl" data-i18n="set.fs"></div><div class="desc" data-i18n="set.fsDesc"></div></div><span class="switch"><input type="checkbox" data-opt="fs"><span></span></span></label>
-      <div class="row">
-        <div class="txt"><div class="lbl" data-i18n="set.reset"></div><div class="desc" data-i18n="set.resetDesc"></div></div>
-        <button class="btn small" id="btnReset" type="button" data-i18n="set.resetBtn">Zurücksetzen</button>
-      </div>
-    </div>
-  </section>
+  <nav class="tabbar" id="tabbar" data-i18n-aria="nav.aria">
+    <span class="tab-ind" id="tabInd" aria-hidden="true"></span>
+    <button class="tab" type="button" data-tab="home" data-i="0" aria-current="page"><svg class="i"><use href="#i-modes"/></svg><span data-i18n="nav.home"></span></button>
+    <button class="tab" type="button" data-tab="session" data-i="1"><svg class="i"><use href="#i-session"/></svg><span data-i18n="nav.session"></span><i class="dot" id="navDot" hidden></i></button>
+    <button class="tab" type="button" data-tab="settings" data-i="2"><svg class="i"><use href="#i-settings"/></svg><span data-i18n="nav.settings"></span></button>
+  </nav>
 
-  <!-- BOMB: waiting for plant -->
-  <section class="scr" id="scrRound" hidden>
-    <div class="clockwrap">
-      <div class="label" id="roundLabel"></div>
-      <div class="clock" id="roundClock">10:00</div>
-    </div>
-    <div class="sites">
-      <button class="hold site a" id="holdA" type="button" data-i18n-aria="bomb.plantA"><span class="fill"></span><span class="letter">A</span><span class="hint" id="hintA"></span></button>
-      <button class="hold site b" id="holdB" type="button" data-i18n-aria="bomb.plantB"><span class="fill"></span><span class="letter">B</span><span class="hint" id="hintB"></span></button>
-    </div>
-    <button class="btn ghost danger" id="abortRound" type="button" data-i18n="game.abort">Runde abbrechen</button>
-  </section>
+  <div class="evt" id="evt" role="status" aria-live="polite"><svg class="i"><use href="#i-flag"/></svg><span></span></div>
+  <div id="fx" aria-hidden="true"></div>
 
-  <!-- BOMB: planted -->
-  <section class="scr" id="scrPlanted" hidden>
-    <div class="planted-head"><span class="sitebadge" id="plantSite">A</span><span data-i18n="bomb.planted">Bombe platziert</span></div>
-    <div class="clock bomb" id="bombClock">0:45</div>
-    <div class="bar"><span id="bombBar"></span></div>
-    <button class="hold defuse" id="holdDefuse" type="button" data-i18n-aria="bomb.defuseAria"><span class="fill"></span><span class="mark" id="halfMark"></span><span class="letter" data-i18n="bomb.defuseBig">ENTSCHÄRFEN</span><span class="hint" id="defuseHint"></span></button>
-    <button class="btn ghost danger" id="abortPlanted" type="button" data-i18n="game.abort">Runde abbrechen</button>
-  </section>
-
-  <!-- OTHER GAME MODES (built by modes.js) -->
-  <section class="scr" id="scrMode" hidden>
-    <div class="modehead"><span class="art tiny" id="mIcon"></span><span id="mName"></span></div>
-    <div class="clockwrap" id="mClockWrap">
-      <div class="label" id="mClockLabel"></div>
-      <div class="clock" id="mClock"></div>
-    </div>
-    <div class="mstatus" id="mStatus"></div>
-    <div class="mbody" id="mBody"></div>
-    <button class="btn ghost danger" id="abortMode" type="button" data-i18n="game.abort">Runde abbrechen</button>
-  </section>
-
-  <!-- END -->
-  <section class="scr" id="scrEnd" hidden>
-    <div class="result" id="result">
-      <div class="rk" id="resKicker"></div>
-      <h2 id="resTitle"></h2>
-      <p id="resSub"></p>
-    </div>
-    <div class="endextra" id="endExtra"></div>
-    <div class="endbtns">
-      <button class="btn primary big" id="btnAgain" type="button" data-i18n="game.again">Neue Runde</button>
-      <button class="btn ghost" id="btnSetup" type="button" data-i18n="game.back">Zurück zum Modus</button>
-    </div>
-  </section>
-</div>
-
-<nav class="tabbar" id="nav">
-  <button type="button" data-tab="home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/></svg><span data-i18n="nav.home">Modi</span></button>
-  <button type="button" data-tab="session"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 13a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM7.8 15.8a6 6 0 0 1 0-7.6M16.2 8.2a6 6 0 0 1 0 7.6M5 18.5a10 10 0 0 1 0-13M19 5.5a10 10 0 0 1 0 13"/></svg><span data-i18n="nav.session">Session</span><i class="dot" id="navDot" hidden></i></button>
-  <button type="button" data-tab="settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8M14 4v6M8 14v6"/></svg><span data-i18n="nav.settings">Einstellungen</span></button>
-</nav>
-
-<div class="sheet-bg" id="sheetBg" hidden>
-  <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="shTitle">
-    <div class="sh-head">
-      <div><h2 id="shTitle"></h2><p id="shDesc"></p></div>
-      <button class="iconbtn" id="shClose" type="button" data-i18n-aria="sheet.close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-    </div>
+  <div class="backdrop" id="backdrop"></div>
+  <div class="sheet" id="vsheet" role="dialog" aria-modal="true" aria-labelledby="vsT">
+    <div class="grab"></div>
+    <div class="sh-head"><div><h2 id="vsT"></h2><p id="vsD"></p></div><button class="iconbtn" id="vsClose" type="button" data-i18n-aria="sheet.close"><svg class="i"><use href="#i-close"/></svg></button></div>
     <div class="sh-val">
-      <button class="rbtn" type="button" data-d="-1" data-i18n-aria="sheet.less">−</button>
-      <output class="sh-out" id="shOut"></output>
-      <button class="rbtn" type="button" data-d="1" data-i18n-aria="sheet.more">+</button>
+      <button class="rbtn" id="vsMinus" type="button" data-i18n-aria="sheet.less"><svg class="i"><use href="#i-minus"/></svg></button>
+      <output class="sh-out" id="vsOut"><span class="roll" id="vsNum"></span><small id="vsUnit"></small></output>
+      <button class="rbtn" id="vsPlus" type="button" data-i18n-aria="sheet.more"><svg class="i"><use href="#i-plus"/></svg></button>
     </div>
-    <input type="range" class="ruler" id="shRange" min="0" max="10" step="1" data-i18n-aria="sheet.value">
-    <div class="sh-scale"><span id="shMin"></span><span id="shMax"></span></div>
-    <div class="sh-presets" id="shPresets"></div>
-    <button class="btn primary big" id="shDone" type="button" data-i18n="sheet.done">Fertig</button>
+    <input type="range" class="ruler" id="vsRange" data-i18n-aria="sheet.value">
+    <div class="sh-scale"><span id="vsMin"></span><span id="vsMax"></span></div>
+    <div class="sh-presets" id="vsPre"></div>
+    <button class="btn primary big" id="vsOk" type="button" data-i18n="sheet.apply">Übernehmen</button>
   </div>
-</div>
+  <div class="sheet" id="gsheet" role="dialog" aria-modal="true" aria-labelledby="gsT"><div class="grab"></div><div class="stack" id="gsBody"></div></div>
 
-<div class="sheet-bg" id="cardBg" hidden>
-  <div class="sheet rolecard" role="dialog" aria-modal="true" aria-labelledby="cardWho">
-    <div class="sh-head">
-      <div><h2 id="cardWho"></h2><p data-i18n="card.secret"></p></div>
-      <button class="iconbtn" id="cardClose" type="button" data-i18n-aria="sheet.close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  <!-- Murder Mystery role card: the back floats, a tap turns it over -->
+  <div class="cardov" id="cardov" hidden role="dialog" aria-modal="true" aria-labelledby="cvWho">
+    <div class="cv-top"><div><p data-i18n="card.secret"></p><h2 id="cvWho"></h2></div><button class="iconbtn" id="cvClose" type="button" data-i18n-aria="sheet.close"><svg class="i"><use href="#i-close"/></svg></button></div>
+    <div class="cv-stage">
+      <div class="cv-aura"></div>
+      <div class="cv-float">
+        <button class="cv-card" id="cvCard" type="button" data-i18n-aria="card.tap">
+          <span class="cv-flip" id="cvFlip">
+            <span class="face back" id="cvBack"></span>
+            <span class="face front"><span class="fv" id="cvFrame"></span><span class="cv-content" id="cvContent"></span><span class="cv-glint" id="cvGlint"></span></span>
+          </span>
+        </button>
+      </div>
+      <div class="cv-sparks" id="cvSparks"></div>
     </div>
-    <button class="reveal" id="cardReveal" type="button">
-      <span class="rv-frame" id="cardFrame" aria-hidden="true"></span>
-      <span class="rv-cover"><span class="rv-back" id="cardBack"></span><span class="rv-tap" data-i18n="card.tap"></span></span>
-      <span class="rv-body" id="cardBody"></span>
-    </button>
-    <div class="card-acts" id="cardActs"></div>
-    <button class="btn primary big" id="cardDone" type="button" data-i18n="card.done"></button>
+    <div class="cv-foot">
+      <p class="cv-hint" data-i18n="card.tap"></p>
+      <div class="cv-acts" id="cvActs"></div>
+      <button class="btn primary big" id="cvDone" type="button" data-i18n="card.done"></button>
+    </div>
   </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 </div>
 
 <script src="vendor/qrcode.js"></script>
 <script src="i18n.js"></script>
 <script src="art.js"></script>
+<script src="ui.js"></script>
 <script src="modes.js"></script>
 <script src="app.js"></script>
 </body>

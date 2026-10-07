@@ -1,7 +1,7 @@
 /* Offline support: the app shell is cached on first visit so the timer still opens on a field without signal.
    Own files are fetched network-first (a new deploy shows up right away), fonts cache-first. */
-const CACHE = 'airsoft-ops-v11';
-const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'modes.js', 'i18n.js', 'art.js', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png', 'vendor/qrcode.js', 'audio/lines.json',
+const CACHE = 'airsoft-ops-v12';
+const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'ui.js', 'modes.js', 'i18n.js', 'art.js', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png', 'vendor/qrcode.js', 'audio/lines.json',
   'img/modes/bomb.webp', 'img/modes/vip.webp', 'img/modes/snd.webp', 'img/modes/br.webp', 'img/modes/hostage.webp', 'img/modes/inf.webp', 'img/modes/murder.webp', 'img/logo.webp', 'img/card-frame.webp', 'img/card-back.webp'];
 
 /* The announcer files are listed in audio/lines.json (written by tools/generate_voice.py). */

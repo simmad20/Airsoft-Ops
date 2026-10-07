@@ -1,4 +1,4 @@
-/* Game modes besides the bomb: settings, rules, screens and Murder Mystery roles.
+/* Game modes: settings, rules, screens and Murder Mystery roles (the bomb's logic lives in app.js).
    app.js owns the game loop, sessions and sound. It merges DEF/TIME from here into its settings
    and calls MODES.create(ctx) once its helpers exist. All text goes through T() (i18n.js).
 
@@ -64,11 +64,9 @@
   /* ---------- Murder Mystery roles ---------- */
   /* Cards are data (role keys, names); the text is rendered on the phone that shows them. */
   const ROLES = {
-    murderer: { icon: '🔪', team: 'evil' }, innocent: { icon: '😇', team: 'good' }, medic: { icon: '💉', team: 'good' },
-    bounty: { icon: '🎯', team: 'own' }, copycat: { icon: '🎲', team: 'draw' }, amok: { icon: '⚠️', team: 'own' },
-    twin: { icon: '👯', team: 'good' }, detective: { icon: '🔎', team: 'good' }, informant: { icon: '🕵️', team: 'good' },
-    bodyguard: { icon: '🛡️', team: 'good' }, double: { icon: '🎭', team: 'good' }, avenger: { icon: '💀', team: 'good' },
-    joker: { icon: '🃏', team: 'own' }, scientist: { icon: '🧪', team: 'good' }, spy: { icon: '📡', team: 'good' }
+    murderer: { team: 'evil' }, innocent: { team: 'good' }, medic: { team: 'good' }, bounty: { team: 'own' }, copycat: { team: 'draw' },
+    amok: { team: 'own' }, twin: { team: 'good' }, detective: { team: 'good' }, informant: { team: 'good' }, bodyguard: { team: 'good' },
+    double: { team: 'good' }, avenger: { team: 'good' }, joker: { team: 'own' }, scientist: { team: 'good' }, spy: { team: 'good' }
   };
   const COPYCAT_DRAW = ['innocent', 'medic', 'amok'];
   const realRole = (p) => (p.role === 'copycat' ? p.drawn : p.role);
@@ -132,74 +130,43 @@
     return tr(k, out);
   }
 
-  /* ---------- Mode list, home cards and lobby settings ---------- */
-  const tcard = (key, label, sub) => '<button class="tcard" type="button" data-key="' + key + '"><span class="tl" data-i18n="' + label + '"></span><span class="tv"></span><span class="td" data-i18n="' + sub + '"></span></button>';
+  /* ---------- Mode list: deck cards (numeral), lobby setting cards [key, label, sub] ---------- */
   const LIST = [
-    { id: 'bomb', icon: '💣', img: 'img/modes/bomb.webp' },
-    { id: 'vip', icon: '👑', img: 'img/modes/vip.webp',
-      setup: '<div class="tgrid">' + tcard('vipTime', 'vip.time', 'vip.timeSub') + tcard('vipLives', 'vip.lives', 'vip.livesSub') + tcard('vipTargets', 'vip.targets', 'vip.targetsSub') + '</div>' },
-    { id: 'snd', icon: '🎯', img: 'img/modes/snd.webp',
-      setup: '<div class="tgrid">' + tcard('sndTime', 'snd.time', 'snd.timeSub') + tcard('sndObjs', 'snd.objs', 'snd.objsSub') + tcard('sndNeed', 'snd.need', 'snd.needSub') + tcard('sndHold', 'snd.hold', 'snd.holdSub') + '</div>' },
-    { id: 'br', icon: '🪂', img: 'img/modes/br.webp',
-      setup: '<div class="tgrid">' + tcard('brTeams', 'br.teams', 'br.teamsSub') + tcard('brTime', 'br.time', 'br.timeSub') + tcard('brZone', 'br.zone', 'br.zoneSub') + tcard('brDrop', 'br.drop', 'br.dropSub') + tcard('brPts', 'br.pts', 'br.ptsSub') + '</div>' },
-    { id: 'hostage', icon: '🆘', img: 'img/modes/hostage.webp',
-      setup: '<div class="tgrid">' + tcard('hosTime', 'hos.time', 'hos.timeSub') + tcard('hosFree', 'hos.free', 'hos.freeSub') + tcard('hosEvac', 'hos.evac', 'hos.evacSub') + '</div>' },
-    { id: 'inf', icon: '🧟', img: 'img/modes/inf.webp',
-      setup: '<div class="tgrid">' + tcard('infPlayers', 'inf.players', 'inf.playersSub') + tcard('infStart', 'inf.start', 'inf.startSub') + tcard('infDelay', 'inf.delay', 'inf.delaySub') + tcard('infTime', 'inf.time', 'inf.timeSub') + '</div>' },
-    { id: 'murder', icon: '🔪', img: 'img/modes/murder.webp',
-      setup: '<div class="tgrid">' + tcard('muMurderers', 'mu.murderers', 'mu.murderersSub') + tcard('muTime', 'mu.time', 'mu.timeSub') + '</div>' +
-        '<div class="group"><div class="row stack"><div class="txt"><div class="lbl" data-i18n="mu.special"></div><div class="desc" data-i18n="mu.specialDesc"></div></div><div class="rolepick" id="muRolePick"></div></div></div>' +
-        '<div class="group"><div class="row stack"><div class="txt"><div class="lbl" data-i18n="mu.names"></div><div class="desc" data-i18n="mu.namesDesc"></div></div>' +
-        '<textarea class="names" id="muNames" rows="5"></textarea><div class="desc" id="muCount"></div></div></div>' }
+    { id: 'bomb', num: 'I', keys: [['roundTime', 'bomb.roundTime', 'bomb.roundTimeSub'], ['bombTime', 'bomb.bombTime', 'bomb.bombTimeSub'], ['plantTime', 'bomb.plant', 'bomb.plantSub'], ['defuseTime', 'bomb.defuse', 'bomb.defuseSub']], toggles: [['half', 'bomb.half', 'bomb.halfDesc']] },
+    { id: 'vip', num: 'II', keys: [['vipTime', 'vip.time', 'vip.timeSub'], ['vipLives', 'vip.lives', 'vip.livesSub'], ['vipTargets', 'vip.targets', 'vip.targetsSub']] },
+    { id: 'snd', num: 'III', keys: [['sndTime', 'snd.time', 'snd.timeSub'], ['sndObjs', 'snd.objs', 'snd.objsSub'], ['sndNeed', 'snd.need', 'snd.needSub'], ['sndHold', 'snd.hold', 'snd.holdSub']] },
+    { id: 'br', num: 'IV', keys: [['brTeams', 'br.teams', 'br.teamsSub'], ['brTime', 'br.time', 'br.timeSub'], ['brZone', 'br.zone', 'br.zoneSub'], ['brDrop', 'br.drop', 'br.dropSub'], ['brPts', 'br.pts', 'br.ptsSub']] },
+    { id: 'hostage', num: 'V', keys: [['hosTime', 'hos.time', 'hos.timeSub'], ['hosFree', 'hos.free', 'hos.freeSub'], ['hosEvac', 'hos.evac', 'hos.evacSub']] },
+    { id: 'inf', num: 'VI', keys: [['infPlayers', 'inf.players', 'inf.playersSub'], ['infStart', 'inf.start', 'inf.startSub'], ['infDelay', 'inf.delay', 'inf.delaySub'], ['infTime', 'inf.time', 'inf.timeSub']] },
+    { id: 'murder', num: 'VII', keys: [['muMurderers', 'mu.murderers', 'mu.murderersSub'], ['muTime', 'mu.time', 'mu.timeSub']] }
   ];
   const BY_ID = {};
   LIST.forEach((m) => { BY_ID[m.id] = m; });
 
-  /* Mode art: the AI picture, or the hand-built vector version (setting "Bilder", body[data-art]).
-     Slots (.artslot[data-art]) are refilled when the setting changes. */
-  const artStyle = () => document.body.dataset.art || 'ai';
-  function art(id, cls) {
-    const m = BY_ID[id];
-    const inner = artStyle() === 'vector' && window.ART ? window.ART.mode(id)
-      : '<span class="art-emoji">' + m.icon + '</span>' + (m.img ? '<img src="' + m.img + '" alt="" onerror="this.remove()">' : '');
-    return '<span class="art ' + (cls || '') + '">' + inner + '</span>';
+  /* Pictures: the AI images or the hand-built vector versions (setting "Bilder"). */
+  let artStyle = 'ai';
+  function artHTML(id) {
+    if (artStyle === 'vector' && window.ART) {
+      const s = id === 'logo' ? window.ART.logo() : window.ART.mode(id);
+      return s.replace('<svg ', '<svg preserveAspectRatio="xMidYMid slice" ');
+    }
+    return '<img src="' + (id === 'logo' ? 'img/logo.webp' : 'img/modes/' + id + '.webp') + '" alt="" draggable="false">';
   }
-  const slot = (id, cls) => '<span class="artslot" data-art="' + id + '" data-cls="' + (cls || '') + '">' + art(id, cls) + '</span>';
-  function fillArt() {
-    document.querySelectorAll('.artslot').forEach((el) => { el.innerHTML = art(el.dataset.art, el.dataset.cls); });
-    const logo = document.getElementById('logoSlot');
-    if (logo) logo.innerHTML = artStyle() === 'vector' && window.ART ? window.ART.logo() : '<img src="img/logo.webp" alt="">';
-  }
+  const cardBackHTML = () => (artStyle === 'vector' && window.ART ? '<span class="fv">' + window.ART.cardFrame() + window.ART.cardBack() + '</span>' : '<img src="img/card-back.webp" alt="" draggable="false">');
+  const cardFrameHTML = () => (artStyle === 'vector' && window.ART ? window.ART.cardFrame() : '<img src="img/card-frame.webp" alt="" draggable="false">');
+  function fillArt(root) { (root || document).querySelectorAll('.aslot[data-art]').forEach((el) => { el.innerHTML = artHTML(el.dataset.art); }); }
   /* Role symbol: hand-drawn neon glyph (never an emoji). */
   const sym = (role, cls) => (window.ART ? window.ART.role(role, cls) : '');
 
-  /* Home cards and lobby setup markup go in before app.js runs, so its time-card code picks up these cards too. */
-  (function buildSetup() {
-    const host = document.getElementById('modeSets');
-    LIST.forEach((m) => {
-      if (!m.setup) return;
-      const d = document.createElement('div');
-      d.className = 'modeset'; d.dataset.mode = m.id; d.hidden = true;
-      d.innerHTML = m.setup;
-      host.appendChild(d);
-    });
-    const grid = document.getElementById('modeGrid');
-    LIST.forEach((m) => {
-      const b = document.createElement('button');
-      b.type = 'button'; b.className = 'modecard'; b.dataset.mode = m.id;
-      b.innerHTML = slot(m.id) + '<span class="mc-name" data-i18n="m.' + m.id + '.name"></span><span class="mc-tag" data-i18n="m.' + m.id + '.tag"></span>';
-      grid.appendChild(b);
-    });
-  })();
-
   /* ---------- Runtime ---------- */
   function create(ctx) {
+    const UI = window.UI, ic = UI.ic;
     const $ = (id) => document.getElementById(id);
     const S = () => ctx.S();
     const G = () => ctx.G();
 
-    /* Small persistent store for secrets that live only on this phone. */
-    /* Cards from an older app version (text instead of role keys) are dropped. */
+    /* Small persistent store for secrets that live only on this phone.
+       Cards from an older app version (text instead of role keys) are dropped. */
     const valid = (k, v) => {
       if (!v) return null;
       if (k === 'abt-card') return v.card && ROLES[v.card.role] ? v : null;
@@ -231,16 +198,16 @@
       if (dur > 20000) out.push({ k: 's10', at: g.endAt - 10000, say: ['s10'], cat: 'events' });
       return out;
     }
+    const remote = () => ctx.isRemote();
 
-    /* Generic hold button markup + wiring (host only). */
-    const holdHtml = (attrs, big, hint, cls) => '<button class="hold mhold ' + (cls || '') + '" type="button" ' + attrs + '><span class="fill"></span><span class="letter">' + big + '</span><span class="hint">' + hint + '</span></button>';
-    function holdProgress(el, h, t) {
-      const p = h && h.start ? Math.min(1, Math.max(0, (t - h.start) / h.dur)) : 0;
-      el.style.setProperty('--p', p);
-      el.classList.toggle('holding', p > 0);
-    }
+    /* Hold pads. The controlling phone publishes { start, base, dur } so the other phones can mirror
+       the progress; a paused hold (finger slipped) has start null. */
+    const padAttrs = (attrs) => attrs + (remote() ? ' disabled' : '');
+    const holdP = (h, t) => (h ? (h.start ? Math.min(1, (h.base || 0) + (t - h.start) / h.dur) : (h.base || 0)) : 0);
+    function mirror(el, h, t) { if (el) UI.padShow(el, holdP(h, t), !!(h && h.start)); }
 
     /* ---------- VIP ---------- */
+    const heart = (cls) => '<svg class="heart ' + (cls || '') + '" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>';
     const vip = {
       start(s, t) {
         const cfg = { time: s.vipTime, lives: s.vipLives, targets: s.vipTargets };
@@ -252,17 +219,14 @@
       },
       timeline: warnings,
       clock: (g, t) => ({ label: tr('game.left'), text: ctx.fmt(left(g, t)) }),
-      status(g) {
-        let h = '';
-        for (let i = 0; i < g.cfg.lives; i++) h += i < g.lives ? '❤️' : '🖤';
-        return tr('vip.status', { hearts: h });
-      },
-      body(g, remote) {
-        if (remote) return '<p class="mnote">' + tr('vip.remote') + '</p>';
-        return (g.cfg.targets > 1 ? '<button class="btn ghost" data-act="vipShow" type="button">' + tr('vip.show') + '</button><div class="secret" id="vipTarget" hidden></div>' : '') +
-          '<button class="btn big hitbtn" data-act="vipHit" type="button">' + tr('vip.hit') + '</button>' +
-          holdHtml('data-hold="vipGoal"', tr('vip.goal'), tr('vip.goalHint'), 'goal') +
-          '<button class="btn ghost small" data-act="vipUndo" type="button">' + tr('vip.undo') + '</button>';
+      status: (g) => tr('vip.lifeStatus', { n: g.lives, m: g.cfg.lives }),
+      body(g) {
+        let h = '<div class="hearts" id="vHearts" role="img"></div>';
+        if (remote()) return h + '<p class="fine center">' + tr('vip.remote') + '</p>';
+        h += g.cfg.targets > 1 ? '<button class="btn ghost wide" data-act="vipShow" type="button">' + ic('viewer') + '<span>' + tr('vip.show') + '</span></button><div id="vipTarget"></div>' : '<p class="fine center">' + tr('vip.oneTarget') + '</p>';
+        return h + '<div class="vip-acts"><button class="btn hit" data-act="vipHit" type="button">' + ic('burst') + '<span>' + tr('vip.hit') + '</span></button>' +
+          '<div class="pads one">' + UI.padHTML('data-hold="vipGoal"', tr('vip.goal'), tr('vip.goalHint'), 'goal') + '</div>' +
+          '<button class="btn ghost small wide" data-act="vipUndo" type="button">' + ic('undo') + '<span>' + tr('vip.undo') + '</span></button></div>';
       },
       bind(root) {
         const el = root.querySelector('[data-hold="vipGoal"]');
@@ -270,11 +234,20 @@
           ctx.setG(finish(G(), ctx.now(), { why: 'goal', side: 'def', kicker: 'vip.rGoalK', title: 'vip.rEscort', sub: 'vip.rGoalSub', say: ['vip_extracted', 'escort_win'], sig: 'jingle' }));
         } });
       },
+      update(root, g) {
+        const box = $('vHearts'); if (!box) return;
+        if (box._l === g.lives) return;
+        const prev = box._l; box._l = g.lives;
+        box.innerHTML = Array.from({ length: g.cfg.lives }, (_, i) => heart((i < g.lives ? '' : 'lost') + (prev != null && prev > g.lives && i === g.lives ? ' break' : prev != null && prev < g.lives && i === g.lives - 1 ? ' gain' : ''))).join('');
+        box.setAttribute('aria-label', tr('vip.hearts', { n: g.lives, m: g.cfg.lives }));
+      },
       act(name) {
         const g = G();
         if (name === 'vipShow') {
           const box = $('vipTarget'), sec = ctx.secret(g.id) || {};
-          if (box.hidden) { box.textContent = tr('vip.target', { p: LETTERS[sec.target || 0] }); box.hidden = false; setTimeout(() => { box.hidden = true; }, 5000); } else box.hidden = true;
+          if (box.innerHTML) { box.innerHTML = ''; return; }
+          box.innerHTML = '<div class="secret"><small>' + tr('vip.only') + '</small><b>' + tr('vip.target', { p: LETTERS[sec.target || 0] }) + '</b><small>' + tr('vip.hide5') + '</small><i></i></div>';
+          clearTimeout(vip._t); vip._t = setTimeout(() => { if (box) box.innerHTML = ''; }, 5000);
         } else if (name === 'vipHit') {
           const lives = g.lives - 1;
           if (lives <= 0) ctx.setG(finish(Object.assign({}, g, { lives: 0 }), ctx.now(), { why: 'down', side: 'att', kicker: 'vip.rDownK', title: 'vip.rHunters', sub: 'vip.rDownSub', say: ['vip_down', 'hunter_win'], sig: 'low' }));
@@ -282,7 +255,8 @@
         } else if (name === 'vipUndo') {
           if (g.lives < g.cfg.lives) commit({ lives: g.lives + 1 });
         }
-      }
+      },
+      icon: (r) => (r.why === 'goal' ? 'crown' : r.why === 'down' ? 'skull' : 'hour')
     };
 
     /* ---------- Search & Destroy ---------- */
@@ -312,19 +286,24 @@
       timeline: warnings,
       clock: (g, t) => ({ label: tr('snd.clock', { r: g.roundNo, a: g.attacker }), text: ctx.fmt(left(g, t)) }),
       status: (g) => tr('snd.status', { d: g.objs.filter(Boolean).length, n: g.cfg.need }),
-      body(g, remote) {
-        let h = '<div class="objgrid">';
-        g.objs.forEach((d, i) => { h += holdHtml('data-hold="obj" data-i="' + i + '"', LETTERS[i], remote ? tr('snd.objLabel', { o: LETTERS[i] }) : tr('snd.holdHint', { n: g.cfg.hold }), 'obj'); });
+      body(g) {
+        const a = g.attacker;
+        let h = '<div class="score-mini"><span class="' + (a === 1 ? 'att' : '') + '">Team 1</span><b>' + g.score[1] + '</b><span>:</span><b>' + g.score[2] + '</b><span class="' + (a === 2 ? 'att' : '') + '">Team 2</span></div>' +
+          '<div class="pips" id="sPips">' + Array(g.cfg.need).fill('<i></i>').join('') + '</div><div class="objgrid">';
+        g.objs.forEach((d, i) => { h += UI.padHTML(padAttrs('data-hold="obj" data-i="' + i + '"'), LETTERS[i], remote() ? tr('snd.objLabel', { o: LETTERS[i] }) : tr('snd.holdHint', { n: g.cfg.hold }), 'obj'); });
         h += '</div>';
-        if (!remote) h += '<button class="btn ghost danger" data-act="sndElim" data-confirm="1" type="button">' + tr('snd.elim') + '</button>';
+        if (!remote()) h += '<button class="btn ghost danger wide" data-act="sndElim" data-confirm="1" type="button">' + ic('skull') + '<span>' + tr('snd.elim') + '</span></button><p class="fine center">' + tr('snd.carry') + '</p>';
         return h;
       },
       bind(root) {
         root.querySelectorAll('[data-hold="obj"]').forEach((el) => {
           const i = +el.dataset.i;
+          const dur = () => G().cfg.hold;
           ctx.makeHold(el, {
-            duration: () => G().cfg.hold,
-            onStart: () => { if (!G().objs[i]) commit({ hold: { i, start: ctx.now(), dur: G().cfg.hold * 1000 } }); },
+            duration: dur,
+            enabled: () => !G().objs[i],
+            onStart: (p) => commit({ hold: { i, base: p, start: ctx.now(), dur: dur() * 1000 } }),
+            onPause: (p) => commit({ hold: { i, base: p, start: null, dur: dur() * 1000 } }),
             onCancel: () => commit({ hold: null }),
             onDone: () => {
               const g = G(); if (g.phase !== 'round' || g.objs[i]) return;
@@ -337,11 +316,15 @@
         });
       },
       update(root, g, t) {
+        const d = g.objs.filter(Boolean).length;
+        root.querySelectorAll('#sPips i').forEach((p, i) => p.classList.toggle('on', i < d));
         root.querySelectorAll('[data-hold="obj"]').forEach((el) => {
           const i = +el.dataset.i, done = !!g.objs[i];
-          el.classList.toggle('done', done);
-          el.disabled = done;
-          if (done) { el.style.setProperty('--p', 1); el.querySelector('.hint').textContent = tr('snd.done'); } else if (ctx.isRemote()) holdProgress(el, g.hold && g.hold.i === i ? g.hold : null, t);
+          if (done && !el.classList.contains('done')) {
+            el.classList.add('done'); el.disabled = true; el.style.setProperty('--p', 1);
+            el.querySelector('.hold-sub').textContent = tr('snd.done'); el.dataset.sub = tr('snd.done');
+          }
+          if (!done && remote()) mirror(el, g.hold && g.hold.i === i ? g.hold : null, t);
         });
       },
       act(name) {
@@ -356,7 +339,9 @@
         return '<div class="score"><div><span>Team 1</span><b>' + g.score[1] + '</b></div><i>:</i><div><span>Team 2</span><b>' + g.score[2] + '</b></div></div>' +
           '<p class="fine center">' + tr('snd.after', { r: g.roundNo, t: next }) + '</p>';
       },
-      again: () => tr('snd.again')
+      again: () => tr('snd.again'), againIcon: 'swap',
+      icon: (r) => (r.why === 'objs' ? 'burst' : r.why === 'elim' ? 'shield' : 'hour'),
+      fx: () => 'win'
     };
 
     /* ---------- Battle Royale ---------- */
@@ -371,7 +356,7 @@
       derive(g, t) {
         if (g.endAt && t >= g.endAt) {
           const a = br.alive(g);
-          return finish(g, g.endAt, { why: 'timeout', side: 'none', kicker: 'br.rTimeK', title: a.length === 1 ? 'br.rTeamWins' : 'br.rDraw', sub: 'br.rStill', v: { t: a[0] + 1, list: a.map(teamName).join(', ') }, say: ['timeout', 'draw'], sig: 'low' });
+          return finish(g, g.endAt, { why: 'timeout', side: a.length === 1 ? 'def' : 'none', kicker: 'br.rTimeK', title: a.length === 1 ? 'br.rTeamWins' : 'br.rDraw', sub: 'br.rStill', v: { t: a[0] + 1, list: a.map(teamName).join(', ') }, say: ['timeout', 'draw'], sig: 'low' });
         }
         return g;
       },
@@ -394,37 +379,42 @@
         return g.endAt && at >= g.endAt ? null : at;
       },
       clock: (g, t) => (g.endAt ? { label: tr('game.left'), text: ctx.fmt(left(g, t)) } : { label: tr('game.elapsed'), text: ctx.fmt(t - g.startedAt) }),
-      status(g, t) {
-        const parts = [tr('br.alive', { n: br.alive(g).length })];
-        const z = br.next(g, t, g.cfg.zone), d = br.next(g, t, g.cfg.drop, 5000);
-        if (z) parts.push(tr('br.zoneIn', { t: ctx.fmt(z - t) }));
-        if (d) parts.push(tr('br.dropIn', { t: ctx.fmt(d - t) }));
-        return parts.join(' · ');
-      },
-      body(g, remote) {
-        let h = '<div class="teams">';
+      status: (g) => tr('br.teamsLeft', { n: br.alive(g).length }),
+      body(g) {
+        const cd = (id, cls, icon, lab, small, off) => '<div class="cd ' + cls + (off ? ' offc' : '') + '" id="' + id + '"><svg class="cr" viewBox="0 0 52 52" aria-hidden="true"><circle class="cr-t" cx="26" cy="26" r="22"/><circle class="cr-p" cx="26" cy="26" r="22" pathLength="100" style="stroke-dashoffset:' + (off ? 100 : 0) + '"/></svg><span class="cd-ic">' + ic(icon) + '</span><div><span>' + lab + '</span><b class="roll">' + (off ? tr('u.off') : '') + '</b><small>' + small + '</small></div></div>';
+        let h = '<div class="cds">' + cd('cdZone', '', 'zone', tr('br.zone'), g.cfg.zone ? tr('br.zoneEvery', { n: g.cfg.zone }) : tr('br.inLobby'), !g.cfg.zone) +
+          cd('cdDrop', 'drop', 'drop', tr('br.drop'), g.cfg.drop ? tr('br.dropPts', { n: g.cfg.pts }) : tr('br.inLobby'), !g.cfg.drop) + '</div><div class="teams">';
         g.out.forEach((o, i) => {
-          h += '<button class="team" type="button" data-act="brTeam" data-i="' + i + '" style="--tc:' + TEAM_HEX[i] + '"' + (remote ? ' disabled' : '') + '><i></i><span>' + teamName(i) + '<small>' + tr('color.' + i) + '</small></span><em></em></button>';
+          h += '<button class="team" type="button" data-act="brTeam" data-i="' + i + '" style="--tc:' + TEAM_HEX[i] + ';animation-delay:' + (i * 60 + 150) + 'ms"' + (remote() ? ' disabled' : '') + '><i></i><span>' + teamName(i) + '<small>' + tr('color.' + i) + '</small></span><em></em></button>';
         });
-        return h + '</div>' + (remote ? '' : '<p class="fine">' + tr('br.help') + '</p>');
+        return h + '</div>' + (remote() ? '' : '<p class="fine">' + tr('br.help') + '</p>');
       },
-      update(root, g) {
+      update(root, g, t) {
         root.querySelectorAll('.team').forEach((el) => {
           const i = +el.dataset.i, o = !!g.out[i];
           el.classList.toggle('out', o);
-          if (!el.classList.contains('armed')) el.querySelector('em').textContent = tr(o ? 'br.out' : 'br.in');
+          if (!el.classList.contains('armed')) { const tx = tr(o ? 'br.out' : 'br.in'), em = el.querySelector('em'); if (em.textContent !== tx) em.textContent = tx; }
         });
+        const upd = (id, next, per) => {
+          const el = $(id); if (!el || !per) return;
+          if (next == null) { UI.roll(el.querySelector('b'), '—'); el.querySelector('.cr-p').style.strokeDashoffset = 100; return; }
+          const rem = next - t;
+          UI.roll(el.querySelector('b'), ctx.fmt(rem), -1);
+          el.querySelector('.cr-p').style.strokeDashoffset = (100 * (1 - UI.clamp(rem / per, 0, 1))).toFixed(1);
+        };
+        upd('cdZone', br.next(g, t, g.cfg.zone), g.cfg.zone * 60000);
+        upd('cdDrop', br.next(g, t, g.cfg.drop, 5000), g.cfg.drop * 60000);
       },
       act(name, el) {
         if (name !== 'brTeam') return;
         const i = +el.dataset.i;
         if (!el.classList.contains('armed')) {
           root().querySelectorAll('.team.armed').forEach((x) => x.classList.remove('armed'));
-          el.classList.add('armed'); el.querySelector('em').textContent = tr(G().out[i] ? 'br.backQ' : 'br.outQ');
+          el.classList.add('armed'); el.querySelector('em').textContent = tr(G().out[i] ? 'br.backQ' : 'br.outQ'); ctx.buzz(25);
           clearTimeout(el._t); el._t = setTimeout(() => { el.classList.remove('armed'); }, 3000);
           return;
         }
-        el.classList.remove('armed');
+        clearTimeout(el._t); el.classList.remove('armed');
         const g = G(), out = g.out.slice(), t = ctx.now();
         out[i] = out[i] ? 0 : t;
         const gg = Object.assign({}, g, { out });
@@ -435,8 +425,10 @@
       },
       endExtra(g) {
         const order = g.out.map((o, i) => ({ i, o })).sort((a, b) => (b.o || Infinity) - (a.o || Infinity));
-        return '<ol class="rank">' + order.map((x, n) => '<li><i style="--tc:' + TEAM_HEX[x.i] + '"></i>' + teamName(x.i) + ' <small>' + tr('color.' + x.i) + '</small><span>' + (x.o ? tr('br.outAfter', { t: ctx.fmt(x.o - g.startedAt) }) : tr(n === 0 ? 'br.winner' : 'br.stillIn')) + '</span></li>').join('') + '</ol>';
-      }
+        return '<ol class="rank">' + order.map((x, n) => '<li style="--i:' + n + '"><i style="--tc:' + TEAM_HEX[x.i] + '"></i>' + teamName(x.i) + ' <small>' + tr('color.' + x.i) + '</small><span>' + (x.o ? tr('br.outAfter', { t: ctx.fmt(x.o - g.startedAt) }) : tr(n === 0 ? 'br.winner' : 'br.stillIn')) + '</span></li>').join('') + '</ol>';
+      },
+      icon: (r) => (r.why === 'win' ? 'crown' : 'hour'),
+      fx: (r) => (r.why === 'win' ? 'win' : 'neutral')
     };
 
     /* ---------- Hostage rescue ---------- */
@@ -452,19 +444,22 @@
       timeline: warnings,
       layout: (g) => g.stage,
       clock: (g, t) => ({ label: tr('game.left'), text: ctx.fmt(left(g, t)) }),
-      status: (g) => tr(g.stage === 'held' ? 'hos.held' : 'hos.freed'),
-      body(g, remote) {
+      status: () => '',
+      body(g) {
         const held = g.stage === 'held';
-        const hint = remote ? tr(held ? 'hos.remoteFree' : 'hos.remoteEvac') : tr(held ? 'hos.freeHint' : 'hos.evacHint', { n: held ? g.cfg.free : g.cfg.evac });
-        return holdHtml('data-hold="hos"', tr(held ? 'hos.free' : 'hos.evacBig'), hint, held ? 'free' : 'goal') +
-          (remote ? '' : '<button class="btn ghost danger" data-act="hosElim" data-confirm="1" type="button">' + tr('hos.elim') + '</button>');
+        const hint = remote() ? tr(held ? 'hos.remoteFree' : 'hos.remoteEvac') : tr(held ? 'bomb.padHint' : 'hos.evacHint', { n: held ? g.cfg.free : g.cfg.evac });
+        return '<div class="phases"><div class="ph ' + (held ? 'on' : 'done') + '"><b>' + (held ? '1' : ic('check')) + '</b>' + tr('hos.phase1') + '</div><div class="ph-line ' + (held ? '' : 'on') + '"><i></i></div><div class="ph ' + (held ? '' : 'on') + '"><b>2</b>' + tr('hos.phase2') + '</div></div>' +
+          '<div class="mid"><span class="pill ' + (held ? 'red' : 'green') + '"><i class="sd"></i>' + tr(held ? 'hos.held' : 'hos.freed') + '</span></div>' +
+          '<div class="pads one">' + UI.padHTML(padAttrs('data-hold="hos"'), tr(held ? 'hos.free' : 'hos.evacBig'), hint, held ? 'free' : 'goal') + '</div>' +
+          (remote() ? '' : '<button class="btn ghost danger wide" data-act="hosElim" data-confirm="1" type="button">' + ic('skull') + '<span>' + tr('hos.elim') + '</span></button><p class="fine center">' + tr('hos.carry') + '</p>');
       },
       bind(root) {
         const el = root.querySelector('[data-hold="hos"]');
         const dur = () => (G().stage === 'held' ? G().cfg.free : G().cfg.evac);
         ctx.makeHold(el, {
           duration: dur,
-          onStart: () => commit({ hold: { start: ctx.now(), dur: dur() * 1000 } }),
+          onStart: (p) => commit({ hold: { base: p, start: ctx.now(), dur: dur() * 1000 } }),
+          onPause: (p) => commit({ hold: { base: p, start: null, dur: dur() * 1000 } }),
           onCancel: () => commit({ hold: null }),
           onDone: () => {
             const g = G(), t = ctx.now();
@@ -474,11 +469,12 @@
         });
       },
       update(root, g, t) {
-        if (ctx.isRemote()) holdProgress(root.querySelector('[data-hold="hos"]'), g.hold, t);
+        if (remote()) mirror(root.querySelector('[data-hold="hos"]'), g.hold, t);
       },
       act(name) {
         if (name === 'hosElim') ctx.setG(finish(G(), ctx.now(), { why: 'elim', side: 'att', kicker: 'hos.rElimK', title: 'hos.rKidnappers', sub: 'hos.rElimSub', say: ['res_elim', 'kidnappers_win'], sig: 'low' }));
-      }
+      },
+      icon: (r) => (r.why === 'evac' ? 'evac' : r.why === 'elim' ? 'skull' : 'hour')
     };
 
     /* ---------- Infection ---------- */
@@ -509,18 +505,25 @@
         return out;
       },
       clock: (g, t) => ({ label: tr('game.left'), text: ctx.fmt(left(g, t)) }),
-      status(g, t) {
-        const pend = g.hits.filter((h) => h > t).sort((a, b) => a - b);
-        return pend.length ? tr('inf.pending', { list: pend.map((h) => ctx.fmt(h - t)).join(', ') }) : tr('inf.none');
-      },
-      body(g, remote) {
-        return '<div class="counters"><div class="cnt surv"><b id="infSurv"></b><span>' + tr('inf.surv') + '</span></div><div class="cnt infd"><b id="infInf"></b><span>' + tr('inf.inf') + '</span></div></div>' +
-          (remote ? '' : '<button class="btn big hitbtn" data-act="infHit" type="button">' + tr('inf.hit') + '</button><button class="btn ghost small" data-act="infUndo" type="button">' + tr('inf.undo') + '</button>');
+      status: () => '',
+      body() {
+        return '<div class="counters"><div class="cnt surv" id="cS"><b class="roll" id="infSurv"></b><span>' + tr('inf.surv') + '</span></div><div class="cnt infd" id="cI"><b class="roll" id="infInf"></b><span>' + tr('inf.inf') + '</span></div></div>' +
+          '<div class="pend" id="iPend" aria-live="polite"></div>' +
+          (remote() ? '' : '<button class="btn hit" data-act="infHit" type="button">' + ic('virus') + '<span>' + tr('inf.hit') + '</span></button><button class="btn ghost small wide" data-act="infUndo" type="button">' + ic('undo') + '<span>' + tr('inf.undo') + '</span></button>');
       },
       update(root, g, t) {
-        const i = inf.infected(g, t);
-        $('infInf').textContent = i;
-        $('infSurv').textContent = g.cfg.players - i;
+        const n = inf.infected(g, t), box = $('iPend');
+        const surv = $('infSurv'), infd = $('infInf');
+        if (infd._n != null && n > infd._n && !UI.RM) { const c = $('cI'); c.classList.remove('bump'); void c.offsetWidth; c.classList.add('bump'); }
+        infd._n = n;
+        UI.roll(infd, String(n)); UI.roll(surv, String(g.cfg.players - n), -1);
+        const pend = g.hits.filter((h) => h > t), key = pend.join(',');
+        if (box._k !== key) { box._k = key; box.innerHTML = pend.length ? pend.map((h) => '<div class="pnd" data-h="' + h + '"><span>' + tr('inf.turning') + '</span><b></b><i></i></div>').join('') : '<p class="none">' + tr('inf.none') + '</p>'; }
+        box.querySelectorAll('.pnd').forEach((el) => {
+          const rem = +el.dataset.h - t, txt = ctx.fmt(rem), b = el.querySelector('b');
+          if (b.textContent !== txt) b.textContent = txt;
+          el.querySelector('i').style.transform = 'scaleX(' + UI.clamp(rem / (g.cfg.delay * 1000 || 1), 0, 1).toFixed(3) + ')';
+        });
       },
       act(name) {
         const g = G(), t = ctx.now();
@@ -530,7 +533,8 @@
         } else if (name === 'infUndo') {
           if (g.hits.length) commit({ hits: g.hits.slice(0, -1) });
         }
-      }
+      },
+      icon: (r) => (r.why === 'all' ? 'virus' : 'shield')
     };
 
     /* ---------- Murder Mystery ---------- */
@@ -538,32 +542,8 @@
     let MU = store.get('abt-mu');
     function sessionPlayers() { return ctx.members().filter((m) => m.role === 'player'); }
     function manualNames() { return (S().muNames || '').split('\n').map((x) => x.trim()).filter(Boolean).slice(0, 40); }
-    function paintMuSetup() {
-      const pickEl = $('muRolePick'); if (!pickEl) return;
-      const R = S().muRoles;
-      if (!pickEl.childElementCount) {
-        MU_EXTRA.forEach((k) => {
-          const b = document.createElement('button');
-          b.type = 'button'; b.dataset.role = k;
-          b.addEventListener('click', () => { S().muRoles[k] = !S().muRoles[k]; ctx.save(); paintMuSetup(); });
-          pickEl.appendChild(b);
-        });
-        const ta = $('muNames');
-        ta.value = S().muNames || '';
-        ta.addEventListener('input', () => { S().muNames = ta.value; ctx.save(); paintMuSetup(); });
-      }
-      $('muNames').placeholder = tr('mu.namesPh');
-      pickEl.querySelectorAll('button').forEach((b) => {
-        const k = b.dataset.role;
-        b.innerHTML = sym(k, 'mini') + '<span>' + esc(tr(k === 'twins' ? 'r.twins' : 'r.' + k)) + '</span>';
-        b.setAttribute('aria-pressed', String(!!R[k]));
-      });
-      const sp = sessionPlayers().length, mn = manualNames().length;
-      const roles = S().muMurderers + Object.keys(R).filter((k) => R[k]).reduce((n, k) => n + (k === 'twins' ? 2 : 1), 0);
-      $('muCount').textContent = tr('mu.count', { sp, mn, n: sp + mn, r: roles }) + (roles > sp + mn ? tr('mu.tooFew') : '');
-    }
-    const passList = () => MU.players.filter((p) => !p.mid).map((p) => '<button class="pass" type="button" data-act="muCard" data-name="' + esc(p.name) + '"><span>' + esc(p.name) + '</span><em></em></button>').join('');
     const murder = {
+      review: false, showRoles: false,
       start(s) {
         const players = sessionPlayers().map((m) => ({ name: m.name || tr('role.player'), mid: m.id })).concat(manualNames().map((n) => ({ name: n, mid: null })));
         const seen = {};
@@ -573,6 +553,7 @@
         const id = ctx.rid();
         MU = { id, players: res.players.map((p) => ({ name: p.name, mid: p.mid, role: p.role, drawn: p.drawn, card: p.card, seen: false })) };
         store.set('abt-mu', MU);
+        murder.review = false; murder.showRoles = false;
         /* Every session player gets their card, or an empty one if they sat this game out. */
         const given = {};
         MU.players.forEach((p) => { if (p.mid) { given[p.mid] = 1; ctx.sendPrivate(p.mid, { game: id, card: p.card }); } });
@@ -597,183 +578,269 @@
       status(g) {
         return g.stage === 'cards' ? tr('mu.cardsStatus') : tr('mu.alive', { n: g.players.filter((p) => !p.out).length, t: g.players.length });
       },
-      body(g, remote) {
-        let h = '';
-        if (remote) {
+      body(g) {
+        if (remote()) {
           const mine = store.get('abt-card');
-          h += mine && mine.game === g.rid ? '<button class="btn primary big" data-act="myRole" type="button">' + tr('mu.myRole') + '</button>' : (ctx.role() === 'player' ? '<p class="mnote">' + tr('mu.noRole') + '</p>' : '');
+          const h = mine && mine.game === g.rid ? '<button class="btn primary big" data-act="myRole" type="button">' + ic('cards') + '<span>' + tr('mu.myRole') + '</span></button>' : (ctx.role() === 'player' ? '<p class="fine center">' + tr('mu.noRole') + '</p>' : '');
           return h + '<div class="plist" id="muList"></div>';
         }
-        if (g.stage === 'cards') {
-          const manual = MU ? MU.players.filter((p) => !p.mid) : [];
-          if (manual.length) h += '<p class="mnote">' + tr('mu.passHint') + '</p><div class="passlist">' + passList() + '</div>';
-          if (MU && MU.players.some((p) => p.mid)) h += '<p class="mnote">' + tr('mu.phoneHint') + '</p>';
-          return h + '<button class="btn primary big" data-act="muPlay" type="button">' + tr('mu.play') + '</button>';
-        }
-        h += '<div class="plist" id="muList"></div><p class="fine">' + tr('mu.toggleHelp') + '</p>';
-        h += '<button class="btn ghost" data-act="muRoles" type="button">' + tr(murder.showRoles ? 'mu.hideRoles' : 'mu.showRoles') + '</button>';
-        if (MU && MU.players.some((p) => p.mid)) {
-          h += '<div class="group msg-gm"><div class="row stack"><div class="txt"><div class="lbl">' + tr('mu.msgTitle') + '</div><div class="desc">' + tr('mu.msgDesc') + '</div></div>' +
-            '<select id="muTo">' + MU.players.filter((p) => p.mid).map((p) => '<option value="' + esc(p.name) + '">' + esc(p.name) + '</option>').join('') + '</select>' +
-            '<input class="namein wide" id="muMsg" maxlength="200" placeholder="' + esc(tr('mu.msgPh')) + '"><button class="btn small" data-act="muSend" type="button">' + tr('mu.send') + '</button></div></div>';
-        }
-        if (MU && MU.players.some((p) => !p.mid)) h += '<button class="btn ghost" data-act="muCards" type="button">' + tr('mu.cards') + '</button><div class="passlist" id="muPass" hidden></div>';
-        return h + '<div class="winpick" id="muWin" hidden><div class="lbl">' + tr('mu.whoWon') + '</div>' +
-          ['evil', 'good', 'amok', 'bounty', 'joker', 'none'].map((w) => '<button class="btn small" data-act="muWinner" data-w="' + w + '" type="button">' + tr('mu.w.' + w) + '</button>').join('') +
-          '</div><button class="btn" data-act="muEnd" type="button">' + tr('mu.end') + '</button>';
+        return '<button class="btn ghost wide" data-act="muRoles" type="button" aria-pressed="' + murder.showRoles + '">' + ic(murder.showRoles ? 'eyeoff' : 'viewer') + '<span>' + tr(murder.showRoles ? 'mu.hideRoles' : 'mu.showRoles') + '</span></button>' +
+          '<div class="plist" id="muList"></div><p class="fine">' + tr('mu.toggleHelp') + '</p>' +
+          '<div class="gm-acts">' + (MU && MU.players.some((p) => p.mid) ? '<button class="btn ghost" data-act="muMsg" type="button">' + ic('msg') + '<span>' + tr('mu.msg') + '</span></button>' : '') +
+          (MU && MU.players.some((p) => !p.mid) ? '<button class="btn ghost" data-act="muCards" type="button">' + ic('cards') + '<span>' + tr('mu.cardsBtn') + '</span></button>' : '') + '</div>' +
+          '<button class="btn primary big" data-act="muEnd" type="button">' + ic('flag') + '<span>' + tr('mu.endBtn') + '</span></button>';
       },
       update(root, g) {
-        const list = $('muList');
-        if (list) {
-          const showRoles = !ctx.isRemote() && murder.showRoles && MU;
-          const html = g.players.map((p, i) => {
-            const r = showRoles ? MU.players.find((q) => q.name === p.name) : null;
-            return '<button class="pl' + (p.out ? ' out' : '') + '" type="button" data-act="muToggle" data-i="' + i + '"' + (ctx.isRemote() ? ' disabled' : '') + '><span>' + esc(p.name) + (r ? ' <small>' + sym(realRole(r), 'mini') + esc(roleLabel(r)) + '</small>' : '') + '</span><em>' + tr(p.out ? 'mu.out' : 'mu.in') + '</em></button>';
-          }).join('');
-          if (list._html !== html && !list.querySelector('.armed')) { list.innerHTML = html; list._html = html; }
-        }
-        root.querySelectorAll('.pass').forEach((b) => {
-          const p = MU && MU.players.find((q) => q.name === b.dataset.name);
-          b.querySelector('em').textContent = p && p.seen ? tr('mu.seen') : '';
-        });
+        const list = $('muList'); if (!list) return;
+        const showRoles = !remote() && murder.showRoles && MU;
+        const html = g.players.map((p, i) => {
+          const r = showRoles ? MU.players.find((q) => q.name === p.name) : null;
+          return '<button class="pl' + (p.out ? ' out' : '') + '" type="button" data-act="muToggle" data-i="' + i + '"' + (remote() ? ' disabled' : '') + '><span class="mid2"><span class="nm">' + esc(p.name) + '</span>' +
+            (p.phone ? '<span class="ph2" title="' + esc(tr('mu.withPhone')) + '">' + ic('phone') + '</span>' : '') +
+            (r ? '<span class="rl2" style="animation-delay:' + i * 40 + 'ms">' + sym(realRole(r), 'mini') + esc(roleLabel(r)) + '</span>' : '') + '</span><em>' + tr(p.out ? 'mu.out' : 'mu.in') + '</em></button>';
+        }).join('');
+        if (list._html !== html && !list.querySelector('.armed')) { list.innerHTML = html; list._html = html; }
       },
       act(name, el) {
         const g = G();
         if (name === 'myRole') return openMyCard();
-        if (name === 'muCard') {
-          const p = MU.players.find((q) => q.name === el.dataset.name);
-          return openCard(p.card, () => { p.seen = true; store.set('abt-mu', MU); }, () => store.set('abt-mu', MU));
-        }
-        if (name === 'muCards') { const box = $('muPass'); box.hidden = !box.hidden; if (!box.hidden) box.innerHTML = passList(); return; }
+        if (name === 'muCards') { murder.review = true; ctx.refresh(); return; }
         if (name === 'muPlay') {
           const t = ctx.now();
           return commit({ stage: 'play', playAt: t, startedAt: t, endAt: g.cfg.time ? t + g.cfg.time * 60000 : null }, ev(['mu_start'], 'start', 'start'));
         }
-        if (name === 'muRoles') { murder.showRoles = !murder.showRoles; el.textContent = tr(murder.showRoles ? 'mu.hideRoles' : 'mu.showRoles'); $('muList')._html = ''; return; }
+        if (name === 'muRoles') {
+          murder.showRoles = !murder.showRoles;
+          el.setAttribute('aria-pressed', String(murder.showRoles));
+          el.innerHTML = ic(murder.showRoles ? 'eyeoff' : 'viewer') + '<span>' + tr(murder.showRoles ? 'mu.hideRoles' : 'mu.showRoles') + '</span>';
+          $('muList')._html = ''; return;
+        }
         if (name === 'muToggle') {
           if (!el.classList.contains('armed')) {
-            el.classList.add('armed'); el.querySelector('em').textContent = tr(g.players[+el.dataset.i].out ? 'mu.backQ' : 'mu.outQ');
-            setTimeout(() => { el.classList.remove('armed'); $('muList')._html = ''; }, 3000);
+            $('muList').querySelectorAll('.pl.armed').forEach((x) => x.classList.remove('armed'));
+            el.classList.add('armed'); el.querySelector('em').textContent = tr(g.players[+el.dataset.i].out ? 'mu.backQ' : 'mu.outQ'); ctx.buzz(25);
+            clearTimeout(el._t); el._t = setTimeout(() => { el.classList.remove('armed'); $('muList')._html = ''; }, 3000);
             return;
           }
+          clearTimeout(el._t);
           const players = g.players.map((p, i) => (i === +el.dataset.i ? Object.assign({}, p, { out: p.out ? 0 : ctx.now() }) : p));
           el.classList.remove('armed'); $('muList')._html = '';
           return commit({ players });
         }
-        if (name === 'muSend') {
-          const to = $('muTo').value, msg = $('muMsg').value.trim();
-          const p = MU.players.find((q) => q.name === to);
-          if (!p || !msg) return;
-          p.card.notes = (p.card.notes || []).concat(msg);
-          store.set('abt-mu', MU);
-          ctx.sendPrivate(p.mid, { game: MU.id, card: p.card, ping: true });
-          $('muMsg').value = '';
-          return ctx.toast(tr('mu.msgSent', { n: to }));
-        }
-        if (name === 'muEnd') { $('muWin').hidden = !$('muWin').hidden; return; }
-        if (name === 'muWinner') {
-          const w = el.dataset.w;
-          ctx.setG(finish(g, ctx.now(), Object.assign(murder.reveal(), { why: 'gm', side: w === 'evil' || w === 'amok' ? 'att' : w === 'good' ? 'def' : 'none', kicker: 'mu.rK', title: 'mu.wt.' + w, sub: 'mu.rSub', say: ['mu_end'], sig: w === 'good' ? 'jingle' : 'low' })));
-        }
+        if (name === 'muMsg') return openMsg();
+        if (name === 'muEnd') return openWinner();
+      },
+      finish(w) {
+        const g = G();
+        if (!g || g.mode !== 'murder' || g.phase !== 'round') return;
+        ctx.setG(finish(g, ctx.now(), Object.assign(murder.reveal(), { why: 'gm', winner: w, side: w === 'evil' || w === 'amok' ? 'att' : w === 'good' ? 'def' : 'none', kicker: 'mu.rK', title: 'mu.wt.' + w, sub: 'mu.rSub', say: ['mu_end'], sig: w === 'good' ? 'jingle' : 'low' })));
       },
       endExtra(g) {
         const r = (g.result && g.result.reveal) || [];
-        return r.length ? '<ul class="reveal-list">' + r.map((p) => '<li><span class="ri">' + sym(realRole(p)) + '</span><b>' + esc(p.name) + '</b><span>' + esc(roleLabel(p)) + '</span></li>').join('') + '</ul>' : '';
+        const out = {}; (g.players || []).forEach((p) => { out[p.name] = p.out; });
+        return r.length ? '<ul class="reveal-list">' + r.map((p, i) => '<li style="--i:' + i + '"><span class="ri">' + sym(realRole(p)) + '</span><b>' + esc(p.name) + (out[p.name] ? ' <small class="fine">' + tr('mu.outShort') + '</small>' : '') + '</b><span>' + esc(roleLabel(p)) + '</span></li>').join('') + '</ul>' : '';
       },
-      again: () => tr('mu.again')
+      again: () => tr('mu.again'), againIcon: 'cards',
+      sym: (r) => ({ good: 'innocent', evil: 'murderer', amok: 'amok', bounty: 'bounty', joker: 'joker' }[r.winner] || null),
+      icon: () => 'flag',
+      fx: (r) => (r.winner === 'good' ? 'win' : r.winner === 'evil' || r.winner === 'amok' ? 'lose' : 'neutral'),
+      stats: (g) => [[tr('mu.stat.out'), String((g.players || []).filter((p) => p.out).length)]]
     };
+    function openMsg() {
+      const phones = MU.players.filter((p) => p.mid);
+      if (!phones.length) return;
+      let to = phones[0].name;
+      const body = UI.sheet.generic(UI.sheet.head(tr('mu.msgTitle'), tr('mu.msgDesc'), tr('sheet.close')) +
+        '<div class="field"><span class="lbl">' + tr('mu.to') + '</span><div class="pickrow" id="msgTo">' + phones.map((p) => '<button type="button" data-n="' + esc(p.name) + '" aria-pressed="' + (p.name === to) + '">' + esc(p.name) + '</button>').join('') + '</div></div>' +
+        '<div class="field"><label class="lbl" for="msgTxt">' + tr('mu.msgPh') + '</label><textarea class="inp" id="msgTxt" rows="3" maxlength="200"></textarea></div>' +
+        '<button class="btn primary big" type="button" id="msgSend">' + ic('msg') + '<span>' + tr('mu.send') + '</span></button>');
+      body.querySelector('#msgTo').onclick = (e) => { const b = e.target.closest('[data-n]'); if (!b) return; to = b.dataset.n; body.querySelectorAll('#msgTo button').forEach((x) => x.setAttribute('aria-pressed', String(x === b))); };
+      body.querySelector('#msgSend').onclick = () => {
+        const t = $('msgTxt'), msg = t.value.trim();
+        const p = MU.players.find((q) => q.name === to);
+        if (!msg || !p) { t.focus(); return; }
+        p.card.notes = (p.card.notes || []).concat(msg);
+        store.set('abt-mu', MU);
+        ctx.sendPrivate(p.mid, { game: MU.id, card: p.card, ping: true });
+        UI.sheet.close(); ctx.toast(tr('mu.msgSent', { n: to }));
+      };
+    }
+    function openWinner() {
+      const W = [['good', 'innocent'], ['evil', 'murderer'], ['amok', 'amok'], ['bounty', 'bounty'], ['joker', 'joker'], ['none', null]];
+      const body = UI.sheet.generic(UI.sheet.head(tr('mu.whoWon'), tr('mu.whoWonDesc'), tr('sheet.close')) +
+        '<div class="wingrid">' + W.map((w, i) => '<button type="button" data-w="' + w[0] + '" style="animation-delay:' + (i * 50 + 120) + 'ms">' + (w[1] ? sym(w[1]) : ic('flag')) + '<span>' + tr('mu.w.' + w[0]) + '</span></button>').join('') + '</div>');
+      body.querySelector('.wingrid').onclick = (e) => { const b = e.target.closest('[data-w]'); if (!b) return; UI.sheet.close(); setTimeout(() => murder.finish(b.dataset.w), 250); };
+    }
+
+    /* Pass the phone: players without a phone look at their card here, one after another. */
+    function renderPass() {
+      const root = $('s-pass');
+      if (!MU) { root.innerHTML = ''; return; }
+      const list = MU.players.map((p, i) => ({ p, i })).filter((x) => !x.p.mid), phones = MU.players.filter((p) => p.mid);
+      const seen = list.filter((x) => x.p.seen).length;
+      root.innerHTML = '<div class="intro center" data-st><h1>' + tr('pass.title') + '</h1><p>' + tr('mu.passHint') + '</p></div>' +
+        (list.length ? '<div class="pp-prog" data-st><span>' + tr('pass.progress', { s: seen, n: list.length }) + '</span><span class="pp-bar"><i id="ppBar"></i></span></div>' +
+        '<div class="pgrid" data-st>' + list.map((x, k) => '<button class="pcard ' + (x.p.seen ? 'seen' : '') + '" type="button" data-p="' + x.i + '" style="--i:' + k + '" aria-label="' + esc(tr('pass.view', { n: x.p.name })) + '"><span class="pc-img">' + cardBackHTML() + '<span class="seal">' + ic('check') + '</span></span><span class="pc-n">' + esc(x.p.name) + '</span><span class="pc-s">' + tr(x.p.seen ? 'pass.seen' : 'pass.open') + '</span></button>').join('') + '</div>' : '') +
+        (phones.length ? '<div class="hintc" data-st>' + ic('phone') + '<div>' + tr(phones.length === 1 ? 'pass.phones1' : 'pass.phonesN', { n: '<b>' + phones.map((p) => esc(p.name)).join(', ') + '</b>' }) + '</div></div>' : '') +
+        '<div class="cta"><button class="btn primary big" type="button" data-pass="' + (murder.review ? 'back' : 'play') + '">' + ic(murder.review ? 'back' : 'play') + '<span>' + tr(murder.review ? 'pass.back' : 'mu.play') + '</span></button></div>';
+      requestAnimationFrame(() => { const b = $('ppBar'); if (b) b.style.transform = 'scaleX(' + (list.length ? seen / list.length : 1) + ')'; });
+    }
+    $('s-pass').addEventListener('click', (e) => {
+      const c = e.target.closest('[data-p]');
+      if (c && MU) {
+        const idx = +c.dataset.p, p = MU.players[idx];
+        openCard(p.card, () => {
+          const first = !p.seen; p.seen = true; store.set('abt-mu', MU); renderPass();
+          if (first && !UI.RM) { const nc = document.querySelector('[data-p="' + idx + '"]'); if (nc) nc.classList.add('stamp'); }
+        }, () => store.set('abt-mu', MU));
+        return;
+      }
+      const a = e.target.closest('[data-pass]'); if (!a) return;
+      if (a.dataset.pass === 'play') murder.act('muPlay');
+      else { murder.review = false; ctx.refresh(); }
+    });
 
     const MODES = { vip, snd, br, hostage, inf, murder };
 
-    /* ---------- Role card overlay ---------- */
-    let cardState = null;
-    function paintCard() {
-      const c = cardState.card, open = $('cardReveal').classList.contains('open');
-      $('cardWho').textContent = c.name ? tr('card.for', { n: c.name }) : tr('card.yours');
-      const drawn = c.act && c.act.type === 'draw' && c.act.used ? c.act.drawn : null;
+    /* ---------- Role card overlay: the back floats, a tap turns it over ---------- */
+    let CV = null, cvCloseT = 0;
+    function cardFront() {
+      const c = CV.card, drawn = c.act && c.act.type === 'draw' && c.act.used ? c.act.drawn : null;
       const role = drawn || c.role, team = ROLES[role].team;
-      $('cardBody').innerHTML = '<span class="ci">' + sym(role, 'big') + '</span><span class="cr">' + esc(tr('r.' + role)) + '</span>' +
-        (team !== 'draw' ? '<span class="ct">' + esc(tr('team.' + team)) + '</span>' : '') +
-        (drawn ? '<span class="cx">' + esc(tr('card.drawn')) + '</span>' : '') +
-        '<span class="cx">' + esc(tr('rt.' + role)) + '</span>' + (c.info || []).map((x) => '<span class="cinfo">' + esc(trv(x)) + '</span>').join('') +
-        (c.act && c.act.type === 'check' && c.act.used ? '<span class="cinfo">' + esc(trv(c.act.answer)) + '</span>' : '') +
-        (c.notes || []).map((x) => '<span class="cnote">' + esc(tr('mu.gm', { m: x })) + '</span>').join('');
-      let acts = '';
-      if (open && c.act && !c.act.used) {
-        if (c.act.type === 'draw') acts = '<button class="btn primary" data-card="draw" type="button">' + tr('card.draw') + '</button>';
-        else acts = '<select id="cardTarget">' + Object.keys(c.act.options).map((n) => '<option>' + esc(n) + '</option>').join('') + '</select><button class="btn primary" data-card="check" type="button">' + tr('card.once', { a: tr(c.act.label) }) + '</button>';
+      let h = sym(role, 'big') + '<span class="cv-role">' + esc(tr('r.' + role)) + '</span>' + (team !== 'draw' ? '<span class="cv-team ' + team + '">' + esc(tr('team.' + team)) + '</span>' : '') + '<span class="cv-line"></span>' +
+        (drawn ? '<span class="cv-drawn">' + esc(tr('card.drawn')) + '</span>' : '') + '<span class="cv-text">' + esc(tr('rt.' + role)) + '</span>';
+      h += (c.info || []).map((x) => '<span class="cv-pill">' + esc(trv(x)) + '</span>').join('');
+      if (c.act && c.act.type === 'check' && c.act.used) h += '<span class="cv-pill">' + esc(trv(c.act.answer)) + '</span>';
+      h += (c.notes || []).map((x) => '<span class="cv-pill note">' + esc(tr('mu.gm', { m: x })) + '</span>').join('');
+      $('cvContent').innerHTML = h;
+      const a = c.act; let acts = '';
+      if (a && !a.used) {
+        if (a.type === 'draw') acts = '<button class="btn primary" type="button" data-cv="draw">' + ic('cards') + '<span>' + tr('card.draw') + '</span></button>';
+        else acts = '<select class="inp" id="cvSel">' + Object.keys(a.options).map((n) => '<option>' + esc(n) + '</option>').join('') + '</select><button class="btn primary" type="button" data-cv="check">' + ic('viewer') + '<span>' + tr('card.once', { a: tr(a.label) }) + '</span></button>';
       }
-      $('cardActs').innerHTML = acts;
+      $('cvActs').innerHTML = acts;
     }
     function openCard(card, onDone, onChange) {
-      cardState = { card, onDone, onChange };
-      const ai = artStyle() !== 'vector';
-      $('cardReveal').classList.toggle('aicard', ai);
-      if (ai) { $('cardFrame').innerHTML = '<img src="img/card-frame.webp" alt="">'; $('cardBack').innerHTML = '<img src="img/card-back.webp" alt="">'; }
-      else if (window.ART) { $('cardFrame').innerHTML = window.ART.cardFrame(); $('cardBack').innerHTML = window.ART.cardBack(); }
-      $('cardReveal').classList.remove('open');
-      paintCard();
-      $('cardBg').hidden = false;
+      clearTimeout(cvCloseT);
+      CV = { card, onDone, onChange, revealed: false, busy: false };
+      $('cvWho').textContent = card.name ? tr('card.for', { n: card.name }) : tr('card.yours');
+      $('cvBack').innerHTML = cardBackHTML(); $('cvFrame').innerHTML = cardFrameHTML();
+      cardFront();
+      const f = $('cvFlip'); f.getAnimations().forEach((x) => x.cancel()); f.style.transform = '';
+      const ov = $('cardov'); ov.classList.remove('revealed', 'out', 'in'); ov.hidden = false; void ov.offsetWidth; ov.classList.add('in');
+      if (!UI.RM) document.querySelector('.cv-float').animate([{ transform: 'translateY(60px) scale(.8)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 600, easing: UI.SPRING });
+      setTimeout(() => $('cvCard').focus({ preventScroll: true }), 50);
     }
-    function closeCard() {
-      $('cardReveal').classList.remove('open');
-      $('cardBg').hidden = true;
-      if (cardState && cardState.onDone) cardState.onDone();
-      cardState = null;
+    function revealCard() {
+      if (!CV || CV.revealed || CV.busy) return;
+      CV.busy = true; const f = $('cvFlip'), st = CV;
+      const done = () => { st.busy = false; st.revealed = true; $('cardov').classList.add('revealed'); };
+      ctx.buzz([30, 30, 60]);
+      if (UI.RM) { f.style.transform = 'rotateY(180deg)'; return done(); }
+      f.animate([{ transform: 'translateY(0) rotateY(0deg) scale(1)' }, { transform: 'translateY(-30px) rotateY(0deg) scale(1.06)', offset: 0.22 }, { transform: 'translateY(-30px) rotateY(196deg) scale(1.09)', offset: 0.72 }, { transform: 'translateY(-6px) rotateY(180deg) scale(1.02)' }], { duration: 1300, easing: 'cubic-bezier(.45,.05,.3,1)', fill: 'forwards' });
+      setTimeout(() => { UI.sparksAt($('cvSparks'), 20, 150); $('cardov').classList.add('revealed'); }, 760);
+      setTimeout(() => { const g = $('cvGlint'); g.classList.remove('go'); void g.offsetWidth; g.classList.add('go'); }, 1000);
+      setTimeout(done, 1300);
     }
-    $('cardReveal').addEventListener('click', () => { $('cardReveal').classList.toggle('open'); paintCard(); });
-    $('cardDone').addEventListener('click', closeCard);
-    $('cardClose').addEventListener('click', closeCard);
-    $('cardActs').addEventListener('click', (e) => {
-      const b = e.target.closest('[data-card]'); if (!b || !cardState) return;
-      const a = cardState.card.act;
-      if (b.dataset.card === 'draw') a.used = true;
-      if (b.dataset.card === 'check') { a.used = true; a.answer = a.options[$('cardTarget').value]; }
-      if (cardState.onChange) cardState.onChange();
-      paintCard();
+    function closeCard(withFlip) {
+      if (!CV || CV.busy) return;
+      const st = CV; st.busy = true;
+      const ov = $('cardov'), f = $('cvFlip');
+      const fin = () => {
+        ov.classList.add('out');
+        if (st.onDone && st.revealed) st.onDone();
+        cvCloseT = setTimeout(() => { if (CV !== st) return; ov.hidden = true; ov.classList.remove('out', 'revealed'); CV = null; }, UI.RM ? 0 : 330);
+      };
+      if (UI.RM || !withFlip || !st.revealed) return fin();
+      ov.classList.remove('revealed');
+      f.getAnimations().forEach((x) => x.cancel());
+      f.animate([{ transform: 'translateY(-6px) rotateY(180deg) scale(1.02)' }, { transform: 'translateY(-24px) rotateY(90deg) scale(1.05)', offset: 0.5 }, { transform: 'translateY(0) rotateY(0deg) scale(1)' }], { duration: 650, easing: 'cubic-bezier(.45,.05,.3,1)', fill: 'forwards' }).onfinish = () => setTimeout(fin, 120);
+    }
+    $('cvCard').addEventListener('click', revealCard);
+    $('cvDone').addEventListener('click', () => closeCard(true));
+    $('cvClose').addEventListener('click', () => closeCard(false));
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && CV) closeCard(false); });
+    $('cvActs').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-cv]'); if (!b || !CV) return;
+      const a = CV.card.act;
+      if (b.dataset.cv === 'draw') {
+        a.used = true; $('cvActs').innerHTML = '';
+        if (CV.onChange) CV.onChange();
+        if (UI.RM) return cardFront();
+        const f = $('cvFlip'); f.getAnimations().forEach((x) => x.cancel());
+        f.animate([{ transform: 'translateY(-6px) rotateY(180deg) scale(1.02)' }, { transform: 'translateY(-26px) rotateY(270deg) scale(1.08)', offset: 0.45 }, { transform: 'translateY(-6px) rotateY(540deg) scale(1.02)' }], { duration: 1000, easing: 'cubic-bezier(.45,.05,.3,1)', fill: 'forwards' });
+        setTimeout(() => { cardFront(); UI.sparksAt($('cvSparks'), 20, 150); }, 450);
+      } else {
+        a.used = true; a.answer = a.options[$('cvSel').value];
+        if (CV.onChange) CV.onChange();
+        cardFront();
+        const pills = $('cvContent').querySelectorAll('.cv-pill'), last = pills[pills.length - 1];
+        if (last && !UI.RM) last.animate([{ transform: 'scale(.4)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 600, easing: UI.SPRING });
+      }
     });
     function openMyCard() {
       const mine = store.get('abt-card');
       if (!mine) return ctx.toast(tr('mu.noCard'));
       openCard(mine.card, null, () => store.set('abt-card', mine));
     }
-    $('btnMyRole').addEventListener('click', openMyCard);
-    function paintMyRoleBtn() {
-      $('btnMyRole').hidden = !(ctx.role() === 'player' && store.get('abt-card'));
+
+    /* ---------- Murder lobby extras: special roles, names without phone, live count ---------- */
+    function lobbyMurderHTML() {
+      const R = S().muRoles;
+      return '<div class="group" data-st><div class="row stack"><div class="txt"><div class="lbl">' + tr('mu.special') + '</div><div class="desc">' + tr('mu.specialDesc') + '</div></div><div class="rolepick" id="muRolePick">' +
+        MU_EXTRA.map((k) => '<button type="button" data-role="' + k + '" aria-pressed="' + !!R[k] + '">' + sym(k, 'mini') + '<span>' + esc(tr(k === 'twins' ? 'r.twins' : 'r.' + k)) + '</span></button>').join('') + '</div></div></div>' +
+        '<div class="group" data-st><div class="row stack"><div class="txt"><label class="lbl" for="muNames">' + tr('mu.names') + '</label><div class="desc">' + tr('mu.namesDesc') + '</div></div>' +
+        '<textarea class="inp" id="muNames" rows="4" placeholder="' + esc(tr('mu.namesPh')) + '">' + esc(S().muNames || '') + '</textarea><div class="pchips" id="pChips"></div><div class="count" id="muCount"></div></div></div>' +
+        '<div class="hintc" data-st>' + ic('phone') + '<div>' + tr('mu.phoneHint') + '</div></div>';
+    }
+    function paintMuSetup() {
+      const c = $('muCount'); if (!c) return;
+      const R = S().muRoles, sp = sessionPlayers(), mn = manualNames();
+      const roles = S().muMurderers + Object.keys(R).filter((k) => R[k]).reduce((n, k) => n + (k === 'twins' ? 2 : 1), 0);
+      const n = sp.length + mn.length, bad = roles > n;
+      const pc = $('pChips');
+      const html = sp.map((p) => '<span class="pchip phone"><b>' + esc((p.name || '?')[0].toUpperCase()) + '</b>' + esc(p.name || tr('role.player')) + ic('phone') + '</span>').join('') + mn.map((x) => '<span class="pchip"><b>' + esc(x[0].toUpperCase()) + '</b>' + esc(x) + '</span>').join('');
+      if (pc._h !== html) { pc._h = html; pc.innerHTML = html; }
+      c.classList.toggle('bad', bad);
+      c.innerHTML = tr('mu.count', { sp: '<b>' + sp.length + '</b>', mn: '<b>' + mn.length + '</b>', n: '<b>' + n + '</b>', r: '<b>' + roles + '</b>' }) + (bad ? '<b class="err">' + tr('mu.tooFew') + '</b>' : '');
+      document.querySelectorAll('#muRolePick button').forEach((b) => b.setAttribute('aria-pressed', String(!!R[b.dataset.role])));
+    }
+    function bindMurderLobby(root) {
+      root.querySelector('#muRolePick').addEventListener('click', (e) => {
+        const b = e.target.closest('[data-role]'); if (!b) return;
+        const k = b.dataset.role; S().muRoles[k] = !S().muRoles[k]; ctx.save(); paintMuSetup();
+        if (!UI.RM) b.animate([{ transform: 'scale(.85)' }, { transform: 'scale(1.06)' }, { transform: 'none' }], { duration: 420, easing: UI.SPRING });
+      });
+      root.querySelector('#muNames').addEventListener('input', (e) => { S().muNames = e.target.value; ctx.save(); paintMuSetup(); });
+      paintMuSetup();
     }
 
     /* ---------- Screen plumbing for app.js ---------- */
     const root = () => $('mBody');
     let built = null;
-    root().addEventListener('click', (e) => {
+    $('gWrap').addEventListener('click', (e) => {
       const el = e.target.closest('[data-act]');
       if (!el || el.disabled) return;
+      const g = G(); if (!g || !MODES[g.mode]) return;
       /* Game-ending buttons need a second tap. */
       if (el.dataset.confirm && !el.classList.contains('armed')) {
-        const label = el.textContent;
-        el.classList.add('armed'); el.textContent = tr('game.confirm');
-        setTimeout(() => { el.classList.remove('armed'); el.textContent = label; }, 3000);
+        el._orig = el.innerHTML; el.classList.add('armed'); el.textContent = tr('game.confirm'); ctx.buzz(30);
+        el._t = setTimeout(() => { el.classList.remove('armed'); el.innerHTML = el._orig; }, 3000);
         return;
       }
-      const m = MODES[G().mode];
-      if (m && m.act && (!ctx.isRemote() || el.dataset.act === 'myRole')) m.act(el.dataset.act, el);
+      if (el.classList.contains('armed') && el.dataset.confirm) { clearTimeout(el._t); el.classList.remove('armed'); el.innerHTML = el._orig; }
+      const m = MODES[g.mode];
+      if (m.act && (!remote() || el.dataset.act === 'myRole')) m.act(el.dataset.act, el);
     });
 
     return {
       list: LIST,
       info: (id) => BY_ID[id],
       has: (id) => !!MODES[id],
-      art,
-      /* Lobby for one mode: picture, text, rules, its settings and the start button label. */
-      paintSetup(mode) {
-        $('lobbyArt').innerHTML = slot(mode, 'big');
-        $('lobbyName').textContent = tr('m.' + mode + '.name');
-        $('lobbyDesc').textContent = tr('m.' + mode + '.desc');
-        $('lobbyHow').innerHTML = tr('m.' + mode + '.how').split('|').map((x) => '<li>' + esc(x) + '</li>').join('');
-        document.querySelectorAll('.modeset').forEach((d) => { d.hidden = d.dataset.mode !== mode; });
-        $('btnStart').textContent = tr(mode === 'murder' ? 'lobby.startMurder' : mode === 'bomb' ? 'lobby.startBomb' : 'lobby.start');
-        if (mode === 'murder') paintMuSetup();
-      },
+      artHTML, fillArt, cardBackHTML,
+      setArt(style) { artStyle = style === 'vector' ? 'vector' : 'ai'; fillArt(); if (document.getElementById('s-pass').childElementCount) renderPass(); },
+      lobbyExtra: (mode) => (mode === 'murder' ? lobbyMurderHTML() : ''),
+      bindLobby(mode, el) { if (mode === 'murder') bindMurderLobby(el); },
       start(mode, s, t, prev) {
         const r = MODES[mode].start(s, t, prev);
         if (r.error) return r;
@@ -784,36 +851,49 @@
       },
       derive(g, t) {
         /* Murder results carry the role reveal, which only the game master knows. */
-        if (g.mode === 'murder' && ctx.isRemote()) return g;
+        if (g.mode === 'murder' && remote()) return g;
         return g.phase === 'round' && MODES[g.mode] ? MODES[g.mode].derive(g, t) : g;
       },
       timeline(g) { const m = MODES[g.mode]; return m && m.timeline ? m.timeline(g) : []; },
-      layoutKey(g) { const m = MODES[g.mode]; return g.id + ':' + (m && m.layout ? m.layout(g) : ''); },
+      /* Which screen the game is on: the murder game master hands the phone around first. */
+      screen(g) { return g.mode === 'murder' && !remote() && g.phase === 'round' && (g.stage === 'cards' || murder.review) ? 'pass' : 'game'; },
+      renderPass,
+      layoutKey(g) { const m = MODES[g.mode]; return g.id + ':' + (m && m.layout ? m.layout(g) : '') + ':' + (remote() ? 'r' : 'h'); },
       build(g) {
         const m = MODES[g.mode];
-        $('mIcon').innerHTML = slot(g.mode, 'tiny');
-        $('mName').textContent = tr('m.' + g.mode + '.name');
-        root().innerHTML = m.body(g, ctx.isRemote());
-        if (!ctx.isRemote() && m.bind) m.bind(root(), g);
+        $('gWrap').innerHTML = '<div class="clockwrap"><div class="label" id="cLab"></div><div class="clock" id="cClock"></div></div><p class="mstatus" id="cSt"></p><div class="mbody" id="mBody">' + m.body(g) + '</div>';
+        if (!remote() && m.bind) m.bind(root(), g);
         built = this.layoutKey(g);
       },
       render(g, t) {
         const m = MODES[g.mode];
-        if (built !== this.layoutKey(g)) this.build(g);
+        if (built !== this.layoutKey(g) || !$('mBody')) this.build(g);
         const c = m.clock(g, t);
-        $('mClockLabel').textContent = c.label;
-        $('mClock').textContent = c.text;
-        $('mStatus').innerHTML = m.status(g, t);
+        const lab = $('cLab'); if (lab.textContent !== c.label) lab.textContent = c.label;
+        UI.roll($('cClock'), c.text, -1);
+        const st = m.status(g, t), se = $('cSt');
+        if (se._h !== st) { se._h = st; se.innerHTML = st; se.hidden = !st; }
         if (m.update) m.update(root(), g, t);
       },
-      /* Result text in this phone's language: values that are text keys get translated too. */
+      invalidate() { built = null; },
+      /* Result in this phone's language: values that are text keys get translated too. */
       resultText(r) {
         const v = {};
         Object.keys(r.v || {}).forEach((k) => { const s = r.v[k]; v[k] = typeof s === 'string' && /^color\./.test(s) ? tr(s) : s; });
         return { kicker: tr(r.kicker || 'game.over', v), title: r.title ? tr(r.title, v) : '', sub: r.sub ? tr(r.sub, v) : '' };
       },
-      endExtra(g) { const m = MODES[g.mode]; built = null; return m && m.endExtra ? m.endExtra(g) : ''; },
-      again(g) { const m = MODES[g.mode]; return m && m.again ? m.again(g) : tr('game.again'); },
+      endInfo(g) {
+        const m = MODES[g.mode] || {}, r = g.result || {};
+        return {
+          icon: m.icon ? m.icon(r) : 'flag',
+          sym: m.sym ? m.sym(r) : null,
+          fx: m.fx ? m.fx(r) : r.sig === 'jingle' ? 'win' : r.sig === 'low' ? 'lose' : 'neutral',
+          stats: m.stats ? m.stats(g) : [],
+          extra: m.endExtra ? m.endExtra(g) : '',
+          again: m.again ? m.again(g) : tr('game.again'),
+          againIcon: m.againIcon || 'refresh'
+        };
+      },
       onPrivate(data) {
         if (data && data.card) {
           const prev = store.get('abt-card');
@@ -823,14 +903,12 @@
           ctx.toast(tr(data.ping ? 'mu.newMsg' : 'mu.roleArrives'));
           ctx.buzz([80, 40, 80]);
         } else store.set('abt-card', null);
-        paintMyRoleBtn();
         built = null;
       },
-      paintRemote: paintMyRoleBtn,
+      hasCard: () => !!store.get('abt-card'),
+      openMyCard,
       refreshSetup: paintMuSetup,
-      /* Language switch: things built with T() at paint time. */
-      relabel() { built = null; paintMuSetup(); },
-      fillArt
+      endReview() { murder.review = false; }
     };
   }
 

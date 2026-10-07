@@ -1,4 +1,4 @@
-# 💣 Airsoft Ops
+# Airsoft Ops
 
 Die Airsoft-Begleit-App fürs Handy: Spielmodus wählen, einstellen, losspielen. Mit männlichem Ansager, Countdown, Piepen und synchronen Bluetooth-Boxen auf mehreren Handys. Auf Deutsch und Englisch. Modi: **Bombe**, **VIP-Eskorte, Search & Destroy, Battle Royale, Geiselbefreiung, Infection** und **Murder Mystery** mit geheimen Rollen.
 
@@ -10,23 +10,23 @@ Im **Allein-Modus** läuft die App komplett im Browser und funktioniert nach dem
 
 Die App hat unten eine Leiste mit drei Tabs:
 
-- **Modi:** Alle Spielmodi als Kacheln mit eigenem Bild. Ein Tipp öffnet die **Lobby** des Modus: Bild, Beschreibung, „So läuft es“ (die Regeln in Kürze), die Einstellungen des Modus und der Start-Knopf.
+- **Modi:** Die Spielmodi liegen als Tarotkarten (I–VII) in einem Kartenfächer vor einem drehenden Runen-Portal. Wischen, die Pfeile oder ein Tipp auf eine Karte wechseln den Modus, **„Wählen“** öffnet die **Lobby**: Das Bild fliegt aus der Karte an seinen Platz, darunter die Einstellungen des Modus, „So läuft es“ (aufklappbar) und der Start-Knopf. „Alle Modi“ bringt das Bild zurück in seine Karte.
 - **Session:** Mehrere Handys verbinden. Entweder dieses Handy steuert („Session starten“, mit Code und QR-Code), oder man tritt einer Session bei (Code, Rolle, Name).
-- **Einstellungen:** App-Sprache und Ansager-Sprache, Ansager, was angesagt wird, Sounds, Synchronisation (nur in einer Session), Anzeige (u. a. **Bilder: KI-Bilder / Eigene Grafik**), Zurücksetzen.
+- **Einstellungen:** App-Sprache und Ansager-Sprache, Ansager (Stimme, Funkgerät-Effekt, Lautstärke), Sounds (Lautstärke, Vibration), Synchronisation (nur in einer Session), Anzeige (**Bilder: KI-Bilder / Eigene Grafik**, Vollbild), Zurücksetzen.
 
 Oben rechts schaltet **DE/EN** die Sprache der ganzen App um. Die Ansager-Sprache folgt der App-Sprache oder lässt sich unter *Einstellungen* getrennt festlegen. In einer Session kann jedes Handy seine eigene Sprache haben, Ergebnisse und Rollenkarten erscheinen auf jedem Handy in dessen Sprache.
 
-Während eines Spiels ist die Leiste ausgeblendet. Zeiten stellt man über Kacheln mit großen Ziffern ein: Ein Tipp öffnet ein Fenster mit Schieberegler, Plus/Minus (gedrückt halten zählt schnell) und Schnellwahl. Alle Einstellungen bleiben auf dem Gerät gespeichert.
+Während eines Spiels ist die Leiste ausgeblendet, oben steht der Modus mit „Beenden“ (zweimal tippen). Zeiten stellt man über Kacheln mit großen Ziffern ein: Ein Tipp öffnet ein Fenster mit Schieberegler, Plus/Minus (gedrückt halten zählt schnell), Schnellwahl und „Übernehmen“. Alle Einstellungen bleiben auf dem Gerät gespeichert. Jeder Wechsel zwischen den Bildschirmen ist animiert, bei „Bewegung reduzieren“ im System nur noch ein Überblenden.
 
 ## Features
 
 - **Männlicher Ansager:** Fertige Audiodateien auf Deutsch und Englisch, laut abgemischt, offline verfügbar. Optional Funkgerät-Effekt oder die Handy-Stimme.
-- **Was angesagt wird** und **welche Sounds** laufen (Piepen, Halte-Töne, Signale, Explosion, Jingle, Vibration), ist einzeln abschaltbar.
+- **Große Halte-Flächen:** Planten (A und B je eine halbe Bildschirmhälfte), Entschärfen, Ziele und Befreien sind große Flächen, die sich von unten füllen. Mehrere Finger zählen, und wer mit Handschuh kurz abrutscht (bis ca. eine halbe Sekunde), verliert den Fortschritt nicht.
 - **Fürs Feld gebaut:** Das Display bleibt während der Runde an (Wake Lock). Ein fast unhörbarer Ton hält die Bluetooth-Box wach.
 - **Vollbild:** Beim Spielstart blendet die App die Browserleiste aus (abschaltbar), oben rechts gibt es zusätzlich einen Vollbild-Knopf.
 - **Schutz vor versehentlichem Verlassen:** Während einer Runde führt die Zurück-Geste nicht aus der App, beim Neuladen fragt der Browser nach.
 - **Offline:** Nach dem ersten Öffnen funktioniert der Allein-Modus auch ohne Netz.
-- **Zwei Bild-Stile:** Unter *Einstellungen → Anzeige → Bilder* wechselt man zwischen den KI-Bildern und eigenen, nachgebauten Vektor-Grafiken (Modi und Logo). Die Rollenkarten bei Murder Mystery haben immer einen gezeichneten Rahmen, eine Rückseite mit Auge und für jede Rolle ein eigenes Neon-Symbol.
+- **Zwei Bild-Stile:** Unter *Einstellungen → Anzeige → Bilder* wechselt man zwischen den KI-Bildern und eigenen, nachgebauten Vektor-Grafiken (Modi, Logo, Kartenrahmen und -rückseite). Jede Rolle bei Murder Mystery hat ein eigenes Neon-Symbol, die App kommt ganz ohne Emojis aus.
 - **Zum Startbildschirm hinzufügbar (PWA):** Über das Browsermenü startet die App ohne Browserleiste wie eine normale App.
 
 ## Spielmodi
@@ -35,15 +35,15 @@ Den Modus wählt man im Tab **Modi**. Jeder Modus hat eine eigene Lobby mit Rege
 
 | Modus | Ablauf in der App | Wer gewinnt |
 |---|---|---|
-| 💣 **Bombe** | Planten an A/B, Countdown, Entschärfen (siehe oben) | Angreifer bei Explosion, Verteidiger bei Entschärfung oder Zeitablauf |
-| 👑 **VIP-Eskorte** | Der VIP trägt das Handy. „VIP getroffen“ zieht ein Leben ab (einstellbar 1–5). „Ziel erreicht“ gedrückt halten. Bei 2–4 Zielpunkten lost die App eines aus, das nur die Eskorte über „Ziel anzeigen“ sieht. | Eskorte, wenn der VIP ankommt. Jäger bei VIP ausgeschaltet oder Zeitablauf |
-| 🎯 **Search & Destroy** | 2–5 Ziele (A–E), jedes per Gedrückthalten zerstören. Einstellbar, wie viele nötig sind. „Alle Angreifer ausgeschaltet“ (zweimal tippen). Punktestand über mehrere Runden mit automatischem Seitenwechsel. | Angreifer bei genug zerstörten Zielen. Verteidiger bei Zeitablauf oder ausgeschalteten Angreifern |
-| 🪂 **Battle Royale** | 2–8 Teams (farbig). Team zweimal antippen = ausgeschieden. Ansagen „Zone schrumpft in einer Minute“ / „jetzt“ im eingestellten Takt, Versorgungsabwürfe an zufälligen nummerierten Punkten. Rangliste am Ende. | Das letzte Team (bei Zeitablauf: Unentschieden) |
-| 🆘 **Geiselbefreiung** | Die Geisel trägt das Handy. „Befreien“ gedrückt halten, dann am Evakuierungspunkt „Evakuiert“. | Retter bei Evakuierung. Geiselnehmer bei Zeitablauf oder ausgeschalteten Rettern |
-| 🧟 **Infection** | Spielerzahl und Start-Infizierte einstellen. „Überlebender getroffen“ startet die Verwandlungszeit, danach Ansage und Zähler. Rücknahme möglich. | Infizierte, wenn alle infiziert sind. Überlebende bei Zeitablauf |
-| 🔪 **Murder Mystery** | Geheime Rollen, siehe unten | Entscheidet der Spielleiter |
+| **Bombe** | Planten an A/B, Countdown, Entschärfen (siehe oben) | Angreifer bei Explosion, Verteidiger bei Entschärfung oder Zeitablauf |
+| **VIP-Eskorte** | Der VIP trägt das Handy. „VIP getroffen“ zieht ein Leben ab (einstellbar 1–5). „Ziel erreicht“ gedrückt halten. Bei 2–4 Zielpunkten lost die App eines aus, das nur die Eskorte über „Ziel anzeigen“ sieht. | Eskorte, wenn der VIP ankommt. Jäger bei VIP ausgeschaltet oder Zeitablauf |
+| **Search & Destroy** | 2–5 Ziele (A–E), jedes per Gedrückthalten zerstören. Einstellbar, wie viele nötig sind. „Alle Angreifer ausgeschaltet“ (zweimal tippen). Punktestand über mehrere Runden mit automatischem Seitenwechsel. | Angreifer bei genug zerstörten Zielen. Verteidiger bei Zeitablauf oder ausgeschalteten Angreifern |
+| **Battle Royale** | 2–8 Teams (farbig). Team zweimal antippen = ausgeschieden. Ansagen „Zone schrumpft in einer Minute“ / „jetzt“ im eingestellten Takt, Versorgungsabwürfe an zufälligen nummerierten Punkten. Rangliste am Ende. | Das letzte Team (bei Zeitablauf: Unentschieden) |
+| **Geiselbefreiung** | Die Geisel trägt das Handy. „Befreien“ gedrückt halten, dann am Evakuierungspunkt „Evakuiert“. | Retter bei Evakuierung. Geiselnehmer bei Zeitablauf oder ausgeschalteten Rettern |
+| **Infection** | Spielerzahl und Start-Infizierte einstellen. „Überlebender getroffen“ startet die Verwandlungszeit, danach Ansage und Zähler. Rücknahme möglich. | Infizierte, wenn alle infiziert sind. Überlebende bei Zeitablauf |
+| **Murder Mystery** | Geheime Rollen, siehe unten | Entscheidet der Spielleiter |
 
-Alle Ansagen (Rundenstart, Treffer, Ziel zerstört, Zone, Abwurf, Ergebnis …) lassen sich unter *Einstellungen → Was angesagt wird* abschalten, z. B. „Spielereignisse“.
+Alle Ereignisse (Rundenstart, Treffer, Ziel zerstört, Zone, Abwurf, Ergebnis …) werden angesagt und oben als Banner eingeblendet.
 
 ### Murder Mystery
 
@@ -51,7 +51,7 @@ Das Handy, das das Spiel startet, ist der **Spielleiter**. Es sieht alle Rollen,
 
 - **Rollen:** 1–3 Mörder (kennen sich) und beliebige Sonderrollen zum Antippen: Medic, Kopfgeldjäger (bekommt ein Ziel), Trittbrettfahrer (zieht seine Rolle: Unschuldiger, Medic oder Amok-Mörder), Zwillinge (kennen sich, genau zwei), Detektiv (prüft einmal eine Person: Gut, Böse oder Eigenes Ziel), Informant („einer dieser drei ist ein Mörder“), Bodyguard, Doppelagent (mit geheimem Ziel), Rächer, Joker, Wissenschaftler (untersucht einmal: „X ist Rolle A oder Rolle B“) und Spion. Alle übrigen werden Unschuldige.
 - **Spieler mit Handy** treten der Session als **„Spieler“** bei. Ihre Rolle kommt nur auf ihr eigenes Handy, andere Handys bekommen sie nie zu sehen. Detektiv, Wissenschaftler und Trittbrettfahrer nutzen ihre Fähigkeit direkt auf der Rollenkarte.
-- **Spieler ohne Handy** trägt man als Namen ein. Sie tippen am Spielleiter-Handy ihren Namen an, decken die Karte auf, verdecken sie wieder und geben das Handy weiter.
+- **Spieler ohne Handy** trägt man als Namen ein. Auf dem Bildschirm „Handy weitergeben“ tippen sie ihre Karte an, drehen sie um, verdecken sie wieder und geben das Handy weiter. Angesehene Karten bekommen einen Haken.
 - **Während des Spiels** markiert der Spielleiter ausgeschaltete Spieler, kann die Rollen einblenden und Spielern mit Handy eine geheime Nachricht schicken (z. B. für den Spion). Am Ende wählt er den Gewinner und alle Rollen werden aufgedeckt.
 
 ## Mehrere Handys (Session)
@@ -82,11 +82,12 @@ Das Handy, das das Spiel startet, ist der **Spielleiter**. Es sieht alle Rollen,
 ├── public/                 # Die eigentliche Web-App (statische Dateien)
 │   ├── index.html
 │   ├── style.css
-│   ├── app.js              # Spielschleife, Bomben-Modus, Sessions, Sound, Sprachausgabe
+│   ├── app.js              # Spielschleife, Bomben-Modus, Sessions, Sound, Sprachausgabe, Bildschirme
+│   ├── ui.js               # Design-Bausteine: Bildschirmwechsel, Kartenfächer und Portal, Halte-Flächen, Effekte
 │   ├── modes.js            # Weitere Spielmodi und Murder-Mystery-Rollen
 │   ├── i18n.js             # Alle Texte auf Deutsch und Englisch
 │   ├── art.js              # Nachgebaute Vektor-Grafiken: Modi, Logo, Rollen-Symbole, Kartenrahmen
-│   ├── img/modes/, img/logo.webp  # KI-Bilder der Spielmodi und das Logo
+│   ├── img/                # KI-Bilder: Spielmodi, Logo, Rollenkarte (Rahmen und Rückseite)
 │   ├── audio/de, audio/en  # Ansagen als MP3, Liste in audio/lines.json
 │   ├── vendor/qrcode.js    # QR-Code-Generator (MIT, Kazuhiko Arase)
 │   ├── sw.js               # Service Worker für Offline-Betrieb

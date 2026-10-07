@@ -1,32 +1,31 @@
+/* Airsoft Ops: game loop, bomb mode, sessions (WebSocket + shared clock), sound and announcer,
+   and the screens: tarot deck, lobby, game, result, session and settings.
+   ui.js provides the design building blocks, modes.js the other game modes. */
 (function () {
+  const UI = window.UI;
   const $ = (id) => document.getElementById(id);
+  const $$ = UI.$$, esc = UI.esc, ic = UI.ic;
   const tr = (k, v) => window.T(k, v);
 
   /* ---------- Settings ---------- */
   const DEF = {
     roundTime: 10, bombTime: 45, plantTime: 4, defuseTime: 7, half: true,
-    lang: window.I18N.guess(), voiceLang: 'auto', art: 'ai', voice: 'male', radio: false, voiceVol: 100, vol: 80, vibrate: true, fs: true, lat: 0, local: true,
-    say: { start: true, planted: true, min1: true, bomb: true, result: true },
-    snd: { tick: true, hold: true, signal: true, boom: true, jingle: true }
+    lang: window.I18N.guess(), voiceLang: 'auto', art: 'ai', voice: 'male', radio: false, voiceVol: 100, vol: 80, vibrate: true, fs: true, lat: 0, local: true
   };
   /* Settings and time cards of the other game modes live in modes.js. */
   const MD = window.MODES || { DEF: {}, TIME: {} };
   Object.keys(MD.DEF).forEach((k) => { if (!(k in DEF)) DEF[k] = MD.DEF[k]; });
-  DEF.say.events = true;
   const clone = (o) => JSON.parse(JSON.stringify(o));
   let S = clone(DEF);
   try {
     const saved = JSON.parse(localStorage.getItem('abt-settings') || '{}');
-    S = Object.assign(clone(DEF), saved, {
-      say: Object.assign({}, DEF.say, saved.say),
-      snd: Object.assign({}, DEF.snd, saved.snd),
-      muRoles: Object.assign({}, DEF.muRoles, saved.muRoles)
-    });
+    delete saved.say; delete saved.snd; /* removed settings: everything is announced and played */
+    S = Object.assign(clone(DEF), saved, { muRoles: Object.assign({}, DEF.muRoles, saved.muRoles) });
   } catch (e) {}
   function save() { try { localStorage.setItem('abt-settings', JSON.stringify(S)); } catch (e) {} }
   window.I18N.set(S.lang);
 
-  /* Time settings: big readout cards; tapping one opens a bottom sheet with slider, +/- (hold to repeat) and presets. */
+  /* Time settings: big readout cards in the lobby; a tap opens the value sheet. */
   const range = (a, b, step) => { const r = []; for (let v = a; v <= b; v += step) r.push(v); return r; };
   const mmss = (v) => Math.floor(v / 60) + ':' + String(v % 60).padStart(2, '0');
   const TIME = {
@@ -53,107 +52,7 @@
   };
   Object.assign(TIME, MD.TIME);
   const nearest = (T, v) => T.values.reduce((bi, x, i) => (Math.abs(x - v) < Math.abs(T.values[bi] - v) ? i : bi), 0);
-  function readout(el, T, v) {
-    const [num, unit] = T.parts(v);
-    el.textContent = num;
-    if (unit) { const u = document.createElement('small'); u.textContent = unit; el.appendChild(u); }
-    el.classList.toggle('off', unit === '');
-  }
-
-  const painters = [];
-  document.querySelectorAll('.tcard').forEach((card) => {
-    const key = card.dataset.key, T = TIME[key];
-    S[key] = T.values[nearest(T, S[key])];
-    painters.push(() => readout(card.querySelector('.tv'), T, S[key]));
-    card.addEventListener('click', () => openSheet(key));
-  });
-
-  let shKey = null, shLast = null;
-  const shRange = $('shRange');
-  function shPaint() {
-    const T = TIME[shKey], i = T.values.indexOf(S[shKey]);
-    readout($('shOut'), T, S[shKey]);
-    shRange.value = i;
-    shRange.style.setProperty('--p', (i / (T.values.length - 1)) * 100 + '%');
-    $('shPresets').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(+b.dataset.v === S[shKey])));
-  }
-  function shSet(i) {
-    const T = TIME[shKey];
-    i = Math.max(0, Math.min(T.values.length - 1, i));
-    if (T.values[i] === S[shKey]) return;
-    S[shKey] = T.values[i];
-    save(); shPaint(); painters.forEach((p) => p()); updateHints();
-    try { navigator.vibrate && S.vibrate && navigator.vibrate(4); } catch (e) {}
-  }
-  function openSheet(key) {
-    shKey = key; shLast = document.activeElement;
-    const T = TIME[key];
-    $('shTitle').textContent = tr(T.title);
-    $('shDesc').textContent = tr(T.desc);
-    shRange.max = T.values.length - 1;
-    $('shMin').textContent = T.chip(T.values[0]);
-    $('shMax').textContent = T.chip(T.values[T.values.length - 1]);
-    const pre = $('shPresets'); pre.textContent = '';
-    T.presets.forEach((v) => {
-      const b = document.createElement('button');
-      b.type = 'button'; b.dataset.v = v; b.textContent = T.chip(v);
-      b.addEventListener('click', () => shSet(T.values.indexOf(v)));
-      pre.appendChild(b);
-    });
-    shPaint();
-    $('sheetBg').hidden = false;
-    $('shDone').focus({ preventScroll: true });
-  }
-  function closeSheet() {
-    $('sheetBg').hidden = true;
-    if (shLast && shLast.focus) shLast.focus({ preventScroll: true });
-  }
-  shRange.addEventListener('input', () => shSet(+shRange.value));
-  $('shDone').addEventListener('click', closeSheet);
-  $('shClose').addEventListener('click', closeSheet);
-  $('sheetBg').addEventListener('click', (e) => { if (e.target === $('sheetBg')) closeSheet(); });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('sheetBg').hidden) closeSheet(); });
-  document.querySelectorAll('.rbtn').forEach((b) => {
-    const d = +b.dataset.d;
-    const bump = () => shSet(TIME[shKey].values.indexOf(S[shKey]) + d);
-    let t = 0, n = 0;
-    const stop = () => { clearTimeout(t); t = 0; };
-    const loop = () => { bump(); n++; t = setTimeout(loop, n > 8 ? 70 : 140); };
-    b.addEventListener('pointerdown', (e) => {
-      if (e.button > 0) return;
-      e.preventDefault(); stop(); n = 0; bump();
-      t = setTimeout(loop, 380);
-    });
-    ['pointerup', 'pointerleave', 'pointercancel'].forEach((ev) => b.addEventListener(ev, stop));
-    b.addEventListener('contextmenu', (e) => e.preventDefault());
-    b.addEventListener('click', (e) => { if (e.detail === 0) bump(); }); /* keyboard */
-  });
-
-  /* Generic bindings for switches, segmented buttons and sliders. */
-  function bindAll() {
-    document.querySelectorAll('[data-opt]').forEach((el) => { el.checked = !!S[el.dataset.opt]; });
-    document.querySelectorAll('[data-say]').forEach((el) => { el.checked = !!S.say[el.dataset.say]; });
-    document.querySelectorAll('[data-snd]').forEach((el) => { el.checked = !!S.snd[el.dataset.snd]; });
-    document.querySelectorAll('[data-range]').forEach((el) => { el.value = S[el.dataset.range]; });
-    document.querySelectorAll('[data-seg]').forEach((seg) => {
-      seg.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === S[seg.dataset.seg])));
-    });
-    painters.forEach((p) => p());
-    updateHints();
-    if (M) M.paintSetup(M.info(S.mode) ? S.mode : 'bomb');
-    $('latVal').textContent = S.lat + ' ms';
-    $('voiceDesc').textContent = tr(S.voice === 'male' ? 'set.voiceMaleDesc' : 'set.voiceDeviceDesc');
-  }
-  document.querySelectorAll('[data-opt]').forEach((el) => el.addEventListener('change', () => { S[el.dataset.opt] = el.checked; save(); updateHints(); }));
-  document.querySelectorAll('[data-say]').forEach((el) => el.addEventListener('change', () => { S.say[el.dataset.say] = el.checked; save(); }));
-  document.querySelectorAll('[data-snd]').forEach((el) => el.addEventListener('change', () => { S.snd[el.dataset.snd] = el.checked; save(); }));
-  document.querySelectorAll('[data-range]').forEach((el) => el.addEventListener('input', () => { S[el.dataset.range] = +el.value; applyGains(); save(); $('latVal').textContent = S.lat + ' ms'; }));
-  document.querySelectorAll('[data-seg]').forEach((seg) => seg.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
-    S[seg.dataset.seg] = b.dataset.v; save();
-    if (seg.dataset.seg === 'lang') applyLang(); else bindAll();
-    if (seg.dataset.seg === 'art') applyArt();
-    if (seg.dataset.seg === 'lang' || seg.dataset.seg === 'voiceLang') loadLines();
-  })));
+  Object.keys(TIME).forEach((k) => { S[k] = TIME[k].values[nearest(TIME[k], S[k])]; });
 
   /* ---------- Announcer ---------- */
   /* Pre-rendered male voice (public/audio, made by tools/generate_voice.py). The phone's own
@@ -322,11 +221,13 @@
       o.connect(g); g.connect(a.destination); o.start(); keep = o;
     } else if (!on && keep) { try { keep.stop(); } catch (e) {} keep = null; }
   }
+  /* The clock flashes with every bomb beep. */
   function flash() {
-    const led = $('led'); led.classList.add('on'); document.body.classList.add('pulse');
-    setTimeout(() => { led.classList.remove('on'); document.body.classList.remove('pulse'); }, 80);
+    const c = $('cClock'); if (!c) return;
+    c.classList.add('blink'); setTimeout(() => c.classList.remove('blink'), 90);
   }
   function buzz(p) { if (!S.vibrate) return; try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} }
+  UI.setVibrate(buzz);
 
   /* ---------- Screen wake lock ---------- */
   let wl = null;
@@ -335,7 +236,6 @@
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible' && (inGame() || isRemote())) wake();
   });
-  if (!('wakeLock' in navigator)) $('wakeNote').dataset.i18n = 'lobby.wakeNo';
 
   /* ---------- Fullscreen & app mode ---------- */
   const root = document.documentElement;
@@ -357,7 +257,7 @@
   }
   function paintFs() {
     const on = !!fsEl();
-    $('icoFsOn').hidden = on; $('icoFsOff').hidden = !on;
+    $('icoFs').querySelector('use').setAttribute('href', on ? '#i-fsoff' : '#i-fs');
     $('btnFs').dataset.i18nAria = on ? 'fs.off' : 'fs.on';
     $('btnFs').setAttribute('aria-label', tr($('btnFs').dataset.i18nAria));
   }
@@ -374,11 +274,7 @@
 
   /* ---------- Guard against leaving mid-round ---------- */
   function inGame() { return G.phase === 'round' || G.phase === 'planted'; }
-  let toastT = 0;
-  function toast(msg) {
-    const t = $('toast'); t.textContent = msg; t.hidden = false;
-    clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, 3500);
-  }
+  const toast = UI.toast;
   /* Asks "Leave page?" on reload, closing the tab or typing a new address. */
   window.addEventListener('beforeunload', (e) => { if (inGame()) { e.preventDefault(); e.returnValue = ''; } });
   /* The back button / back swipe lands on an extra history entry instead of leaving the page. */
@@ -480,7 +376,7 @@
       }
       case 'state': if (isRemote()) applyRemote(m.state); return;
       case 'members': NET.members = m.list || []; paintMembers(); return;
-      case 'private': if (M) M.onPrivate(m.data); return;
+      case 'private': if (M) { M.onPrivate(m.data); paintRemote(); } return;
       case 'ended':
         toast(tr('sess.ended'));
         return leaveSession();
@@ -488,7 +384,7 @@
         if (m.code === 'nosession') {
           const joining = NET.fresh;
           leaveSession();
-          if (joining) { UI.tab = 'session'; $('joinMsg').textContent = tr('sess.notFound'); render(); }
+          if (joining) { UIS.tab = 'session'; $('joinMsg').textContent = tr('sess.notFound'); render(); }
           else toast(tr('sess.gone'));
         }
         return;
@@ -513,7 +409,7 @@
     NET.role = role; NET.code = code; NET.name = name; NET.hostKey = null; NET.pending = null; NET.fresh = true;
     $('joinMsg').textContent = '';
     G = { phase: 'setup' };
-    UI.tab = 'session';
+    UIS.tab = 'session';
     enterRemote();
     connect();
     paintSession();
@@ -525,97 +421,114 @@
     NET.role = 'solo'; NET.code = null; NET.hostKey = null; NET.pending = null; NET.members = []; NET.fresh = false;
     offset = 0;
     saveSess();
-    if (wasRemote) { exitRemote(); G = { phase: 'setup' }; stopVoice(); keepAlive(false); unwake(); UI.tab = 'session'; }
+    if (wasRemote) { exitRemote(); G = { phase: 'setup' }; stopVoice(); keepAlive(false); unwake(); UIS.tab = 'session'; }
     paintSession(); render();
   }
 
-  /* ---------- Session UI ---------- */
+  /* ---------- Session screens ---------- */
   const ROLE_NAME = (r) => tr('role.' + r);
   function joinUrl() { return location.origin + location.pathname + '?s=' + NET.code; }
-  let qrFor = null;
+  let qrFor = null, codeFor = null;
   function paintSession() {
-    const host = isHost();
-    $('net').hidden = !inSession();
-    document.body.classList.toggle('insession', inSession());
+    const host = isHost(), on = inSession();
+    $('net').hidden = !on;
     $('net').classList.toggle('on', NET.online);
     $('netCode').textContent = NET.code || '…';
+    $('app').classList.toggle('insession', on);
+    $('navDot').hidden = !on;
     $('sessIdle').hidden = host;
     $('sessHost').hidden = !host;
-    $('navDot').hidden = !inSession();
-    $('navDot').classList.toggle('on', NET.online);
-    $('syncHead').hidden = $('syncGroup').hidden = !inSession();
     $('rowLocal').hidden = !host;
-    const n = NET.members.length;
-    $('sessBanner').hidden = !host;
-    $('sessBannerText').textContent = tr('home.sess', { code: NET.code || '…', n });
-    $('lobbySess').textContent = host ? tr('lobby.sessOn', { code: NET.code || '…' }) : tr('lobby.sessHint');
+    $('syncNote').hidden = on;
+    $$('#syncGroup .sx').forEach((r) => r.classList.toggle('off', !on));
+    document.querySelector('.tab[data-tab="home"]').hidden = isRemote();
+    UI.placeTabInd();
+    $('homeBanner').hidden = !host;
     if (host) {
-      $('hostCode').textContent = NET.code || '····';
       $('hostMsg').textContent = '';
+      if (codeFor !== (NET.code || '')) {
+        codeFor = NET.code || '';
+        $('hostCode').innerHTML = [...(NET.code || '····')].map((ch, i) => '<span style="--i:' + i + '">' + esc(ch) + '</span>').join('');
+        $('hostCode').setAttribute('aria-label', tr('sess.code') + ' ' + (NET.code || '').split('').join(' '));
+      }
+      $('hostLink').textContent = NET.code ? joinUrl().replace(/^https?:\/\//, '') : '…';
       if (NET.code && qrFor !== NET.code && window.qrcode) {
         try {
           const q = qrcode(0, 'M'); q.addData(joinUrl()); q.make();
-          $('hostQr').innerHTML = q.createSvgTag({ cellSize: 4, margin: 2, scalable: true });
+          $('hostQr').innerHTML = q.createSvgTag({ cellSize: 4, margin: 0, scalable: true }) + '<span class="gl"></span>';
           qrFor = NET.code;
         } catch (e) {}
       }
       paintMembers();
     }
-    if (isRemote()) {
-      $('remRole').textContent = ROLE_NAME(NET.role);
-      $('remCode').textContent = NET.code || '····';
-      $('remHint').textContent = tr({ speaker: 'rem.hintSpeaker', player: 'rem.hintPlayer' }[NET.role] || 'rem.hintViewer');
-      if (M) M.paintRemote();
-    }
+    paintLobbySess();
+    paintRemote();
     render();
   }
   function paintMembers() {
     const others = NET.members.filter((m) => m.role !== 'bomb');
-    const box = $('members'); box.textContent = '';
     const n = (r) => others.filter((m) => m.role === r).length;
-    const head = document.createElement('div');
-    head.className = 'mhead';
-    head.textContent = others.length
-      ? tr('sess.members', { s: n('speaker'), p: n('player'), v: n('viewer') })
-      : tr(NET.online ? 'sess.nobody' : 'sess.toServer');
-    box.appendChild(head);
+    $('mSum').innerHTML = others.length
+      ? tr('sess.members', { s: '<b>' + n('speaker') + '</b>', p: '<b>' + n('player') + '</b>', v: '<b>' + n('viewer') + '</b>' })
+      : esc(tr(NET.online ? 'sess.nobody' : 'sess.toServer')) + '<span class="waitdots"><i></i><i></i><i></i></span>';
+    const ul = $('devs'), have = new Set();
     others.forEach((m) => {
-      const c = document.createElement('span');
-      c.className = 'mchip ' + m.role;
-      c.textContent = ({ speaker: '🔊 ', player: '🎭 ' }[m.role] || '👁 ') + (m.name || ROLE_NAME(m.role));
-      box.appendChild(c);
+      const key = m.id + ':' + m.role + ':' + (m.name || ''); have.add(key);
+      if (ul.querySelector('[data-k="' + CSS.escape(key) + '"]')) return;
+      const li = document.createElement('li'); li.dataset.k = key;
+      li.innerHTML = '<span class="av ' + m.role + '">' + ic(m.role) + '</span><span class="nm">' + esc(m.name || ROLE_NAME(m.role)) + '<small>' + tr('sess.devOn') + '</small></span><span class="badge">' + esc(ROLE_NAME(m.role)) + '</span>';
+      ul.appendChild(li);
     });
-    $('sessBannerText').textContent = tr('home.sess', { code: NET.code || '…', n: NET.members.length });
+    [...ul.children].forEach((li) => { if (!have.has(li.dataset.k)) li.remove(); });
+    $('homeBannerT').textContent = tr('home.sess', { code: NET.code || '…', n: NET.members.length });
+    paintLobbySess();
     if (M) M.refreshSetup();
   }
 
   /* Speaker/player/viewer phones mirror the game screens read-only. */
-  function enterRemote() {
-    document.body.classList.add('remote');
-    wake(); keepAlive(soundOn());
-  }
-  function exitRemote() {
-    document.body.classList.remove('remote');
-  }
+  function enterRemote() { $('app').classList.add('remote'); wake(); keepAlive(soundOn()); }
+  function exitRemote() { $('app').classList.remove('remote'); }
   function applyRemote(state) {
     G = state && typeof state === 'object' ? state : { phase: 'setup' };
     render();
   }
+  function paintRemote() {
+    if (!isRemote()) return;
+    const r = NET.role, ok = NET.online;
+    $('remConn').classList.toggle('wait', !ok);
+    $('remConnT').textContent = ok ? tr('rem.connectedTo', { c: NET.code || '' }) : tr('rem.connecting');
+    $('remIco').className = 'rem-ico ' + r;
+    $('remIcoUse').setAttribute('href', '#i-' + r);
+    $('remRole').textContent = ROLE_NAME(r);
+    $('remName').textContent = NET.name ? tr('rem.as', { n: NET.name }) : tr('rem.noName');
+    $('remStatus').textContent = tr(ok ? (G.phase && G.phase !== 'setup' ? 'rem.running' : 'rem.wait') : 'rem.connecting');
+    $('remHint').textContent = tr({ speaker: 'rem.hintSpeaker', player: 'rem.hintPlayer' }[r] || 'rem.hintViewer');
+    $('btnMyRole').hidden = !(r === 'player' && M && M.hasCard());
+    $('chipT').textContent = tr(ok ? 'chip.connected' : 'chip.offline');
+  }
 
   let joinRole = 'speaker';
-  function paintRole() {
-    $('joinRole').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === joinRole)));
-    $('roleDesc').textContent = tr('role.' + joinRole + 'Desc');
+  function paintSeg(seg, v) {
+    const bs = $$('button', seg);
+    bs.forEach((b, i) => { const on = b.dataset.v === v; b.setAttribute('aria-pressed', String(on)); if (on) seg.style.setProperty('--k', i); });
   }
-  $('joinRole').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { joinRole = b.dataset.v; paintRole(); }));
-  paintRole();
+  function paintRole() { paintSeg($('joinRole'), joinRole); $('roleDesc').textContent = tr('role.' + joinRole + 'Desc'); }
+  $('joinRole').addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    joinRole = b.dataset.v; paintRole();
+    if (!UI.RM) $('roleDesc').animate([{ opacity: 0, transform: 'translateY(4px)' }, { opacity: 1, transform: 'none' }], { duration: 300, easing: UI.EO });
+  });
   $('joinCode').addEventListener('input', (e) => {
     e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
     $('joinMsg').textContent = '';
   });
-  $('btnJoin').addEventListener('click', () => {
-    const code = $('joinCode').value.trim().toUpperCase();
-    if (code.length !== 4) { $('joinMsg').textContent = tr('sess.codeMissing'); return; }
+  $('joinF').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const c = $('joinCode'), code = c.value.trim().toUpperCase();
+    if (code.length !== 4) {
+      c.classList.remove('bad'); void c.offsetWidth; c.classList.add('bad');
+      $('joinMsg').textContent = tr('sess.codeMissing'); buzz([50, 30, 50]); c.focus(); return;
+    }
     joinSession(code, joinRole, $('joinName').value.trim());
   });
   $('btnHost').addEventListener('click', startHost);
@@ -626,69 +539,18 @@
       await navigator.clipboard.writeText(url); toast(tr('sess.copied'));
     } catch (e) {}
   });
-  $('btnLeave').addEventListener('click', leaveSession);
+  UI.twoTap($('btnEndSession'), () => tr('sess.endConfirm'), leaveSession);
+  UI.twoTap($('btnLeave'), () => tr('sess.endConfirm'), leaveSession);
+  $('btnMyRole').addEventListener('click', () => M && M.openMyCard());
+  $('homeBanner').addEventListener('click', () => { UIS.tab = 'session'; render(); });
 
-  /* ---------- Hold-to-act buttons ---------- */
+  /* ---------- Hold pads: tones while holding ---------- */
+  function holdTone(n) { if (soundOn()) tone(600 + n * 90, 0.05, 'sine', 0.22); }
+  const holdLeft = (s) => tr('hold.left', { s: s.toFixed(1).replace('.', S.lang === 'de' ? ',' : '.') });
   function makeHold(el, o) {
-    let raf = 0, startT = 0, base = 0, active = false, lastStep = -1;
-    const h = { progress: 0 };
-    const paint = () => el.style.setProperty('--p', h.progress);
-    function frame(t) {
-      if (!active) return;
-      h.progress = Math.min(1, base + (t - startT) / (o.duration() * 1000));
-      paint();
-      const stepN = Math.floor(h.progress * 8);
-      if (stepN !== lastStep) { lastStep = stepN; if (S.snd.hold && soundOn()) tone(600 + stepN * 90, 0.05, 'sine', 0.22); }
-      if (h.progress >= 1) { active = false; el.classList.remove('holding'); o.onDone(); return; }
-      raf = requestAnimationFrame(frame);
-    }
-    function down(e) {
-      if (el.disabled || active || isRemote()) return;
-      if (e.cancelable) e.preventDefault();
-      if (e.pointerId != null) { try { el.setPointerCapture(e.pointerId); } catch (_) {} }
-      audio();
-      active = true; base = h.progress; startT = performance.now(); lastStep = -1;
-      el.classList.add('holding');
-      o.onStart && o.onStart(h.progress);
-      raf = requestAnimationFrame(frame);
-    }
-    function up() {
-      if (!active) return;
-      active = false; cancelAnimationFrame(raf); el.classList.remove('holding');
-      const cp = o.checkpoint ? o.checkpoint() : 0;
-      h.progress = (cp && h.progress >= cp) ? cp : 0;
-      paint();
-      o.onCancel && o.onCancel(h.progress);
-    }
-    h.reset = () => { active = false; cancelAnimationFrame(raf); el.classList.remove('holding'); h.progress = 0; paint(); };
-    el.addEventListener('pointerdown', down);
-    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach((ev) => el.addEventListener(ev, up));
-    el.addEventListener('contextmenu', (e) => e.preventDefault());
-    el.addEventListener('keydown', (e) => { if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) down(e); });
-    el.addEventListener('keyup', (e) => { if (e.key === ' ' || e.key === 'Enter') up(); });
-    return h;
+    audio();
+    return UI.makePad(el, Object.assign({ onStep: holdTone, left: holdLeft, keepText: () => tr('hold.keep') }, o));
   }
-
-  const holdA = makeHold($('holdA'), {
-    duration: () => G.cfg.plantTime,
-    onStart: () => { $('holdB').disabled = true; setHold({ site: 'A', start: now(), dur: G.cfg.plantTime * 1000 }); },
-    onCancel: () => { $('holdB').disabled = false; setHold(null); },
-    onDone: () => plant('A')
-  });
-  const holdB = makeHold($('holdB'), {
-    duration: () => G.cfg.plantTime,
-    onStart: () => { $('holdA').disabled = true; setHold({ site: 'B', start: now(), dur: G.cfg.plantTime * 1000 }); },
-    onCancel: () => { $('holdA').disabled = false; setHold(null); },
-    onDone: () => plant('B')
-  });
-  const holdDef = makeHold($('holdDefuse'), {
-    duration: () => G.cfg.defuseTime,
-    checkpoint: () => (G.cfg.half ? 0.5 : 0),
-    onStart: (p) => { if (G.phase === 'planted') { G.def = { base: p, start: now(), dur: G.cfg.defuseTime * 1000 }; publish(); } },
-    onCancel: (p) => { if (G.phase === 'planted') { G.def = { base: p, start: null }; publish(); } },
-    onDone: () => defused()
-  });
-  function setHold(h) { if (G.phase === 'round') { G.hold = h; publish(); } }
 
   /* ---------- Game state (owned by the bomb phone, or this phone alone) ---------- */
   /* G.phase: setup | round | planted | end. Times are server time (see now()). */
@@ -698,6 +560,7 @@
     S: () => S, G: () => G, setG: (g) => { G = g; publish(); }, save, now, rid, fmt, makeHold, toast, buzz,
     isRemote, role: () => NET.role, members: () => NET.members,
     sendPrivate: (to, data) => wsSend({ t: 'private', to, data }),
+    refresh: () => render(),
     /* Secrets of the current round (e.g. the VIP target) stay on this phone only. */
     secret(id, v) {
       try {
@@ -707,12 +570,8 @@
       return undefined;
     }
   }) : null;
+  UI.setArt((id) => M.artHTML(id));
   const isMode = (g) => !!(g && g.mode && g.mode !== 'bomb' && M && M.has(g.mode));
-  /* Home: tap a mode card to open its lobby. */
-  document.querySelectorAll('#modeGrid .modecard').forEach((b) => b.addEventListener('click', () => {
-    S.mode = b.dataset.mode; save(); M.paintSetup(S.mode); updateHints();
-    UI.lobby = true; render();
-  }));
   function publish() {
     G.rev = (G.rev || 0) + 1;
     if (isHost()) wsSend({ t: 'state', state: G });
@@ -721,13 +580,19 @@
 
   function startRound() {
     if (isRemote()) return;
+    const err = (msg) => {
+      const e = $('lbErr'), b = $('btnStart');
+      if (e && view === 'lobby') e.textContent = msg; else toast(msg);
+      if (b) { b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); }
+      buzz([60, 40, 60]);
+    };
     if (M && M.has(S.mode)) {
       const g = M.start(S.mode, S, now(), G);
-      if (g.error) { toast(g.error); return; }
+      if (g.error) return err(g.error);
+      if ($('lbErr')) $('lbErr').textContent = '';
       audio(); keepAlive(true); wake();
       if (S.fs) enterFs();
       armBack();
-      holdA.reset(); holdB.reset(); holdDef.reset();
       G = g;
       publish();
       return;
@@ -737,15 +602,12 @@
     armBack();
     const t = now();
     const cfg = { roundTime: S.roundTime, bombTime: S.bombTime, plantTime: S.plantTime, defuseTime: S.defuseTime, half: S.half };
-    holdA.reset(); holdB.reset(); holdDef.reset();
-    $('holdA').disabled = false; $('holdB').disabled = false;
-    G = { phase: 'round', id: rid(), cfg, startedAt: t, roundEnd: cfg.roundTime > 0 ? t + cfg.roundTime * 60000 : null, hold: null };
+    G = { mode: 'bomb', phase: 'round', id: rid(), cfg, startedAt: t, roundEnd: cfg.roundTime > 0 ? t + cfg.roundTime * 60000 : null, hold: null };
     publish();
   }
   function plant(site) {
     if (G.phase !== 'round') return;
     const t = now();
-    holdDef.reset();
     G = Object.assign({}, G, { phase: 'planted', site, plantedAt: t, bombEnd: t + G.cfg.bombTime * 1000, hold: null, def: { base: 0, start: null } });
     publish();
   }
@@ -757,8 +619,8 @@
     publish();
   }
   function toSetup() {
-    holdA.reset(); holdB.reset(); holdDef.reset();
     G = { phase: 'setup' };
+    if (M) M.endReview();
     publish();
   }
   /* Explosion and timeout follow from the clock alone, so every phone reaches them at the same moment
@@ -769,59 +631,233 @@
     if (g.phase === 'round' && g.roundEnd && t >= g.roundEnd) return Object.assign({}, g, { phase: 'end', hold: null, result: { why: 'timeout', at: g.roundEnd } });
     return g;
   }
-
-  /* ---------- Rendering ---------- */
-  const CHIP = { setup: 'chip.ready', round: 'chip.round', planted: 'chip.planted', end: 'chip.end' };
-  const SCREEN = { round: 'scrRound', planted: 'scrPlanted', end: 'scrEnd' };
-  const SCREENS = ['scrHome', 'scrLobby', 'scrSession', 'scrSettings', 'scrRemote', 'scrRound', 'scrPlanted', 'scrMode', 'scrEnd'];
-  let view = null;
-  function setScreen(id) {
-    if (view === id) return;
-    view = id;
-    SCREENS.forEach((s) => { $(s).hidden = s !== id; });
-    window.scrollTo(0, 0);
-  }
-  /* Navigation between games: tab bar (modes / session / settings), the lobby is a sub-page of modes.
-     Speaker, player and viewer phones only have the session and settings tabs. */
-  const UI = { tab: 'home', lobby: false };
-  function setupScreen() {
-    if (isRemote()) return UI.tab === 'settings' ? 'scrSettings' : 'scrRemote';
-    if (UI.tab === 'session') return 'scrSession';
-    if (UI.tab === 'settings') return 'scrSettings';
-    return UI.lobby ? 'scrLobby' : 'scrHome';
-  }
-  function paintNav() {
-    document.querySelectorAll('#nav button').forEach((b) => {
-      const tab = b.dataset.tab;
-      b.hidden = tab === 'home' && isRemote();
-      b.setAttribute('aria-current', String(tab === UI.tab || (tab === 'session' && isRemote() && UI.tab !== 'settings')));
-    });
-  }
-  document.querySelectorAll('#nav button').forEach((b) => b.addEventListener('click', () => {
-    if (b.dataset.tab === 'home' && UI.tab === 'home') UI.lobby = false;
-    UI.tab = b.dataset.tab;
-    render();
-  }));
-  $('btnBack').addEventListener('click', () => { UI.lobby = false; render(); });
-  $('sessBanner').addEventListener('click', () => { UI.tab = 'session'; render(); });
   function fmt(ms, tenths) {
     ms = Math.max(0, ms);
     if (tenths && ms < 10000) return (Math.floor(ms / 100) / 10).toFixed(1);
     const s = Math.ceil(ms / 1000);
     return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
   }
-  function updateHints() {
-    const c = (!isMode(G) && G.cfg) || S;
-    const half = c.half ? tr('bomb.halfSaved') : '';
-    if (isRemote()) {
-      $('hintA').textContent = $('hintB').textContent = tr('bomb.remotePlant');
-      $('defuseHint').textContent = tr('bomb.remoteDefuse') + half;
-      return;
+  const holdP = (h, t) => (h ? (h.start ? Math.min(1, (h.base || 0) + (t - h.start) / h.dur) : (h.base || 0)) : 0);
+
+  /* ---------- Navigation: tab bar, deck -> lobby, game screens ---------- */
+  const UIS = { tab: 'home', lobby: false, kind: null };
+  const TAB_IDX = { home: 0, lobby: 0, pass: 0, game: 0, end: 0, session: 1, remote: 1, settings: 2 };
+  const INGAME = new Set(['pass', 'game', 'end']);
+  function desiredScreen(g) {
+    const phase = g.phase || 'setup';
+    if (phase === 'setup') {
+      if (isRemote()) return UIS.tab === 'settings' ? 'settings' : 'remote';
+      if (UIS.tab === 'session') return 'session';
+      if (UIS.tab === 'settings') return 'settings';
+      return UIS.lobby ? 'lobby' : 'home';
     }
-    $('hintA').textContent = $('hintB').textContent = tr('bomb.holdPlant', { n: c.plantTime });
-    $('defuseHint').textContent = tr('bomb.holdDefuse', { n: c.defuseTime }) + half;
+    if (phase === 'end') return 'end';
+    return isMode(g) ? M.screen(g) : 'game';
+  }
+  function kindFor(from, to) {
+    if (UIS.kind) { const k = UIS.kind; UIS.kind = null; return k; }
+    if (to === 'end') return 'fade';
+    if (from === 'end' && INGAME.has(to)) return 'fade';
+    if (from === 'pass' && to === 'game') return 'push';
+    if (from === 'game' && to === 'pass') return 'push';
+    if (INGAME.has(to) && !INGAME.has(from)) return 'rise';
+    if (INGAME.has(from) && !INGAME.has(to)) return 'sink';
+    const a = TAB_IDX[from], b = TAB_IDX[to];
+    if (a !== b) return b > a ? 'tabR' : 'tabL';
+    if (from === 'home' && to === 'lobby') return 'push';
+    if (from === 'lobby' && to === 'home') return 'pop';
+    return 'fade';
+  }
+  let view = null;
+  function setScreen(id) {
+    if (view === id) return;
+    const from = view; view = id;
+    if (from == null) UI.router.show(id); else UI.router.go(id, kindFor(from, id));
+  }
+  let pendingFx = null;
+  UI.router.hooks.enter = (id) => {
+    if (id === 'home') requestAnimationFrame(() => UI.deck.size());
+    if (id === 'pass' && M) M.renderPass();
+    if (id === 'lobby' && !$('s-lobby').childElementCount) renderLobby(false);
+  };
+  UI.router.hooks.after = (id) => {
+    if (id === 'home') UI.deck.size();
+    if (id === 'end' && pendingFx) { const k = pendingFx; pendingFx = null; UI.endFx(k, $('eEm')); }
+  };
+  $$('.tab').forEach((b) => b.addEventListener('click', () => {
+    const tab = b.dataset.tab;
+    if (tab === 'home' && UIS.tab === 'home' && UIS.lobby && view === 'lobby') return backToDeck();
+    UIS.tab = tab; render();
+  }));
+  function backToDeck() {
+    if (UI.router.busy || UI.deck.choosing) return;
+    UI.deck.morphOut((kind) => { UIS.lobby = false; UIS.kind = kind; render(); return true; });
   }
 
+  /* ---------- Tarot deck ---------- */
+  const deckItems = () => M.list.map((m) => ({ id: m.id, num: m.num, name: tr('m.' + m.id + '.name'), tag: tr('m.' + m.id + '.tag') }));
+  UI.deck.init(deckItems(), (i) => {
+    if (isRemote() || G.phase !== 'setup') return;
+    S.mode = M.list[i].id; save();
+    renderLobby(true);
+    UIS.lobby = true;
+    UI.deck.morphIn((kind) => { UIS.kind = kind; render(); return true; });
+  });
+  UI.deck.setIndex(Math.max(0, M.list.findIndex((m) => m.id === S.mode)));
+
+  /* ---------- Lobby of one mode ---------- */
+  const tcHTML = (k) => '<button class="tc" type="button" data-k="' + k[0] + '"><span class="tl">' + esc(tr(k[1])) + '</span><span class="tv" data-tv="' + k[0] + '"><span class="roll" data-v="' + k[0] + '"></span><small data-u="' + k[0] + '"></small></span><span class="td">' + esc(tr(k[2])) + '</span><span class="gl"></span></button>';
+  function paintTC(k, dir, glint) {
+    const el = document.querySelector('[data-v="' + k + '"]'); if (!el) return;
+    const pr = TIME[k].parts(S[k]);
+    UI.roll(el, pr[0], dir || 1);
+    document.querySelector('[data-u="' + k + '"]').textContent = pr[1];
+    document.querySelector('[data-tv="' + k + '"]').classList.toggle('off', pr[1] === '');
+    if (glint) { const c = el.closest('.tc'); c.classList.remove('glint'); void c.offsetWidth; c.classList.add('glint'); setTimeout(() => c.classList.remove('glint'), 1400); }
+  }
+  function renderLobby(morph) {
+    const id = S.mode, m = M.info(id) || M.info('bomb');
+    let h = '<div class="lb-top" data-st><button class="backbtn press" type="button" data-act="back">' + ic('back') + '<span>' + esc(tr('lobby.back')) + '</span></button><span class="lb-num">' + esc(tr('lobby.arcanum', { n: m.num })) + '</span></div>' +
+      '<div class="hero ' + (morph ? '' : 'pop') + '">' + UI.heroRunes() + '<span class="hero-art aslot" data-art="' + m.id + '"></span></div>' +
+      '<h1 class="hero-name" data-st>' + esc(tr('m.' + m.id + '.name')) + '</h1><p class="hero-tag" data-st>' + esc(tr('m.' + m.id + '.tag')) + '</p>' +
+      '<button class="banner press" type="button" data-act="sess" id="lobbySess" hidden data-st><i></i><span></span><b></b></button>' +
+      '<h3 class="sec" data-st>' + esc(tr('lobby.settings')) + '</h3><div class="tgrid" data-st>' + m.keys.map(tcHTML).join('') + '</div>';
+    if (m.toggles) h += '<div class="group" data-st>' + m.toggles.map((x) => '<label class="row"><div class="txt"><div class="lbl">' + esc(tr(x[1])) + '</div><div class="desc">' + esc(tr(x[2])) + '</div></div><span class="switch"><input type="checkbox" role="switch" data-lopt="' + x[0] + '"' + (S[x[0]] ? ' checked' : '') + ' aria-label="' + esc(tr(x[1])) + '"><span></span></span></label>').join('') + '</div>';
+    h += M.lobbyExtra(m.id);
+    h += '<div class="how" data-st><button class="how-h" type="button" data-act="how" aria-expanded="false"><span>' + esc(tr('lobby.how')) + '</span>' + ic('down') + '</button><div class="how-b"><div><p class="how-desc">' + esc(tr('m.' + m.id + '.desc')) + '</p><ol>' +
+      tr('m.' + m.id + '.how').split('|').map((x) => '<li>' + esc(x) + '</li>').join('') + '</ol></div></div></div>';
+    h += '<div class="cta"><p class="errmsg" id="lbErr" role="alert"></p><button class="btn primary big" type="button" id="btnStart" data-act="start">' + ic(m.id === 'murder' ? 'cards' : 'play') + '<span>' + esc(tr(m.id === 'murder' ? 'lobby.startMurder' : m.id === 'bomb' ? 'lobby.startBomb' : 'lobby.start')) + '</span></button></div>' +
+      '<p class="fine" data-st id="lobbyFine"></p>';
+    const el = $('s-lobby');
+    el.innerHTML = h;
+    M.fillArt(el);
+    m.keys.forEach((k) => paintTC(k[0]));
+    M.bindLobby(m.id, el);
+    paintLobbySess();
+  }
+  function paintLobbySess() {
+    const b = $('lobbySess'), f = $('lobbyFine');
+    if (b) {
+      b.hidden = !isHost();
+      b.querySelector('span').textContent = tr('lobby.sessOn', { code: NET.code || '…' });
+      b.querySelector('b').textContent = NET.members.length + ' ' + tr('u.players');
+    }
+    if (f) f.textContent = ('wakeLock' in navigator ? tr('lobby.wake') : tr('lobby.wakeNo')) + (isHost() ? '' : ' ' + tr('lobby.sessHint'));
+  }
+  $('s-lobby').addEventListener('click', (e) => {
+    const t = e.target.closest('[data-act],[data-k]'); if (!t) return;
+    if (t.dataset.k) {
+      const k = t.dataset.k, T = TIME[k];
+      UI.valueSheet({ title: tr(T.title), desc: tr(T.desc), values: T.values, presets: T.presets, parts: T.parts, chip: T.chip }, S[k], (v) => {
+        const old = S[k]; S[k] = v; save();
+        paintTC(k, v >= old ? 1 : -1, v !== old);
+        if (k === 'muMurderers') M.refreshSetup();
+      });
+      return;
+    }
+    const a = t.dataset.act;
+    if (a === 'back') backToDeck();
+    else if (a === 'sess') { UIS.tab = 'session'; render(); }
+    else if (a === 'how') { const how = t.closest('.how'); how.classList.toggle('open'); t.setAttribute('aria-expanded', String(how.classList.contains('open'))); }
+    else if (a === 'start') startRound();
+  });
+  $('s-lobby').addEventListener('change', (e) => { const k = e.target.dataset.lopt; if (k) { S[k] = e.target.checked; save(); } });
+
+  /* ---------- Bomb screens ---------- */
+  let bombBuilt = null, holds = {};
+  const clockHTML = (lab, cls) => '<div class="clockwrap"><div class="label" id="cLab">' + esc(lab) + '</div><div class="clock ' + (cls || '') + '" id="cClock"></div></div>';
+  function buildBomb(g) {
+    const rem = isRemote(), dis = rem ? ' disabled' : '';
+    let h;
+    if (g.phase === 'round') {
+      const hint = rem ? tr('bomb.remotePlant') : tr('bomb.padHint', { n: g.cfg.plantTime });
+      h = clockHTML(g.roundEnd ? tr('bomb.roundTime') : tr('game.elapsed'), 'compact') +
+        '<div class="pads">' + UI.padHTML('id="holdA" aria-label="' + esc(tr('bomb.plantA')) + '"' + dis, 'A', hint, 'site a') + UI.padHTML('id="holdB" aria-label="' + esc(tr('bomb.plantB')) + '"' + dis, 'B', hint, 'site b') + '</div>' +
+        (rem ? '' : '<p class="fine center">' + esc(tr('bomb.gloves')) + '</p>');
+    } else {
+      h = clockHTML(tr('bomb.timer'), 'red compact') +
+        '<div class="planted-head"><span class="sitebadge' + (g.site === 'B' ? ' b' : '') + '">' + esc(g.site) + '</span>' + esc(tr('bomb.planted')) + '</div>' +
+        '<div class="bar"><span id="bombBar"></span></div><p class="mstatus" id="bSub"></p>' +
+        '<div class="pads one">' + UI.padHTML('id="holdDef" aria-label="' + esc(tr('bomb.defuseAria')) + '"' + dis, esc(tr('bomb.defuseBig')), rem ? tr('bomb.remoteDefuse') : tr('bomb.padHint', { n: g.cfg.defuseTime }), 'defuse', g.cfg.half) + '</div>' +
+        '<p class="fine center">' + esc(tr(g.cfg.half ? 'bomb.halfNote' : 'bomb.resetNote')) + '</p>';
+    }
+    $('gWrap').innerHTML = '<div id="bombBody" class="mbody">' + h + '</div>';
+    if (M) M.invalidate();
+    holds = {};
+    if (!rem && g.phase === 'round') {
+      const pad = (site, other) => makeHold($('hold' + site), {
+        duration: () => G.cfg.plantTime,
+        enabled: () => G.phase === 'round' && !(G.hold && G.hold.site && G.hold.site !== site),
+        onStart: (p) => { $(other).classList.add('off'); setHold({ site, base: p, start: now(), dur: G.cfg.plantTime * 1000 }); },
+        onPause: (p) => setHold({ site, base: p, start: null, dur: G.cfg.plantTime * 1000 }),
+        onCancel: () => { $(other).classList.remove('off'); setHold(null); },
+        onDone: () => plant(site)
+      });
+      holds.A = pad('A', 'holdB'); holds.B = pad('B', 'holdA');
+    } else if (!rem) {
+      holds.def = makeHold($('holdDef'), {
+        duration: () => G.cfg.defuseTime,
+        enabled: () => G.phase === 'planted',
+        checkpoint: () => (G.cfg.half ? 0.5 : 0),
+        onStart: (p) => { if (G.phase === 'planted') { G.def = { base: p, start: now(), dur: G.cfg.defuseTime * 1000 }; publish(); } },
+        onPause: (p) => { if (G.phase === 'planted') { G.def = { base: p, start: null, dur: G.cfg.defuseTime * 1000 }; publish(); } },
+        onCancel: (p) => { if (G.phase === 'planted') { G.def = { base: p, start: null, dur: G.cfg.defuseTime * 1000 }; publish(); } },
+        onDone: () => defused()
+      });
+    }
+    bombBuilt = g.id + ':' + g.phase + ':' + (rem ? 'r' : 'h');
+  }
+  function setHold(h) { if (G.phase === 'round') { G.hold = h; publish(); } }
+  function renderBomb(g, t) {
+    if (bombBuilt !== g.id + ':' + g.phase + ':' + (isRemote() ? 'r' : 'h') || !$('bombBody')) buildBomb(g);
+    const gs = $('s-game');
+    if (g.phase === 'round') {
+      gs.classList.remove('danger', 'crit');
+      UI.roll($('cClock'), g.roundEnd ? fmt(g.roundEnd - t) : fmt(t - g.startedAt), -1);
+      if (isRemote()) {
+        const h = g.hold, p = holdP(h, t);
+        UI.padShow($('holdA'), h && h.site === 'A' ? p : 0, !!(h && h.site === 'A' && h.start));
+        UI.padShow($('holdB'), h && h.site === 'B' ? p : 0, !!(h && h.site === 'B' && h.start));
+      }
+    } else if (g.phase === 'planted') {
+      const total = g.bombEnd - g.plantedAt, rem = g.bombEnd - t;
+      gs.classList.add('danger'); gs.classList.toggle('crit', rem < 10000);
+      UI.roll($('cClock'), fmt(rem, true), -1);
+      $('bombBar').style.transform = 'scaleX(' + Math.max(0, rem / total) + ')';
+      const sub = g.roundEnd ? tr('bomb.paused', { t: fmt(g.roundEnd - g.plantedAt) }) : tr('bomb.noRound');
+      if ($('bSub').textContent !== sub) $('bSub').textContent = sub;
+      if (isRemote() && g.def) UI.padShow($('holdDef'), holdP(g.def, t), !!g.def.start);
+    }
+  }
+
+  /* ---------- Game bar in the header ---------- */
+  let barFor = null;
+  function paintChrome(g, phase) {
+    if (phase === 'setup') {
+      if (!isRemote()) $('chipT').textContent = tr('chip.ready');
+      return;
+    }
+    const mode = g.mode && M.info(g.mode) ? g.mode : 'bomb';
+    if (barFor !== mode) {
+      barFor = mode;
+      const a = $('gbArt'); a.dataset.art = mode; a.innerHTML = M.artHTML(mode);
+    }
+    $('gbName').textContent = tr('m.' + mode + '.name');
+    const chip = phase === 'end' ? ['chip.end', 'over'] : phase === 'planted' ? ['chip.planted', 'hot'] : [mode === 'bomb' ? 'chip.round' : 'chip.game', 'live'];
+    const c = $('gbChip'); if (c.className !== 'chip ' + chip[1]) c.className = 'chip ' + chip[1];
+    const txt = tr(chip[0]); if ($('gbChipT').textContent !== txt) $('gbChipT').textContent = txt;
+    $('btnQuit').hidden = isRemote();
+  }
+  /* "Beenden" in the game bar: two taps end the round; on the result screen one tap goes back. */
+  $('btnQuit').addEventListener('click', () => {
+    const b = $('btnQuit');
+    if (G.phase === 'end') { toSetup(); return; }
+    if (b.classList.contains('armed')) { clearTimeout(b._t); b.classList.remove('armed'); b.textContent = tr('game.end'); $('gbChip').classList.remove('armedhide'); toSetup(); return; }
+    b.classList.add('armed'); b.textContent = tr('game.endConfirm'); $('gbChip').classList.add('armedhide'); buzz(30);
+    b._t = setTimeout(() => { b.classList.remove('armed'); b.textContent = tr('game.end'); $('gbChip').classList.remove('armedhide'); }, 3000);
+  });
+
+  /* ---------- Rendering ---------- */
   let lastKey = null;
   function render() {
     const t = now();
@@ -829,105 +865,76 @@
     const phase = g.phase || 'setup';
     const key = (g.id || '-') + ':' + phase;
     if (key !== lastKey) { lastKey = key; enter(g, t); }
+    setScreen(desiredScreen(g));
+    paintChrome(g, phase);
+    if (phase === 'setup') { if (isRemote()) paintRemote(); return; }
+    if (phase === 'end') return;
+    if (isMode(g)) { if (view === 'game') M.render(g, t); return; }
+    renderBomb(g, t);
+  }
 
-    document.body.classList.toggle('ingame', phase !== 'setup');
-    if (phase === 'setup') {
-      setScreen(setupScreen());
-      paintNav();
-      $('chip').textContent = tr(isRemote() ? (NET.online ? 'chip.connected' : 'chip.offline') : CHIP.setup);
-      if (isRemote()) $('remStatus').textContent = tr(NET.online ? 'rem.wait' : 'rem.connecting');
-      return;
-    }
-    if (isMode(g)) {
-      if (phase === 'end') { setScreen('scrEnd'); $('chip').textContent = tr(CHIP.end); return; }
-      setScreen('scrMode');
-      $('chip').textContent = tr('chip.game');
-      M.render(g, t);
-      return;
-    }
-    setScreen(SCREEN[phase]);
-    $('chip').textContent = tr(CHIP[phase]);
-
-    if (phase === 'round') {
-      $('roundLabel').textContent = tr(g.roundEnd ? 'bomb.roundTime' : 'bomb.noLimit');
-      $('roundClock').textContent = g.roundEnd ? fmt(g.roundEnd - t) : '--:--';
-      if (isRemote()) {
-        const h = g.hold, p = h && h.start ? Math.min(1, Math.max(0, (t - h.start) / h.dur)) : 0;
-        $('holdA').style.setProperty('--p', h && h.site === 'A' ? p : 0);
-        $('holdB').style.setProperty('--p', h && h.site === 'B' ? p : 0);
-      }
-    } else if (phase === 'planted') {
-      const total = g.bombEnd - g.plantedAt, rem = g.bombEnd - t;
-      $('bombClock').textContent = fmt(rem, true);
-      $('bombBar').style.transform = 'scaleX(' + Math.max(0, rem / total) + ')';
-      if (isRemote() && g.def) {
-        const p = g.def.start ? Math.min(1, g.def.base + (t - g.def.start) / g.def.dur) : g.def.base;
-        $('holdDefuse').style.setProperty('--p', p);
-        $('holdDefuse').classList.toggle('holding', !!g.def.start);
-      }
-    }
+  /* Event banner and the line texts of the announcer (in the app language). */
+  const SAY_ICON = [[/^zone/, 'zone'], [/^drop/, 'drop'], [/^team_out/, 'skull'], [/^vip_hit|^obj_down/, 'burst'], [/^hos_freed/, 'unlock'], [/^inf/, 'virus'], [/^mu_/, 'cards'], [/^(min1|s30|s10)$/, 'hour'], [/start$|^side_swap/, 'play'], [/^planted/, 'bomb']];
+  function banner(item) {
+    if (item.cat === 'result') return;
+    const say = item.say || [], k = say[say.length - 1];
+    const L = LINES[S.lang] || LINES.de;
+    const text = k ? L[k] || (LINES.de[k]) : item.sig === 'hit' ? tr('inf.turning') : '';
+    if (!text) return;
+    const icon = (SAY_ICON.find((x) => k && x[0].test(k)) || [0, item.sig === 'hit' ? 'virus' : 'flag'])[1];
+    const kind = item.sig === 'start' || item.sig === 'jingle' ? 'green' : item.sig === 'alert' || item.sig === 'hit' || item.sig === 'low' ? 'red' : '';
+    UI.evt(text, kind, icon);
   }
 
   /* Runs once per phase change on every phone: screen setup plus the one-shot sounds. */
   function enter(g, t) {
     const phase = g.phase || 'setup';
-    ['setup', 'round', 'planted', 'end'].forEach((p) => document.body.classList.toggle(p, p === phase));
-    updateHints();
     const fresh = (at) => t - at < 4000;   /* late joiners skip stale announcements */
     const snd = soundOn();
+    $('btnQuit').classList.remove('armed'); $('btnQuit').textContent = tr('game.end'); $('gbChip').classList.remove('armedhide');
+    if (phase !== 'end') pendingFx = null;
     if (isMode(g)) return enterMode(g, t, phase);
     if (phase === 'setup') {
-      stopVoice();
-      cancelBoom();
+      stopVoice(); cancelBoom(); UI.evtOff();
+      $('s-game').classList.remove('danger', 'crit');
       if (!isRemote()) { keepAlive(false); unwake(); }
       return;
     }
     keepAlive(snd || !inSession()); wake();
     if (phase === 'round') {
       P.said = {};
-      if (isRemote()) { $('holdA').disabled = $('holdB').disabled = false; }
-      if (snd && fresh(g.startedAt)) {
-        if (S.snd.signal) { tone(880, 0.12, 'square', 0.3); tone(1320, 0.18, 'square', 0.3, 0.14); }
-        if (S.say.start) speak('start');
+      if (fresh(g.startedAt)) {
+        UI.evt(LINES[S.lang] ? LINES[S.lang].start : LINES.de.start, 'green', 'play');
+        if (snd) { tone(880, 0.12, 'square', 0.3); tone(1320, 0.18, 'square', 0.3, 0.14); speak('start'); }
       }
     } else if (phase === 'planted') {
-      const badge = $('plantSite'); badge.textContent = g.site; badge.classList.toggle('b', g.site === 'B');
-      $('halfMark').hidden = !g.cfg.half;
-      if (isRemote()) $('holdDefuse').style.setProperty('--p', 0);
       if (fresh(g.plantedAt)) {
         buzz([120, 60, 120]);
-        if (snd && S.snd.signal) { tone(1500, 0.1, 'square', 0.35); tone(1500, 0.1, 'square', 0.35, 0.15); }
-        if (snd && S.say.planted) speak(g.site === 'B' ? 'planted_b' : 'planted_a');
+        UI.evt((LINES[S.lang] || LINES.de)[g.site === 'B' ? 'planted_b' : 'planted_a'], 'red', 'bomb');
+        if (snd) { tone(1500, 0.1, 'square', 0.35); tone(1500, 0.1, 'square', 0.35, 0.15); speak(g.site === 'B' ? 'planted_b' : 'planted_a'); }
       }
     } else if (phase === 'end') {
-      $('endExtra').innerHTML = '';
-      $('btnAgain').textContent = tr('game.again');
       const r = g.result || { why: 'timeout', at: t };
       const isFresh = fresh(r.at);
+      UI.evtOff();
+      showEndFor(g);
       if (r.why === 'defused') {
         cancelBoom();
-        showResult('def', tr('bomb.rDefusedK'), tr('bomb.rDefWin'), tr('bomb.rDefusedSub', { site: g.site, s: (Math.max(0, r.rem) / 1000).toFixed(1) }));
         if (isFresh) {
-          buzz(200);
-          if (snd && S.snd.jingle) winJingle();
-          if (snd && S.say.result) setTimeout(() => { if (G.phase === 'end') speak(['defused', 'def_win']); }, S.snd.jingle ? 700 : 150);
+          pendingFx = 'win'; buzz(200);
+          if (snd) { winJingle(); setTimeout(() => { if (G.phase === 'end') speak(['defused', 'def_win']); }, 700); }
         }
       } else if (r.why === 'boom') {
-        holdDef.reset();
-        showResult('att', tr('bomb.rBoomK'), tr('bomb.rAttWin'), tr('bomb.rBoomSub', { site: g.site }));
         if (isFresh) {
-          if (snd && S.snd.boom && P.boomId !== g.id && t - r.at < 1500) { P.boomId = g.id; explosion(0); }
+          pendingFx = 'boom';
+          if (snd && P.boomId !== g.id && t - r.at < 1500) { P.boomId = g.id; explosion(0); }
           buzz([400, 100, 400]);
-          let n = 0; const iv = setInterval(() => { flash(); if (++n > 8) clearInterval(iv); }, 140);
-          if (snd && S.say.result) setTimeout(() => { if (G.phase !== 'setup') speak('att_win'); }, Math.max(300, r.at + (S.snd.boom ? 2200 : 300) - now()));
+          if (t - r.at < 1500) UI.boomFx();
+          if (snd) setTimeout(() => { if (G.phase !== 'setup') speak('att_win'); }, Math.max(300, r.at + 2200 - now()));
         }
-      } else {
-        holdA.reset(); holdB.reset();
-        showResult('def', tr('bomb.rTimeK'), tr('bomb.rDefWin'), tr('bomb.rTimeSub'));
-        if (isFresh && snd) {
-          if (S.snd.signal) { tone(440, 0.4, 'square', 0.3); tone(330, 0.6, 'square', 0.3, 0.45); }
-          if (S.say.result) speak(['timeout', 'def_win']);
-        }
+      } else if (isFresh) {
+        pendingFx = 'win';
+        if (snd) { tone(440, 0.4, 'square', 0.3); tone(330, 0.6, 'square', 0.3, 0.45); speak(['timeout', 'def_win']); }
       }
       if (!isRemote()) { unwake(); setTimeout(() => { if (G.phase === 'end') keepAlive(false); }, 6000); }
     }
@@ -935,31 +942,62 @@
   /* Other game modes: their screen is built by modes.js, sounds come from G.ev and the timeline. */
   function enterMode(g, t, phase) {
     keepAlive(soundOn() || !inSession()); wake();
+    $('s-game').classList.remove('danger', 'crit');
     if (phase !== 'end') return;
+    UI.evtOff();
     const r = g.result || {};
-    const txt = M.resultText(r);
-    showResult(r.side === 'none' ? '' : (r.side || ''), txt.kicker, txt.title, txt.sub);
-    $('endExtra').innerHTML = M.endExtra(g);
-    $('btnAgain').textContent = M.again(g);
-    if (t - (r.at || t) < 4000) { announce({ say: r.say, sig: r.sig, cat: 'result' }); buzz([300, 100, 300]); }
+    showEndFor(g);
+    if (t - (r.at || t) < 4000) {
+      pendingFx = M.endInfo(g).fx;
+      if (r.sig === 'boom') UI.boomFx();
+      announce({ say: r.say, sig: r.sig, cat: 'result' }); buzz([300, 100, 300]);
+    }
     if (!isRemote()) { unwake(); setTimeout(() => { if (G.phase === 'end') keepAlive(false); }, 6000); }
+  }
+  /* Result screen: emblem, texts in this phone's language, stats, extra lists, buttons. */
+  function showEndFor(g) {
+    const r = g.result || {};
+    let side, kicker, title, sub, icon, sym = null, stats = [], extra = '', again = tr('game.again'), againIcon = 'refresh';
+    const playTime = Math.max(0, (r.at || now()) - (g.playAt || g.startedAt || now()));
+    if (isMode(g)) {
+      const txt = M.resultText(r), info = M.endInfo(g);
+      side = r.side || 'none'; kicker = txt.kicker; title = txt.title; sub = txt.sub;
+      icon = info.icon; sym = info.sym; stats = info.stats; extra = info.extra; again = info.again; againIcon = info.againIcon;
+    } else if (r.why === 'defused') {
+      side = 'def'; kicker = tr('bomb.rDefusedK'); title = tr('bomb.rDefWin'); sub = tr('bomb.rDefusedSub', { site: g.site, s: (Math.max(0, r.rem) / 1000).toFixed(1) }); icon = 'shield';
+      stats = [[tr('stat.left'), fmt(r.rem)], [tr('stat.site'), g.site]];
+    } else if (r.why === 'boom') {
+      side = 'att'; kicker = tr('bomb.rBoomK'); title = tr('bomb.rAttWin'); sub = tr('bomb.rBoomSub', { site: g.site }); icon = 'burst';
+      stats = [[tr('stat.site'), g.site]];
+    } else {
+      side = 'def'; kicker = tr('bomb.rTimeK'); title = tr('bomb.rDefWin'); sub = tr('bomb.rTimeSub'); icon = 'hour';
+    }
+    stats = stats.concat([[tr('stat.time'), fmt(playTime)]]);
+    $('result').className = 'result ' + side;
+    $('eK').textContent = kicker; $('eT').textContent = title; $('eS').textContent = sub || '';
+    $('eIc').innerHTML = sym && window.ART ? window.ART.role(sym) : ic(icon || 'flag');
+    $('eStats').innerHTML = stats.map((s) => '<div class="stat"><b>' + esc(s[1]) + '</b><span>' + esc(s[0]) + '</span></div>').join('');
+    $('eX').innerHTML = extra;
+    $('btnAgain').innerHTML = ic(againIcon) + '<span>' + esc(again) + '</span>';
+    document.querySelector('#s-end .endbtns').hidden = isRemote();
+    const em = $('eEm'); em.classList.remove('pop'); void em.offsetWidth; em.classList.add('pop');
   }
   const SIG_PAUSE = { jingle: 700, boom: 2200, low: 900, start: 350, alert: 300, hit: 300 };
   function playSig(sig) {
-    if (sig === 'start' && S.snd.signal) { tone(880, 0.12, 'square', 0.3); tone(1320, 0.18, 'square', 0.3, 0.14); }
-    else if (sig === 'alert' && S.snd.signal) { tone(1500, 0.1, 'square', 0.35); tone(1500, 0.1, 'square', 0.35, 0.15); }
-    else if (sig === 'hit' && S.snd.signal) { tone(990, 0.08, 'square', 0.35); tone(660, 0.16, 'square', 0.35, 0.1); }
-    else if (sig === 'low' && S.snd.signal) { tone(440, 0.4, 'square', 0.3); tone(330, 0.6, 'square', 0.3, 0.45); }
-    else if (sig === 'jingle' && S.snd.jingle) winJingle();
-    else if (sig === 'boom' && S.snd.boom) explosion(0);
+    if (sig === 'start') { tone(880, 0.12, 'square', 0.3); tone(1320, 0.18, 'square', 0.3, 0.14); }
+    else if (sig === 'alert') { tone(1500, 0.1, 'square', 0.35); tone(1500, 0.1, 'square', 0.35, 0.15); }
+    else if (sig === 'hit') { tone(990, 0.08, 'square', 0.35); tone(660, 0.16, 'square', 0.35, 0.1); }
+    else if (sig === 'low') { tone(440, 0.4, 'square', 0.3); tone(330, 0.6, 'square', 0.3, 0.45); }
+    else if (sig === 'jingle') winJingle();
+    else if (sig === 'boom') explosion(0);
   }
-  /* One announcement: { say: [lineKeys], sig, cat } where cat picks the "Was angesagt wird" switch. */
+  /* One announcement: { say: [lineKeys], sig, cat }. Everything is announced and played. */
   function announce(item) {
     if (item.sig === 'alert' || item.sig === 'hit') buzz([120, 60, 120]);
+    banner(item);
     if (!soundOn()) return;
     playSig(item.sig);
-    const on = { start: S.say.start, result: S.say.result, min1: S.say.min1, events: S.say.events }[item.cat || 'events'];
-    if (item.say && item.say.length && on) setTimeout(() => speak(item.say), item.sig ? (SIG_PAUSE[item.sig] || 300) : 0);
+    if (item.say && item.say.length) setTimeout(() => speak(item.say), item.sig ? (SIG_PAUSE[item.sig] || 300) : 0);
   }
   const seenEv = new Set();
   let tlId = null, tlDone = new Set();
@@ -973,13 +1011,6 @@
       tlDone.add(it.k);
       if (t - it.at < 3000) announce(it);
     });
-  }
-
-  function showResult(side, kicker, title, sub) {
-    $('result').className = 'result ' + side;
-    $('resKicker').textContent = kicker;
-    $('resTitle').textContent = title;
-    $('resSub').textContent = sub;
   }
 
   /* ---------- Sound scheduling ---------- */
@@ -1004,30 +1035,33 @@
         const bt = P.beepT, rem = G.bombEnd - bt, r = Math.max(0, rem / total);
         const d = bt - L - t;
         if (d > -60) {
-          if (snd && S.snd.tick) tone(2000 + 900 * (1 - r), 0.07, 'square', 0.35, Math.max(0, d) / 1000);
+          if (snd) tone(2000 + 900 * (1 - r), 0.07, 'square', 0.35, Math.max(0, d) / 1000);
           setTimeout(flash, Math.max(0, bt - t));
         }
         P.beepT = bt + (rem < 2000 ? 90 : 110 + 890 * Math.pow(r, 0.8));
       }
-      if (snd && S.snd.boom && P.boomId !== G.id && G.bombEnd - L <= t + LOOK) {
+      if (snd && P.boomId !== G.id && G.bombEnd - L <= t + LOOK) {
         P.boomId = G.id;
         const d = G.bombEnd - L - t;
         if (d > -1500) P.boomNodes = explosion(Math.max(0, d) / 1000);
       }
       const remL = G.bombEnd - (t + L);
-      if (snd && S.say.bomb && !P.said.s30 && remL <= 30500 && G.cfg.bombTime >= 40) { P.said.s30 = 1; if (remL > 27000) speak('s30'); }
-      if (snd && S.say.bomb && !P.said.s10 && remL <= 10500 && G.cfg.bombTime >= 20) { P.said.s10 = 1; if (remL > 8000) speak('s10'); }
+      if (snd && !P.said.s30 && remL <= 30500 && G.cfg.bombTime >= 40) { P.said.s30 = 1; if (remL > 27000) speak('s30'); }
+      if (snd && !P.said.s10 && remL <= 10500 && G.cfg.bombTime >= 20) { P.said.s10 = 1; if (remL > 8000) speak('s10'); }
     }
     if (!isMode(G) && G.phase === 'round' && G.roundEnd) {
       const remL = G.roundEnd - (t + L);
-      if (snd && S.say.min1 && !P.said.min1 && remL <= 60000 && G.cfg.roundTime > 1) { P.said.min1 = 1; if (remL > 55000) speak('min1'); }
+      if (snd && !P.said.min1 && remL <= 60000 && G.cfg.roundTime > 1) { P.said.min1 = 1; if (remL > 55000) { speak('min1'); UI.evt((LINES[S.lang] || LINES.de).min1, '', 'hour'); } }
     }
     /* Calibration: one beep on every full second of server time. */
-    if ($('optSyncBeep').checked && snd) {
+    if ($('optSyncBeep').checked && inSession()) {
       if (P.syncT < t - 1000) P.syncT = Math.ceil((t + L) / 1000) * 1000;
       while (P.syncT - L <= t + LOOK) {
         const d = P.syncT - L - t;
-        if (d > -30) tone(1760, 0.06, 'square', 0.4, Math.max(0, d) / 1000);
+        if (d > -30) {
+          if (snd) tone(1760, 0.06, 'square', 0.4, Math.max(0, d) / 1000);
+          setTimeout(() => { const b = $('beep'); b.classList.add('on'); setTimeout(() => b.classList.remove('on'), 160); }, Math.max(0, d));
+        }
         P.syncT += 1000;
       }
     }
@@ -1044,69 +1078,75 @@
   }
   setInterval(tick, 40);
 
-  /* Two-tap confirm instead of a dialog */
-  function armConfirm(btn, action, prompt) {
-    let t = 0;
-    const label = () => (btn.dataset.i18n ? tr(btn.dataset.i18n) : btn.textContent);
-    btn.addEventListener('click', () => {
-      if (btn.classList.contains('armed')) { clearTimeout(t); btn.classList.remove('armed'); btn.textContent = label(); action(); return; }
-      btn.classList.add('armed'); btn.textContent = tr(prompt || 'game.abortConfirm');
-      t = setTimeout(() => { btn.classList.remove('armed'); btn.textContent = label(); }, 3000);
-    });
-  }
-  armConfirm($('abortRound'), toSetup);
-  armConfirm($('abortPlanted'), toSetup);
-  armConfirm($('abortMode'), toSetup);
-  armConfirm($('btnEndSession'), leaveSession, 'sess.endConfirm');
-
-  $('btnStart').addEventListener('click', startRound);
   $('btnAgain').addEventListener('click', startRound);
-  $('btnSetup').addEventListener('click', toSetup);
+  $('btnBackMode').addEventListener('click', toSetup);
 
-  function testSound() {
+  /* ---------- Settings ---------- */
+  function testSound(btn, msg) {
     audio(); keepAlive(true);
     tone(2400, 0.08, 'square', 0.35); tone(2400, 0.08, 'square', 0.35, 0.25);
     loadLines();
     speak('test');
+    if (msg) { msg.hidden = false; msg.textContent = tr('set.testMsg'); }
   }
-  $('btnTest').addEventListener('click', () => {
-    testSound();
-    $('testMsg').textContent = tr('set.testMsg');
-  });
-  $('btnRemTest').addEventListener('click', testSound);
+  $('btnTest').addEventListener('click', () => testSound($('btnTest'), $('testMsg')));
+  $('btnRemTest').addEventListener('click', () => testSound($('btnRemTest'), null));
   $('btnVoiceTest').addEventListener('click', () => { audio(); loadLines(); speak('planted_a'); });
   $('optSyncBeep').addEventListener('change', () => { audio(); P.syncT = 0; });
+  $('btnToSess').addEventListener('click', () => { UIS.tab = 'session'; render(); });
 
-  let resetT = 0;
-  $('btnReset').addEventListener('click', () => {
-    const b = $('btnReset');
-    if (!b.classList.contains('armed')) {
-      b.classList.add('armed'); b.textContent = tr('set.sure');
-      resetT = setTimeout(() => { b.classList.remove('armed'); b.textContent = tr('set.resetBtn'); }, 3000);
-      return;
-    }
-    clearTimeout(resetT); b.classList.remove('armed'); b.textContent = tr('set.resetBtn');
-    S = clone(DEF); save(); applyArt(); applyLang(); applyGains(); loadLines();
+  function paintRange(r) {
+    const p = (r.value - r.min) / (r.max - r.min) * 100;
+    r.style.setProperty('--p', p + '%');
+    const o = document.querySelector('[data-out="' + r.dataset.range + '"]'); if (o) o.textContent = r.value + ' ' + o.dataset.unit;
+  }
+  function paintSettings() {
+    $$('#s-settings [data-seg]').forEach((seg) => paintSeg(seg, S[seg.dataset.seg]));
+    $$('#s-settings [data-opt]').forEach((el) => { el.checked = !!S[el.dataset.opt]; });
+    $$('#s-settings [data-range]').forEach((el) => { el.value = S[el.dataset.range]; paintRange(el); });
+    $('voiceDesc').textContent = tr(S.voice === 'male' ? 'set.voiceMaleDesc' : 'set.voiceDeviceDesc');
+  }
+  $('s-settings').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-seg] button'); if (!b) return;
+    const key = b.parentElement.dataset.seg, v = b.dataset.v;
+    if (S[key] === v) return;
+    S[key] = v; save(); paintSettings();
+    if (key === 'lang') { applyLang(); loadLines(); }
+    if (key === 'voiceLang') loadLines();
+    if (key === 'art') { applyArt(true); toast(tr(v === 'ai' ? 'art.ai' : 'art.vec')); }
+  });
+  $('s-settings').addEventListener('change', (e) => { const k = e.target.dataset.opt; if (k) { S[k] = e.target.checked; save(); } });
+  $('s-settings').addEventListener('input', (e) => {
+    const k = e.target.dataset.range; if (!k) return;
+    S[k] = +e.target.value; paintRange(e.target); applyGains(); save();
+  });
+  UI.twoTap($('btnReset'), () => tr('set.sure'), () => {
+    S = clone(DEF); save(); applyArt(true); applyLang(); applyGains(); loadLines();
+    toast(tr('set.resetDesc'));
   });
 
   /* Picture style: AI pictures or the hand-built vector art (art.js). */
-  function applyArt() {
-    document.body.dataset.art = S.art === 'vector' ? 'vector' : 'ai';
-    if (M) M.fillArt();
+  function applyArt(anim) {
+    M.setArt(S.art);
+    if (anim && !UI.RM) $$('.aslot').forEach((el) => { if (el.offsetParent) el.animate([{ opacity: 0, filter: 'brightness(2)' }, { opacity: 1, filter: 'none' }], { duration: 600, easing: UI.EO }); });
   }
 
-  /* Language switch: static text via data-i18n, everything painted from code gets repainted. */
+  /* Language switch: static text via data-i18n, everything built from code gets rebuilt. */
   function applyLang() {
     window.I18N.set(S.lang);
     window.I18N.apply();
-    $('langLabel').textContent = S.lang.toUpperCase();
-    paintRole();
-    if (M) M.relabel();
-    bindAll();
-    paintSession();
-    paintMembers();
-    lastKey = null;
-    render();
+    $('btnLang').textContent = S.lang.toUpperCase();
+    UI.deck.relabel(deckItems());
+    paintRole(); paintSettings();
+    if ($('s-lobby').childElementCount) renderLobby(false);
+    if (M) M.invalidate();
+    bombBuilt = null; barFor = null;
+    paintSession(); paintMembers();
+    const g = derive(G, now());
+    if (g.phase === 'end') showEndFor(g);
+    if (view === 'pass' && M) M.renderPass();
+    paintChrome(g, g.phase || 'setup');
+    requestAnimationFrame(UI.placeTabInd);
   }
   $('btnLang').addEventListener('click', () => {
     if (inGame()) return;
@@ -1114,7 +1154,7 @@
     applyLang(); loadLines();
   });
 
-  applyArt();
+  applyArt(false);
   applyLang();
   loadLines();
   /* Announcer texts of all modes (also the phone-voice fallback) come from audio/lines.json. */
@@ -1132,15 +1172,18 @@
     if (linkCode) { try { history.replaceState(null, '', location.pathname); } catch (e) {} }
     if (saved && saved.code && (!linkCode || linkCode === saved.code)) {
       NET.role = saved.role; NET.code = saved.code; NET.hostKey = saved.hostKey || null; NET.name = saved.name || '';
-      if (isRemote()) { enterRemote(); UI.tab = 'session'; }
+      if (isRemote()) { enterRemote(); UIS.tab = 'session'; }
       connect();
     } else if (linkCode) {
       if (saved) saveSess();
       $('joinCode').value = linkCode;
-      UI.tab = 'session';
+      UIS.tab = 'session';
     }
+    UI.V.resize();
     paintSession();
     render();
+    requestAnimationFrame(() => { UI.deck.size(); UI.placeTabInd(); if (view === 'home') UI.deck.deal(); });
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => UI.placeTabInd());
   })();
 
   /* ---------- Offline support (PWA) ---------- */
