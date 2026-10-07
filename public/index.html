@@ -73,7 +73,10 @@
   </defs>
 </svg>
 
-<div id="app">
+<div id="app" class="classic">
+  <!-- Classic is the default and is set in the markup, so the first paint is already Classic.
+       Only a saved choice of Modern switches it off, before anything is drawn. -->
+  <script>try { if ((JSON.parse(localStorage.getItem('abt-settings') || '{}').design) === 'modern') document.getElementById('app').classList.remove('classic'); } catch (e) {}</script>
   <div class="nebula" aria-hidden="true"></div>
   <canvas id="vortex" aria-hidden="true"></canvas>
 

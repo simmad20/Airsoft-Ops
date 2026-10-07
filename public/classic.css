@@ -25,7 +25,7 @@
 }
 body:has(#app.classic) { background: #111417; }
 #app.classic *, #app.classic *::before, #app.classic *::after { animation: none !important; transition: none !important; }
-#app.classic .nebula, #app.classic #vortex, #app.classic .evt, #app.classic #fx, #app.classic .ripple { display: none !important; }
+#app.classic #s-home, #app.classic .nebula, #app.classic #vortex, #app.classic .evt, #app.classic #fx, #app.classic .ripple { display: none !important; }
 #app.classic svg.i { display: none; }
 #app.classic .iconbtn svg.i { display: block; width: 20px; height: 20px; stroke-width: 2; }
 #app.classic .rsym, #app.classic .aslot, #app.classic .hearts, #app.classic .e-emblem, #app.classic .stats, #app.classic .cd svg.cr, #app.classic .cd .cd-ic { display: none !important; }
@@ -87,6 +87,7 @@ body:has(#app.classic) { background: #111417; }
 #app.classic .seg button { min-width: 0; min-height: 0; padding: 10px 6px; color: var(--fg); text-shadow: none; overflow: hidden; text-overflow: ellipsis; }
 #app.classic .seg button + button { box-shadow: -1px 0 0 var(--line); }
 #app.classic .seg button[aria-pressed="true"] { color: #1a1205; }
+#app.classic .seg:not(.wide) button { min-width: 64px; min-height: 44px; padding: 10px 16px; }
 #app.classic .seg.tall button { min-height: 0; }
 #app.classic .switch span { background: var(--panel-2); border-color: var(--line); box-shadow: none; }
 #app.classic .switch span::after { background: var(--muted); box-shadow: none; }
