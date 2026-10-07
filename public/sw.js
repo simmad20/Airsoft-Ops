@@ -1,7 +1,8 @@
 /* Offline support: the app shell is cached on first visit so the timer still opens on a field without signal.
    Own files are fetched network-first (a new deploy shows up right away), fonts cache-first. */
-const CACHE = 'bomb-timer-v7';
-const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'modes.js', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png', 'vendor/qrcode.js', 'audio/lines.json'];
+const CACHE = 'airsoft-ops-v8';
+const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'modes.js', 'i18n.js', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png', 'vendor/qrcode.js', 'audio/lines.json',
+  'img/modes/bomb.webp', 'img/modes/vip.webp', 'img/modes/snd.webp', 'img/modes/br.webp', 'img/modes/hostage.webp'];
 
 /* The announcer files are listed in audio/lines.json (written by tools/generate_voice.py). */
 self.addEventListener('install', (e) => {

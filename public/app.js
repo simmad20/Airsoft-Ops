@@ -1,10 +1,11 @@
 (function () {
   const $ = (id) => document.getElementById(id);
+  const tr = (k, v) => window.T(k, v);
 
   /* ---------- Settings ---------- */
   const DEF = {
     roundTime: 10, bombTime: 45, plantTime: 4, defuseTime: 7, half: true,
-    lang: 'de', voice: 'male', radio: false, voiceVol: 100, vol: 80, vibrate: true, fs: true, lat: 0, local: true,
+    lang: window.I18N.guess(), voiceLang: 'auto', voice: 'male', radio: false, voiceVol: 100, vol: 80, vibrate: true, fs: true, lat: 0, local: true,
     say: { start: true, planted: true, min1: true, bomb: true, result: true },
     snd: { tick: true, hold: true, signal: true, boom: true, jingle: true }
   };
@@ -23,30 +24,31 @@
     });
   } catch (e) {}
   function save() { try { localStorage.setItem('abt-settings', JSON.stringify(S)); } catch (e) {} }
+  window.I18N.set(S.lang);
 
   /* Time settings: big readout cards; tapping one opens a bottom sheet with slider, +/- (hold to repeat) and presets. */
   const range = (a, b, step) => { const r = []; for (let v = a; v <= b; v += step) r.push(v); return r; };
   const mmss = (v) => Math.floor(v / 60) + ':' + String(v % 60).padStart(2, '0');
   const TIME = {
     roundTime: {
-      title: 'Rundenzeit', desc: 'So lange haben die Angreifer zum Planten.',
+      title: 'bomb.roundTime', desc: 'bomb.roundTimeDesc',
       values: range(0, 60, 1), presets: [0, 3, 5, 8, 10, 15, 20, 30],
-      parts: (v) => (v === 0 ? ['Aus', ''] : [String(v), 'min']), chip: (v) => (v === 0 ? 'Aus' : v + ' min')
+      parts: (v) => (v === 0 ? [tr('u.off'), ''] : [String(v), tr('u.min')]), chip: (v) => (v === 0 ? tr('u.off') : v + ' ' + tr('u.min'))
     },
     bombTime: {
-      title: 'Bomben-Timer', desc: 'Zeit von der Platzierung bis zur Explosion.',
+      title: 'bomb.bombTimeTitle', desc: 'bomb.bombTimeDesc',
       values: range(10, 60, 5).concat(range(75, 300, 15), range(330, 600, 30)), presets: [30, 40, 45, 60, 90, 120, 180, 300],
-      parts: (v) => (v < 60 ? [String(v), 's'] : [mmss(v), 'min']), chip: (v) => (v < 60 ? v + ' s' : mmss(v))
+      parts: (v) => (v < 60 ? [String(v), tr('u.s')] : [mmss(v), tr('u.min')]), chip: (v) => (v < 60 ? v + ' ' + tr('u.s') : mmss(v))
     },
     plantTime: {
-      title: 'Planten', desc: 'So lange muss A oder B gedrückt werden.',
+      title: 'bomb.plant', desc: 'bomb.plantDesc',
       values: range(1, 20, 1), presets: [2, 3, 4, 5, 6, 8, 10, 15],
-      parts: (v) => [String(v), 's'], chip: (v) => v + ' s'
+      parts: (v) => [String(v), tr('u.s')], chip: (v) => v + ' ' + tr('u.s')
     },
     defuseTime: {
-      title: 'Entschärfen', desc: 'So lange muss „Entschärfen“ gedrückt werden.',
+      title: 'bomb.defuse', desc: 'bomb.defuseDesc',
       values: range(1, 30, 1), presets: [3, 5, 7, 8, 10, 12, 15, 20],
-      parts: (v) => [String(v), 's'], chip: (v) => v + ' s'
+      parts: (v) => [String(v), tr('u.s')], chip: (v) => v + ' ' + tr('u.s')
     }
   };
   Object.assign(TIME, MD.TIME);
@@ -86,8 +88,8 @@
   function openSheet(key) {
     shKey = key; shLast = document.activeElement;
     const T = TIME[key];
-    $('shTitle').textContent = T.title;
-    $('shDesc').textContent = T.desc;
+    $('shTitle').textContent = tr(T.title);
+    $('shDesc').textContent = tr(T.desc);
     shRange.max = T.values.length - 1;
     $('shMin').textContent = T.chip(T.values[0]);
     $('shMax').textContent = T.chip(T.values[T.values.length - 1]);
@@ -140,17 +142,16 @@
     updateHints();
     if (M) M.paintSetup(M.info(S.mode) ? S.mode : 'bomb');
     $('latVal').textContent = S.lat + ' ms';
-    $('voiceDesc').textContent = S.voice === 'male'
-      ? 'Männliche Ansager-Stimme, funktioniert offline'
-      : 'Sprachausgabe des Handys, klingt je nach Gerät anders';
+    $('voiceDesc').textContent = tr(S.voice === 'male' ? 'set.voiceMaleDesc' : 'set.voiceDeviceDesc');
   }
   document.querySelectorAll('[data-opt]').forEach((el) => el.addEventListener('change', () => { S[el.dataset.opt] = el.checked; save(); updateHints(); }));
   document.querySelectorAll('[data-say]').forEach((el) => el.addEventListener('change', () => { S.say[el.dataset.say] = el.checked; save(); }));
   document.querySelectorAll('[data-snd]').forEach((el) => el.addEventListener('change', () => { S.snd[el.dataset.snd] = el.checked; save(); }));
   document.querySelectorAll('[data-range]').forEach((el) => el.addEventListener('input', () => { S[el.dataset.range] = +el.value; applyGains(); save(); $('latVal').textContent = S.lat + ' ms'; }));
   document.querySelectorAll('[data-seg]').forEach((seg) => seg.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
-    S[seg.dataset.seg] = b.dataset.v; save(); bindAll();
-    if (seg.dataset.seg === 'lang') loadLines();
+    S[seg.dataset.seg] = b.dataset.v; save();
+    if (seg.dataset.seg === 'lang') applyLang(); else bindAll();
+    if (seg.dataset.seg === 'lang' || seg.dataset.seg === 'voiceLang') loadLines();
   })));
 
   /* ---------- Announcer ---------- */
@@ -172,7 +173,8 @@
       timeout: 'Time is up.', test: 'Speaker check. Site A. Site B.'
     }
   };
-  const lang = () => (LINES[S.lang] ? S.lang : 'de');
+  /* Announcer language: its own setting, or the app language. */
+  const lang = () => { const l = S.voiceLang && S.voiceLang !== 'auto' ? S.voiceLang : S.lang; return LINES[l] ? l : 'de'; };
   const buffers = {};   /* "de/start" -> AudioBuffer */
   const loading = {};
   function loadLines() {
@@ -332,9 +334,7 @@
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible' && (inGame() || isRemote())) wake();
   });
-  if (!('wakeLock' in navigator)) {
-    $('wakeNote').textContent = 'Achtung: Dieser Browser kann das Display nicht wach halten. Automatische Sperre am Handy für die Runde hochstellen oder Browser aktualisieren.';
-  }
+  if (!('wakeLock' in navigator)) $('wakeNote').dataset.i18n = 'lobby.wakeNo';
 
   /* ---------- Fullscreen & app mode ---------- */
   const root = document.documentElement;
@@ -357,8 +357,8 @@
   function paintFs() {
     const on = !!fsEl();
     $('icoFsOn').hidden = on; $('icoFsOff').hidden = !on;
-    $('btnFs').setAttribute('aria-label', on ? 'Vollbild beenden' : 'Vollbild');
-    $('btnFs').title = on ? 'Vollbild beenden' : 'Vollbild';
+    $('btnFs').dataset.i18nAria = on ? 'fs.off' : 'fs.on';
+    $('btnFs').setAttribute('aria-label', tr($('btnFs').dataset.i18nAria));
   }
   if (canFs && !isApp()) {
     $('btnFs').hidden = false;
@@ -383,7 +383,7 @@
   /* The back button / back swipe lands on an extra history entry instead of leaving the page. */
   function armBack() { if (!(history.state && history.state.abt)) { try { history.pushState({ abt: 1 }, ''); } catch (e) {} } }
   window.addEventListener('popstate', () => {
-    if (inGame()) { armBack(); toast(isRemote() ? 'Runde läuft. Bitte die App offen lassen.' : 'Runde läuft. Zum Beenden „Runde abbrechen“ nutzen.'); }
+    if (inGame()) { armBack(); toast(tr(isRemote() ? 'rem.keepOpen' : 'game.keepOpen')); }
   });
 
   /* ---------- Session: clock sync & connection ---------- */
@@ -481,14 +481,14 @@
       case 'members': NET.members = m.list || []; paintMembers(); return;
       case 'private': if (M) M.onPrivate(m.data); return;
       case 'ended':
-        toast('Die Bomben-Session wurde beendet.');
+        toast(tr('sess.ended'));
         return leaveSession();
       case 'error':
         if (m.code === 'nosession') {
           const joining = NET.fresh;
           leaveSession();
-          if (joining) { showJoin(); $('joinMsg').textContent = m.msg; }
-          else toast('Session existiert nicht mehr.');
+          if (joining) { UI.tab = 'session'; $('joinMsg').textContent = tr('sess.notFound'); render(); }
+          else toast(tr('sess.gone'));
         }
         return;
     }
@@ -502,7 +502,7 @@
   function startHost() {
     audio(); loadLines();
     NET.role = 'bomb'; NET.pending = 'create'; NET.code = null; NET.fresh = true;
-    $('hostMsg').textContent = 'Verbinde …';
+    $('hostMsg').textContent = tr('sess.connecting');
     connect();
     paintSession();
   }
@@ -512,6 +512,7 @@
     NET.role = role; NET.code = code; NET.name = name; NET.hostKey = null; NET.pending = null; NET.fresh = true;
     $('joinMsg').textContent = '';
     G = { phase: 'setup' };
+    UI.tab = 'session';
     enterRemote();
     connect();
     paintSession();
@@ -523,12 +524,12 @@
     NET.role = 'solo'; NET.code = null; NET.hostKey = null; NET.pending = null; NET.members = []; NET.fresh = false;
     offset = 0;
     saveSess();
-    if (wasRemote) { exitRemote(); G = { phase: 'setup' }; stopVoice(); keepAlive(false); unwake(); }
+    if (wasRemote) { exitRemote(); G = { phase: 'setup' }; stopVoice(); keepAlive(false); unwake(); UI.tab = 'session'; }
     paintSession(); render();
   }
 
   /* ---------- Session UI ---------- */
-  const ROLE_NAME = { bomb: 'Bombe', speaker: 'Lautsprecher', viewer: 'Zuschauer', player: 'Spieler' };
+  const ROLE_NAME = (r) => tr('role.' + r);
   function joinUrl() { return location.origin + location.pathname + '?s=' + NET.code; }
   let qrFor = null;
   function paintSession() {
@@ -537,9 +538,16 @@
     document.body.classList.toggle('insession', inSession());
     $('net').classList.toggle('on', NET.online);
     $('netCode').textContent = NET.code || '…';
-    $('mpIdle').hidden = host;
-    $('mpHost').hidden = !host;
+    $('sessIdle').hidden = host;
+    $('sessHost').hidden = !host;
+    $('navDot').hidden = !inSession();
+    $('navDot').classList.toggle('on', NET.online);
     $('syncHead').hidden = $('syncGroup').hidden = !inSession();
+    $('rowLocal').hidden = !host;
+    const n = NET.members.length;
+    $('sessBanner').hidden = !host;
+    $('sessBannerText').textContent = tr('home.sess', { code: NET.code || '…', n });
+    $('lobbySess').textContent = host ? tr('lobby.sessOn', { code: NET.code || '…' }) : tr('lobby.sessHint');
     if (host) {
       $('hostCode').textContent = NET.code || '····';
       $('hostMsg').textContent = '';
@@ -553,13 +561,9 @@
       paintMembers();
     }
     if (isRemote()) {
-      $('remRole').textContent = ROLE_NAME[NET.role];
+      $('remRole').textContent = ROLE_NAME(NET.role);
       $('remCode').textContent = NET.code || '····';
-      $('remHint').textContent = NET.role === 'speaker'
-        ? 'Box mit diesem Handy koppeln, Lautstärke aufdrehen und die App offen lassen. Das Display bleibt an.'
-        : NET.role === 'player'
-          ? 'Bei Murder Mystery bekommst du hier deine geheime Rolle. Sonst siehst du den Spielstand live.'
-          : 'Zeigt den Spielstand live. Dieses Handy macht keinen Ton.';
+      $('remHint').textContent = tr({ speaker: 'rem.hintSpeaker', player: 'rem.hintPlayer' }[NET.role] || 'rem.hintViewer');
       if (M) M.paintRemote();
     }
     render();
@@ -571,27 +575,25 @@
     const head = document.createElement('div');
     head.className = 'mhead';
     head.textContent = others.length
-      ? n('speaker') + ' Lautsprecher · ' + n('player') + ' Spieler · ' + n('viewer') + ' Zuschauer verbunden'
-      : (NET.online ? 'Noch niemand verbunden' : 'Verbinde mit dem Server …');
+      ? tr('sess.members', { s: n('speaker'), p: n('player'), v: n('viewer') })
+      : tr(NET.online ? 'sess.nobody' : 'sess.toServer');
     box.appendChild(head);
     others.forEach((m) => {
       const c = document.createElement('span');
       c.className = 'mchip ' + m.role;
-      c.textContent = ({ speaker: '🔊 ', player: '🎭 ' }[m.role] || '👁 ') + (m.name || ROLE_NAME[m.role]);
+      c.textContent = ({ speaker: '🔊 ', player: '🎭 ' }[m.role] || '👁 ') + (m.name || ROLE_NAME(m.role));
       box.appendChild(c);
     });
+    $('sessBannerText').textContent = tr('home.sess', { code: NET.code || '…', n: NET.members.length });
     if (M) M.refreshSetup();
   }
 
-  /* Speaker/viewer phones reuse the settings panel and the game screens, read-only. */
-  const adv = $('adv'), advHome = adv.parentNode, advNext = adv.nextSibling;
+  /* Speaker/player/viewer phones mirror the game screens read-only. */
   function enterRemote() {
-    $('advSlot').appendChild(adv);
     document.body.classList.add('remote');
     wake(); keepAlive(soundOn());
   }
   function exitRemote() {
-    advHome.insertBefore(adv, advNext);
     document.body.classList.remove('remote');
   }
   function applyRemote(state) {
@@ -599,15 +601,10 @@
     render();
   }
 
-  function showJoin(code) {
-    if (code) $('joinCode').value = code;
-    setScreen('scrJoin');
-    $('chip').textContent = 'Beitreten';
-  }
   let joinRole = 'speaker';
   function paintRole() {
     $('joinRole').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === joinRole)));
-    $('roleDesc').textContent = { speaker: 'Spielt alle Töne über die Box an diesem Handy', player: 'Bekommt bei Murder Mystery die geheime Rolle, sonst wie Zuschauer', viewer: 'Zeigt nur den Spielstand, ohne Ton' }[joinRole];
+    $('roleDesc').textContent = tr('role.' + joinRole + 'Desc');
   }
   $('joinRole').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { joinRole = b.dataset.v; paintRole(); }));
   paintRole();
@@ -615,19 +612,17 @@
     e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
     $('joinMsg').textContent = '';
   });
-  $('btnShowJoin').addEventListener('click', () => showJoin());
-  $('btnJoinBack').addEventListener('click', () => { if (NET.fresh && !isHost()) leaveSession(); view = null; render(); });
   $('btnJoin').addEventListener('click', () => {
     const code = $('joinCode').value.trim().toUpperCase();
-    if (code.length !== 4) { $('joinMsg').textContent = 'Bitte den 4-stelligen Code eingeben.'; return; }
+    if (code.length !== 4) { $('joinMsg').textContent = tr('sess.codeMissing'); return; }
     joinSession(code, joinRole, $('joinName').value.trim());
   });
   $('btnHost').addEventListener('click', startHost);
   $('btnShare').addEventListener('click', async () => {
     const url = joinUrl();
     try {
-      if (navigator.share) { await navigator.share({ title: 'Bomb Timer Session ' + NET.code, url }); return; }
-      await navigator.clipboard.writeText(url); toast('Link kopiert');
+      if (navigator.share) { await navigator.share({ title: tr('sess.shareTitle', { code: NET.code }), url }); return; }
+      await navigator.clipboard.writeText(url); toast(tr('sess.copied'));
     } catch (e) {}
   });
   $('btnLeave').addEventListener('click', leaveSession);
@@ -712,8 +707,10 @@
     }
   }) : null;
   const isMode = (g) => !!(g && g.mode && g.mode !== 'bomb' && M && M.has(g.mode));
-  document.querySelectorAll('#modePick .modebtn').forEach((b) => b.addEventListener('click', () => {
-    S.mode = b.dataset.mode; save(); M.paintSetup(S.mode);
+  /* Home: tap a mode card to open its lobby. */
+  document.querySelectorAll('#modeGrid .modecard').forEach((b) => b.addEventListener('click', () => {
+    S.mode = b.dataset.mode; save(); M.paintSetup(S.mode); updateHints();
+    UI.lobby = true; render();
   }));
   function publish() {
     G.rev = (G.rev || 0) + 1;
@@ -773,15 +770,39 @@
   }
 
   /* ---------- Rendering ---------- */
-  const CHIP = { setup: 'Bereit', round: 'Runde läuft', planted: 'Bombe aktiv', end: 'Runde vorbei' };
+  const CHIP = { setup: 'chip.ready', round: 'chip.round', planted: 'chip.planted', end: 'chip.end' };
   const SCREEN = { round: 'scrRound', planted: 'scrPlanted', end: 'scrEnd' };
+  const SCREENS = ['scrHome', 'scrLobby', 'scrSession', 'scrSettings', 'scrRemote', 'scrRound', 'scrPlanted', 'scrMode', 'scrEnd'];
   let view = null;
   function setScreen(id) {
     if (view === id) return;
     view = id;
-    ['scrSetup', 'scrJoin', 'scrRemote', 'scrRound', 'scrPlanted', 'scrMode', 'scrEnd'].forEach((s) => { $(s).hidden = s !== id; });
+    SCREENS.forEach((s) => { $(s).hidden = s !== id; });
     window.scrollTo(0, 0);
   }
+  /* Navigation between games: tab bar (modes / session / settings), the lobby is a sub-page of modes.
+     Speaker, player and viewer phones only have the session and settings tabs. */
+  const UI = { tab: 'home', lobby: false };
+  function setupScreen() {
+    if (isRemote()) return UI.tab === 'settings' ? 'scrSettings' : 'scrRemote';
+    if (UI.tab === 'session') return 'scrSession';
+    if (UI.tab === 'settings') return 'scrSettings';
+    return UI.lobby ? 'scrLobby' : 'scrHome';
+  }
+  function paintNav() {
+    document.querySelectorAll('#nav button').forEach((b) => {
+      const tab = b.dataset.tab;
+      b.hidden = tab === 'home' && isRemote();
+      b.setAttribute('aria-current', String(tab === UI.tab || (tab === 'session' && isRemote() && UI.tab !== 'settings')));
+    });
+  }
+  document.querySelectorAll('#nav button').forEach((b) => b.addEventListener('click', () => {
+    if (b.dataset.tab === 'home' && UI.tab === 'home') UI.lobby = false;
+    UI.tab = b.dataset.tab;
+    render();
+  }));
+  $('btnBack').addEventListener('click', () => { UI.lobby = false; render(); });
+  $('sessBanner').addEventListener('click', () => { UI.tab = 'session'; render(); });
   function fmt(ms, tenths) {
     ms = Math.max(0, ms);
     if (tenths && ms < 10000) return (Math.floor(ms / 100) / 10).toFixed(1);
@@ -790,42 +811,44 @@
   }
   function updateHints() {
     const c = (!isMode(G) && G.cfg) || S;
+    const half = c.half ? tr('bomb.halfSaved') : '';
     if (isRemote()) {
-      $('hintA').textContent = $('hintB').textContent = 'Wird an der Bombe geplantet';
-      $('defuseHint').textContent = 'Wird an der Bombe entschärft' + (c.half ? ' · ab 50 % gesichert' : '');
+      $('hintA').textContent = $('hintB').textContent = tr('bomb.remotePlant');
+      $('defuseHint').textContent = tr('bomb.remoteDefuse') + half;
       return;
     }
-    $('hintA').textContent = $('hintB').textContent = c.plantTime + ' s halten zum Planten';
-    $('defuseHint').textContent = c.defuseTime + ' s gedrückt halten' + (c.half ? ' · ab 50 % gesichert' : '');
+    $('hintA').textContent = $('hintB').textContent = tr('bomb.holdPlant', { n: c.plantTime });
+    $('defuseHint').textContent = tr('bomb.holdDefuse', { n: c.defuseTime }) + half;
   }
 
   let lastKey = null;
   function render() {
-    if (view === 'scrJoin' && !isRemote()) return;
     const t = now();
     const g = derive(G, t);
     const phase = g.phase || 'setup';
     const key = (g.id || '-') + ':' + phase;
     if (key !== lastKey) { lastKey = key; enter(g, t); }
 
+    document.body.classList.toggle('ingame', phase !== 'setup');
     if (phase === 'setup') {
-      setScreen(isRemote() ? 'scrRemote' : 'scrSetup');
-      $('chip').textContent = isRemote() ? (NET.online ? 'Verbunden' : 'Offline') : CHIP.setup;
-      if (isRemote()) $('remStatus').textContent = NET.online ? 'Warte auf Rundenstart …' : 'Verbindung wird hergestellt …';
+      setScreen(setupScreen());
+      paintNav();
+      $('chip').textContent = tr(isRemote() ? (NET.online ? 'chip.connected' : 'chip.offline') : CHIP.setup);
+      if (isRemote()) $('remStatus').textContent = tr(NET.online ? 'rem.wait' : 'rem.connecting');
       return;
     }
     if (isMode(g)) {
-      if (phase === 'end') { setScreen('scrEnd'); $('chip').textContent = CHIP.end; return; }
+      if (phase === 'end') { setScreen('scrEnd'); $('chip').textContent = tr(CHIP.end); return; }
       setScreen('scrMode');
-      $('chip').textContent = M.chip(g);
+      $('chip').textContent = tr('chip.game');
       M.render(g, t);
       return;
     }
     setScreen(SCREEN[phase]);
-    $('chip').textContent = CHIP[phase];
+    $('chip').textContent = tr(CHIP[phase]);
 
     if (phase === 'round') {
-      $('roundLabel').textContent = g.roundEnd ? 'Rundenzeit' : 'Ohne Zeitlimit';
+      $('roundLabel').textContent = tr(g.roundEnd ? 'bomb.roundTime' : 'bomb.noLimit');
       $('roundClock').textContent = g.roundEnd ? fmt(g.roundEnd - t) : '--:--';
       if (isRemote()) {
         const h = g.hold, p = h && h.start ? Math.min(1, Math.max(0, (t - h.start) / h.dur)) : 0;
@@ -877,12 +900,12 @@
       }
     } else if (phase === 'end') {
       $('endExtra').innerHTML = '';
-      $('btnAgain').textContent = 'Neue Runde';
+      $('btnAgain').textContent = tr('game.again');
       const r = g.result || { why: 'timeout', at: t };
       const isFresh = fresh(r.at);
       if (r.why === 'defused') {
         cancelBoom();
-        showResult('def', 'Bombe entschärft', 'Verteidiger gewinnen', 'Auf Punkt ' + g.site + ' entschärft, ' + (Math.max(0, r.rem) / 1000).toFixed(1) + ' s vor der Explosion.');
+        showResult('def', tr('bomb.rDefusedK'), tr('bomb.rDefWin'), tr('bomb.rDefusedSub', { site: g.site, s: (Math.max(0, r.rem) / 1000).toFixed(1) }));
         if (isFresh) {
           buzz(200);
           if (snd && S.snd.jingle) winJingle();
@@ -890,7 +913,7 @@
         }
       } else if (r.why === 'boom') {
         holdDef.reset();
-        showResult('att', 'Explosion', 'Angreifer gewinnen', 'Die Bombe auf Punkt ' + g.site + ' ist hochgegangen.');
+        showResult('att', tr('bomb.rBoomK'), tr('bomb.rAttWin'), tr('bomb.rBoomSub', { site: g.site }));
         if (isFresh) {
           if (snd && S.snd.boom && P.boomId !== g.id && t - r.at < 1500) { P.boomId = g.id; explosion(0); }
           buzz([400, 100, 400]);
@@ -899,7 +922,7 @@
         }
       } else {
         holdA.reset(); holdB.reset();
-        showResult('def', 'Zeit abgelaufen', 'Verteidiger gewinnen', 'Die Angreifer haben nicht rechtzeitig geplantet.');
+        showResult('def', tr('bomb.rTimeK'), tr('bomb.rDefWin'), tr('bomb.rTimeSub'));
         if (isFresh && snd) {
           if (S.snd.signal) { tone(440, 0.4, 'square', 0.3); tone(330, 0.6, 'square', 0.3, 0.45); }
           if (S.say.result) speak(['timeout', 'def_win']);
@@ -913,7 +936,8 @@
     keepAlive(soundOn() || !inSession()); wake();
     if (phase !== 'end') return;
     const r = g.result || {};
-    showResult(r.side === 'none' ? '' : (r.side || ''), r.kicker || 'Spiel vorbei', r.title || '', r.sub || '');
+    const txt = M.resultText(r);
+    showResult(r.side === 'none' ? '' : (r.side || ''), txt.kicker, txt.title, txt.sub);
     $('endExtra').innerHTML = M.endExtra(g);
     $('btnAgain').textContent = M.again(g);
     if (t - (r.at || t) < 4000) { announce({ say: r.say, sig: r.sig, cat: 'result' }); buzz([300, 100, 300]); }
@@ -1021,17 +1045,18 @@
 
   /* Two-tap confirm instead of a dialog */
   function armConfirm(btn, action, prompt) {
-    const label = btn.textContent; let t = 0;
+    let t = 0;
+    const label = () => (btn.dataset.i18n ? tr(btn.dataset.i18n) : btn.textContent);
     btn.addEventListener('click', () => {
-      if (btn.classList.contains('armed')) { clearTimeout(t); btn.classList.remove('armed'); btn.textContent = label; action(); return; }
-      btn.classList.add('armed'); btn.textContent = prompt || 'Nochmal tippen zum Abbrechen';
-      t = setTimeout(() => { btn.classList.remove('armed'); btn.textContent = label; }, 3000);
+      if (btn.classList.contains('armed')) { clearTimeout(t); btn.classList.remove('armed'); btn.textContent = label(); action(); return; }
+      btn.classList.add('armed'); btn.textContent = tr(prompt || 'game.abortConfirm');
+      t = setTimeout(() => { btn.classList.remove('armed'); btn.textContent = label(); }, 3000);
     });
   }
   armConfirm($('abortRound'), toSetup);
   armConfirm($('abortPlanted'), toSetup);
   armConfirm($('abortMode'), toSetup);
-  armConfirm($('btnEndSession'), leaveSession, 'Nochmal tippen zum Beenden');
+  armConfirm($('btnEndSession'), leaveSession, 'sess.endConfirm');
 
   $('btnStart').addEventListener('click', startRound);
   $('btnAgain').addEventListener('click', startRound);
@@ -1045,7 +1070,7 @@
   }
   $('btnTest').addEventListener('click', () => {
     testSound();
-    $('testMsg').textContent = 'Du solltest zwei Pieptöne und eine Ansage aus der Box hören.';
+    $('testMsg').textContent = tr('set.testMsg');
   });
   $('btnRemTest').addEventListener('click', testSound);
   $('btnVoiceTest').addEventListener('click', () => { audio(); loadLines(); speak('planted_a'); });
@@ -1055,15 +1080,34 @@
   $('btnReset').addEventListener('click', () => {
     const b = $('btnReset');
     if (!b.classList.contains('armed')) {
-      b.classList.add('armed'); b.textContent = 'Sicher?';
-      resetT = setTimeout(() => { b.classList.remove('armed'); b.textContent = 'Zurücksetzen'; }, 3000);
+      b.classList.add('armed'); b.textContent = tr('set.sure');
+      resetT = setTimeout(() => { b.classList.remove('armed'); b.textContent = tr('set.resetBtn'); }, 3000);
       return;
     }
-    clearTimeout(resetT); b.classList.remove('armed'); b.textContent = 'Zurücksetzen';
-    S = clone(DEF); save(); bindAll(); applyGains(); loadLines();
+    clearTimeout(resetT); b.classList.remove('armed'); b.textContent = tr('set.resetBtn');
+    S = clone(DEF); save(); applyLang(); applyGains(); loadLines();
   });
 
-  bindAll();
+  /* Language switch: static text via data-i18n, everything painted from code gets repainted. */
+  function applyLang() {
+    window.I18N.set(S.lang);
+    window.I18N.apply();
+    $('langLabel').textContent = S.lang.toUpperCase();
+    paintRole();
+    if (M) M.relabel();
+    bindAll();
+    paintSession();
+    paintMembers();
+    lastKey = null;
+    render();
+  }
+  $('btnLang').addEventListener('click', () => {
+    if (inGame()) return;
+    S.lang = S.lang === 'de' ? 'en' : 'de'; save();
+    applyLang(); loadLines();
+  });
+
+  applyLang();
   loadLines();
   /* Announcer texts of all modes (also the phone-voice fallback) come from audio/lines.json. */
   fetch('audio/lines.json').then((r) => (r.ok ? r.json() : null)).then((j) => {
@@ -1080,11 +1124,12 @@
     if (linkCode) { try { history.replaceState(null, '', location.pathname); } catch (e) {} }
     if (saved && saved.code && (!linkCode || linkCode === saved.code)) {
       NET.role = saved.role; NET.code = saved.code; NET.hostKey = saved.hostKey || null; NET.name = saved.name || '';
-      if (isRemote()) enterRemote();
+      if (isRemote()) { enterRemote(); UI.tab = 'session'; }
       connect();
     } else if (linkCode) {
       if (saved) saveSess();
-      showJoin(linkCode);
+      $('joinCode').value = linkCode;
+      UI.tab = 'session';
     }
     paintSession();
     render();

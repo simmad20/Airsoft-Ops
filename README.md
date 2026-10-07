@@ -1,33 +1,36 @@
-# 💣 Airsoft Bomb Timer
+# 💣 Airsoft Ops
 
-Ein Bomb-Timer fürs Airsoft-Feld als Web-App fürs Handy: Bombe auf Punkt A oder B planten, Countdown mit Piepen und Sprachansagen über die Bluetooth-Box, entschärfen per Gedrückthalten. Dazu weitere Spielmodi: **VIP-Eskorte, Search & Destroy, Battle Royale, Geiselbefreiung, Infection** und **Murder Mystery** mit geheimen Rollen.
+Die Airsoft-Begleit-App fürs Handy: Spielmodus wählen, einstellen, losspielen. Mit männlichem Ansager, Countdown, Piepen und synchronen Bluetooth-Boxen auf mehreren Handys. Auf Deutsch und Englisch. Modi: **Bombe**, **VIP-Eskorte, Search & Destroy, Battle Royale, Geiselbefreiung, Infection** und **Murder Mystery** mit geheimen Rollen.
 
 **▶ Live: [airsoft-ops.onrender.com](https://airsoft-ops.onrender.com)**
 
 Im **Allein-Modus** läuft die App komplett im Browser und funktioniert nach dem ersten Öffnen dank Service Worker **auch ohne Netz**. Im **Session-Modus** verbinden sich mehrere Handys über mobiles Internet: ein Handy ist die Bombe, die anderen spielen als Lautsprecher die Töne synchron über ihre eigenen Bluetooth-Boxen ab.
 
+## Bedienung
+
+Die App hat unten eine Leiste mit drei Tabs:
+
+- **Modi:** Alle Spielmodi als Kacheln mit eigenem Bild. Ein Tipp öffnet die **Lobby** des Modus: Bild, Beschreibung, „So läuft es“ (die Regeln in Kürze), die Einstellungen des Modus und der Start-Knopf.
+- **Session:** Mehrere Handys verbinden. Entweder dieses Handy steuert („Session starten“, mit Code und QR-Code), oder man tritt einer Session bei (Code, Rolle, Name).
+- **Einstellungen:** App-Sprache und Ansager-Sprache, Ansager, was angesagt wird, Sounds, Synchronisation (nur in einer Session), Anzeige, Zurücksetzen.
+
+Oben rechts schaltet **DE/EN** die Sprache der ganzen App um. Die Ansager-Sprache folgt der App-Sprache oder lässt sich unter *Einstellungen* getrennt festlegen. In einer Session kann jedes Handy seine eigene Sprache haben, Ergebnisse und Rollenkarten erscheinen auf jedem Handy in dessen Sprache.
+
+Während eines Spiels ist die Leiste ausgeblendet. Zeiten stellt man über Kacheln mit großen Ziffern ein: Ein Tipp öffnet ein Fenster mit Schieberegler, Plus/Minus (gedrückt halten zählt schnell) und Schnellwahl. Alle Einstellungen bleiben auf dem Gerät gespeichert.
+
 ## Features
 
-- **Setup:** Rundenzeit, Bomben-Timer, Plant- und Entschärfzeit als Kacheln mit großen Ziffern. Ein Tipp öffnet ein Einstell-Fenster mit Schieberegler, großen Plus/Minus-Knöpfen (gedrückt halten zählt schnell weiter) und Schnellwahl (z. B. 5 min · 10 min oder 45 s · 1:30). Dazu Halb-Entschärfen (Fortschritt bleibt ab 50 % erhalten). Alles wird auf dem Gerät gespeichert.
-- **Erweiterte Einstellungen** (zugeklappt unter dem Start-Knopf):
-  - *Ansagen:* Sprache DE/EN, Sprecher (männlicher Ansager oder Handy-Stimme), Funkgerät-Effekt, eigene Lautstärke, Probe hören.
-  - *Was angesagt wird:* Rundenstart, Bombe platziert, Noch eine Minute, Bomben-Restzeit (30 s / 10 s), Ergebnis, jeweils einzeln abschaltbar.
-  - *Sounds:* eigene Lautstärke, Bomben-Piepen, Halte-Töne, Signaltöne, Explosion, Sieger-Jingle und Vibration, jeweils einzeln abschaltbar.
-  - *Anzeige:* Vollbild beim Rundenstart, alles auf Standard zurücksetzen.
-- **Männlicher Ansager:** Die Ansagen sind fertige Audiodateien (Deutsch und Englisch), laut abgemischt und offline verfügbar. Sie klingen auf jedem Handy gleich.
-- **Planten:** Punkt A oder B gedrückt halten, mit Fortschrittsanzeige und Tönen.
-- **Bombe aktiv:** großer Countdown, Piepen wird immer schneller, blinkende LED, Ansagen bei 30 s und 10 s.
-- **Entschärfen:** Feld gedrückt halten. Loslassen setzt den Fortschritt zurück (bei Halb-Entschärfen auf 50 %).
-- **Ende:** Explosion mit Sound und Vibration oder Sieger-Jingle, Sprachansage, wer gewonnen hat.
-- **Fürs Feld gebaut:** Das Display bleibt während der Runde an (Wake Lock). Ein fast unhörbarer Ton hält die Bluetooth-Box wach. Dunkles Design, gut lesbar draußen.
-- **Vollbild:** Beim Rundenstart blendet die App die Browserleiste automatisch aus (abschaltbar). Zusätzlich gibt es oben rechts einen Vollbild-Knopf.
-- **Schutz vor versehentlichem Verlassen:** Während einer Runde führt die Zurück-Taste bzw. die Zurück-Wischgeste nicht aus der App, sondern zeigt nur einen Hinweis. Beim Neuladen oder Schließen des Tabs fragt der Browser nach.
-- **Display bleibt an:** Solange eine Runde läuft, sperrt sich das Handy nicht (Screen Wake Lock). Kann der Browser das nicht, zeigt die App einen Hinweis.
-- **Zum Startbildschirm hinzufügbar (PWA):** Über das Browsermenü („Zum Startbildschirm hinzufügen“ bzw. Teilen → „Zum Home-Bildschirm“) startet die App ohne Browserleiste wie eine normale App.
+- **Männlicher Ansager:** Fertige Audiodateien auf Deutsch und Englisch, laut abgemischt, offline verfügbar. Optional Funkgerät-Effekt oder die Handy-Stimme.
+- **Was angesagt wird** und **welche Sounds** laufen (Piepen, Halte-Töne, Signale, Explosion, Jingle, Vibration), ist einzeln abschaltbar.
+- **Fürs Feld gebaut:** Das Display bleibt während der Runde an (Wake Lock). Ein fast unhörbarer Ton hält die Bluetooth-Box wach.
+- **Vollbild:** Beim Spielstart blendet die App die Browserleiste aus (abschaltbar), oben rechts gibt es zusätzlich einen Vollbild-Knopf.
+- **Schutz vor versehentlichem Verlassen:** Während einer Runde führt die Zurück-Geste nicht aus der App, beim Neuladen fragt der Browser nach.
+- **Offline:** Nach dem ersten Öffnen funktioniert der Allein-Modus auch ohne Netz.
+- **Zum Startbildschirm hinzufügbar (PWA):** Über das Browsermenü startet die App ohne Browserleiste wie eine normale App.
 
 ## Spielmodi
 
-Den Modus wählt man oben auf dem Startbildschirm. Jeder Modus hat eigene Einstellungen, Ansagen und einen eigenen Spielbildschirm. Alle laufen allein auf einem Handy oder in einer Session mit Lautsprecher-Handys.
+Den Modus wählt man im Tab **Modi**. Jeder Modus hat eine eigene Lobby mit Regeln und Einstellungen, eigene Ansagen und einen eigenen Spielbildschirm. Alle laufen allein auf einem Handy oder in einer Session mit Lautsprecher-Handys.
 
 | Modus | Ablauf in der App | Wer gewinnt |
 |---|---|---|
@@ -39,7 +42,7 @@ Den Modus wählt man oben auf dem Startbildschirm. Jeder Modus hat eigene Einste
 | 🧟 **Infection** | Spielerzahl und Start-Infizierte einstellen. „Überlebender getroffen“ startet die Verwandlungszeit, danach Ansage und Zähler. Rücknahme möglich. | Infizierte, wenn alle infiziert sind. Überlebende bei Zeitablauf |
 | 🔪 **Murder Mystery** | Geheime Rollen, siehe unten | Entscheidet der Spielleiter |
 
-Alle Ansagen (Rundenstart, Treffer, Ziel zerstört, Zone, Abwurf, Ergebnis …) lassen sich unter *Erweiterte Einstellungen → Was angesagt wird* abschalten, z. B. „Spielereignisse“.
+Alle Ansagen (Rundenstart, Treffer, Ziel zerstört, Zone, Abwurf, Ergebnis …) lassen sich unter *Einstellungen → Was angesagt wird* abschalten, z. B. „Spielereignisse“.
 
 ### Murder Mystery
 
@@ -54,8 +57,8 @@ Das Handy, das das Spiel startet, ist der **Spielleiter**. Es sieht alle Rollen,
 
 **So geht's:**
 
-1. Auf dem Handy, das die **Bombe** sein soll: **„Session starten“**. Es erscheinen ein 4-stelliger Code und ein QR-Code.
-2. Mitspieler scannen den QR-Code (oder öffnen die Seite → **„Beitreten“** → Code eingeben) und wählen eine Rolle:
+1. Auf dem Handy, das das Spiel steuert (bei „Bombe“ ist es die Bombe): Tab **Session** → **„Session starten“**. Es erscheinen ein 4-stelliger Code und ein QR-Code.
+2. Mitspieler scannen den QR-Code (oder öffnen die Seite → Tab **Session** → Code eingeben) und wählen eine Rolle:
    - **Lautsprecher:** Spielt alle Töne und Ansagen über die Box, die mit diesem Handy gekoppelt ist. Beliebig viele, verteilt übers Feld.
    - **Spieler:** Bekommt bei Murder Mystery die geheime Rolle, sonst wie Zuschauer.
    - **Zuschauer:** Zeigt Rundenzeit, Bomben-Timer, Plant- und Entschärf-Fortschritt live, ohne Ton.
@@ -63,7 +66,7 @@ Das Handy, das das Spiel startet, ist der **Spielleiter**. Es sieht alle Rollen,
 
 **Wie die Synchronisation funktioniert:** Es wird kein Ton übertragen, sondern nur der Spielstand mit Zeitstempeln. Jedes Handy gleicht seine Uhr laufend mit dem Server ab (wie NTP) und spielt Piepen und Explosion selbst zur gemeinsamen Uhrzeit ab. Im Test lagen die Handys dabei wenige Millisekunden auseinander, auch bei verstellter Handy-Uhr. Ansagen wie „Bombe platziert“ kommen um die Netz-Verzögerung später (meist unter 0,3 s).
 
-**Box-Verzögerung:** Bluetooth-Boxen haben selbst 100–300 ms Verzögerung, je nach Modell unterschiedlich. Unter *Erweiterte Einstellungen → Synchronisation* gibt es pro Handy die **Box-Verzögerung** und das **Abgleich-Piepen** (piept jede Sekunde auf allen Handys gleichzeitig). Auf zwei Handys einschalten und die Verzögerung der langsameren Box erhöhen, bis beide zusammen piepen.
+**Box-Verzögerung:** Bluetooth-Boxen haben selbst 100–300 ms Verzögerung, je nach Modell unterschiedlich. Unter *Einstellungen → Synchronisation* gibt es pro Handy die **Box-Verzögerung** und das **Abgleich-Piepen** (piept jede Sekunde auf allen Handys gleichzeitig). Auf zwei Handys einschalten und die Verzögerung der langsameren Box erhöhen, bis beide zusammen piepen.
 
 **Gut zu wissen:**
 - Alle Handys brauchen mobiles Internet und müssen die App **im Vordergrund offen** lassen. Das Display bleibt dabei automatisch an.
@@ -80,6 +83,8 @@ Das Handy, das das Spiel startet, ist der **Spielleiter**. Es sieht alle Rollen,
 │   ├── style.css
 │   ├── app.js              # Spielschleife, Bomben-Modus, Sessions, Sound, Sprachausgabe
 │   ├── modes.js            # Weitere Spielmodi und Murder-Mystery-Rollen
+│   ├── i18n.js             # Alle Texte auf Deutsch und Englisch
+│   ├── img/modes/          # Bilder der Spielmodi
 │   ├── audio/de, audio/en  # Ansagen als MP3, Liste in audio/lines.json
 │   ├── vendor/qrcode.js    # QR-Code-Generator (MIT, Kazuhiko Arase)
 │   ├── sw.js               # Service Worker für Offline-Betrieb
