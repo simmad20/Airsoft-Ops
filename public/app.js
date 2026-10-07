@@ -8,13 +8,18 @@
     say: { start: true, planted: true, min1: true, bomb: true, result: true },
     snd: { tick: true, hold: true, signal: true, boom: true, jingle: true }
   };
+  /* Settings and time cards of the other game modes live in modes.js. */
+  const MD = window.MODES || { DEF: {}, TIME: {} };
+  Object.keys(MD.DEF).forEach((k) => { if (!(k in DEF)) DEF[k] = MD.DEF[k]; });
+  DEF.say.events = true;
   const clone = (o) => JSON.parse(JSON.stringify(o));
   let S = clone(DEF);
   try {
     const saved = JSON.parse(localStorage.getItem('abt-settings') || '{}');
     S = Object.assign(clone(DEF), saved, {
       say: Object.assign({}, DEF.say, saved.say),
-      snd: Object.assign({}, DEF.snd, saved.snd)
+      snd: Object.assign({}, DEF.snd, saved.snd),
+      muRoles: Object.assign({}, DEF.muRoles, saved.muRoles)
     });
   } catch (e) {}
   function save() { try { localStorage.setItem('abt-settings', JSON.stringify(S)); } catch (e) {} }
@@ -44,6 +49,7 @@
       parts: (v) => [String(v), 's'], chip: (v) => v + ' s'
     }
   };
+  Object.assign(TIME, MD.TIME);
   const nearest = (T, v) => T.values.reduce((bi, x, i) => (Math.abs(x - v) < Math.abs(T.values[bi] - v) ? i : bi), 0);
   function readout(el, T, v) {
     const [num, unit] = T.parts(v);
@@ -132,6 +138,7 @@
     });
     painters.forEach((p) => p());
     updateHints();
+    if (M) M.paintSetup(M.info(S.mode) ? S.mode : 'bomb');
     $('latVal').textContent = S.lat + ' ms';
     $('voiceDesc').textContent = S.voice === 'male'
       ? 'Männliche Ansager-Stimme, funktioniert offline'
@@ -384,7 +391,7 @@
   let offset = 0;
   const now = () => Date.now() + offset;
   const NET = { ws: null, role: 'solo', code: null, hostKey: null, name: '', pending: null, online: false, members: [], retry: 0, retryT: 0, samples: [], fresh: false };
-  const isRemote = () => NET.role === 'speaker' || NET.role === 'viewer';
+  const isRemote = () => NET.role === 'speaker' || NET.role === 'viewer' || NET.role === 'player';
   const isHost = () => NET.role === 'bomb';
   const inSession = () => NET.role !== 'solo';
   const myId = (() => {
@@ -472,6 +479,7 @@
       }
       case 'state': if (isRemote()) applyRemote(m.state); return;
       case 'members': NET.members = m.list || []; paintMembers(); return;
+      case 'private': if (M) M.onPrivate(m.data); return;
       case 'ended':
         toast('Die Bomben-Session wurde beendet.');
         return leaveSession();
@@ -520,7 +528,7 @@
   }
 
   /* ---------- Session UI ---------- */
-  const ROLE_NAME = { bomb: 'Bombe', speaker: 'Lautsprecher', viewer: 'Zuschauer' };
+  const ROLE_NAME = { bomb: 'Bombe', speaker: 'Lautsprecher', viewer: 'Zuschauer', player: 'Spieler' };
   function joinUrl() { return location.origin + location.pathname + '?s=' + NET.code; }
   let qrFor = null;
   function paintSession() {
@@ -549,7 +557,10 @@
       $('remCode').textContent = NET.code || '····';
       $('remHint').textContent = NET.role === 'speaker'
         ? 'Box mit diesem Handy koppeln, Lautstärke aufdrehen und die App offen lassen. Das Display bleibt an.'
-        : 'Zeigt den Spielstand live. Dieses Handy macht keinen Ton.';
+        : NET.role === 'player'
+          ? 'Bei Murder Mystery bekommst du hier deine geheime Rolle. Sonst siehst du den Spielstand live.'
+          : 'Zeigt den Spielstand live. Dieses Handy macht keinen Ton.';
+      if (M) M.paintRemote();
     }
     render();
   }
@@ -560,15 +571,16 @@
     const head = document.createElement('div');
     head.className = 'mhead';
     head.textContent = others.length
-      ? n('speaker') + ' Lautsprecher · ' + n('viewer') + ' Zuschauer verbunden'
+      ? n('speaker') + ' Lautsprecher · ' + n('player') + ' Spieler · ' + n('viewer') + ' Zuschauer verbunden'
       : (NET.online ? 'Noch niemand verbunden' : 'Verbinde mit dem Server …');
     box.appendChild(head);
     others.forEach((m) => {
       const c = document.createElement('span');
       c.className = 'mchip ' + m.role;
-      c.textContent = (m.role === 'speaker' ? '🔊 ' : '👁 ') + (m.name || ROLE_NAME[m.role]);
+      c.textContent = ({ speaker: '🔊 ', player: '🎭 ' }[m.role] || '👁 ') + (m.name || ROLE_NAME[m.role]);
       box.appendChild(c);
     });
+    if (M) M.refreshSetup();
   }
 
   /* Speaker/viewer phones reuse the settings panel and the game screens, read-only. */
@@ -595,7 +607,7 @@
   let joinRole = 'speaker';
   function paintRole() {
     $('joinRole').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === joinRole)));
-    $('roleDesc').textContent = joinRole === 'speaker' ? 'Spielt alle Töne über die Box an diesem Handy' : 'Zeigt nur den Spielstand, ohne Ton';
+    $('roleDesc').textContent = { speaker: 'Spielt alle Töne über die Box an diesem Handy', player: 'Bekommt bei Murder Mystery die geheime Rolle, sonst wie Zuschauer', viewer: 'Zeigt nur den Spielstand, ohne Ton' }[joinRole];
   }
   $('joinRole').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { joinRole = b.dataset.v; paintRole(); }));
   paintRole();
@@ -686,6 +698,23 @@
   /* G.phase: setup | round | planted | end. Times are server time (see now()). */
   let G = { phase: 'setup' };
   const rid = () => Math.random().toString(36).slice(2, 10);
+  const M = window.MODES ? window.MODES.create({
+    S: () => S, G: () => G, setG: (g) => { G = g; publish(); }, save, now, rid, fmt, makeHold, toast, buzz,
+    isRemote, role: () => NET.role, members: () => NET.members,
+    sendPrivate: (to, data) => wsSend({ t: 'private', to, data }),
+    /* Secrets of the current round (e.g. the VIP target) stay on this phone only. */
+    secret(id, v) {
+      try {
+        if (v === undefined) return (JSON.parse(localStorage.getItem('abt-secret') || '{}'))[id];
+        localStorage.setItem('abt-secret', JSON.stringify({ [id]: v }));
+      } catch (e) {}
+      return undefined;
+    }
+  }) : null;
+  const isMode = (g) => !!(g && g.mode && g.mode !== 'bomb' && M && M.has(g.mode));
+  document.querySelectorAll('#modePick .modebtn').forEach((b) => b.addEventListener('click', () => {
+    S.mode = b.dataset.mode; save(); M.paintSetup(S.mode);
+  }));
   function publish() {
     G.rev = (G.rev || 0) + 1;
     if (isHost()) wsSend({ t: 'state', state: G });
@@ -694,6 +723,17 @@
 
   function startRound() {
     if (isRemote()) return;
+    if (M && M.has(S.mode)) {
+      const g = M.start(S.mode, S, now(), G);
+      if (g.error) { toast(g.error); return; }
+      audio(); keepAlive(true); wake();
+      if (S.fs) enterFs();
+      armBack();
+      holdA.reset(); holdB.reset(); holdDef.reset();
+      G = g;
+      publish();
+      return;
+    }
     audio(); keepAlive(true); wake();
     if (S.fs) enterFs();
     armBack();
@@ -726,6 +766,7 @@
   /* Explosion and timeout follow from the clock alone, so every phone reaches them at the same moment
      even if the bomb phone is out of reach. The bomb phone then records the result. */
   function derive(g, t) {
+    if (isMode(g)) return M.derive(g, t);
     if (g.phase === 'planted' && t >= g.bombEnd) return Object.assign({}, g, { phase: 'end', def: null, result: { why: 'boom', at: g.bombEnd } });
     if (g.phase === 'round' && g.roundEnd && t >= g.roundEnd) return Object.assign({}, g, { phase: 'end', hold: null, result: { why: 'timeout', at: g.roundEnd } });
     return g;
@@ -738,7 +779,7 @@
   function setScreen(id) {
     if (view === id) return;
     view = id;
-    ['scrSetup', 'scrJoin', 'scrRemote', 'scrRound', 'scrPlanted', 'scrEnd'].forEach((s) => { $(s).hidden = s !== id; });
+    ['scrSetup', 'scrJoin', 'scrRemote', 'scrRound', 'scrPlanted', 'scrMode', 'scrEnd'].forEach((s) => { $(s).hidden = s !== id; });
     window.scrollTo(0, 0);
   }
   function fmt(ms, tenths) {
@@ -748,7 +789,7 @@
     return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
   }
   function updateHints() {
-    const c = G.cfg || S;
+    const c = (!isMode(G) && G.cfg) || S;
     if (isRemote()) {
       $('hintA').textContent = $('hintB').textContent = 'Wird an der Bombe geplantet';
       $('defuseHint').textContent = 'Wird an der Bombe entschärft' + (c.half ? ' · ab 50 % gesichert' : '');
@@ -771,6 +812,13 @@
       setScreen(isRemote() ? 'scrRemote' : 'scrSetup');
       $('chip').textContent = isRemote() ? (NET.online ? 'Verbunden' : 'Offline') : CHIP.setup;
       if (isRemote()) $('remStatus').textContent = NET.online ? 'Warte auf Rundenstart …' : 'Verbindung wird hergestellt …';
+      return;
+    }
+    if (isMode(g)) {
+      if (phase === 'end') { setScreen('scrEnd'); $('chip').textContent = CHIP.end; return; }
+      setScreen('scrMode');
+      $('chip').textContent = M.chip(g);
+      M.render(g, t);
       return;
     }
     setScreen(SCREEN[phase]);
@@ -803,6 +851,7 @@
     updateHints();
     const fresh = (at) => t - at < 4000;   /* late joiners skip stale announcements */
     const snd = soundOn();
+    if (isMode(g)) return enterMode(g, t, phase);
     if (phase === 'setup') {
       stopVoice();
       cancelBoom();
@@ -827,6 +876,8 @@
         if (snd && S.say.planted) speak(g.site === 'B' ? 'planted_b' : 'planted_a');
       }
     } else if (phase === 'end') {
+      $('endExtra').innerHTML = '';
+      $('btnAgain').textContent = 'Neue Runde';
       const r = g.result || { why: 'timeout', at: t };
       const isFresh = fresh(r.at);
       if (r.why === 'defused') {
@@ -857,6 +908,48 @@
       if (!isRemote()) { unwake(); setTimeout(() => { if (G.phase === 'end') keepAlive(false); }, 6000); }
     }
   }
+  /* Other game modes: their screen is built by modes.js, sounds come from G.ev and the timeline. */
+  function enterMode(g, t, phase) {
+    keepAlive(soundOn() || !inSession()); wake();
+    if (phase !== 'end') return;
+    const r = g.result || {};
+    showResult(r.side === 'none' ? '' : (r.side || ''), r.kicker || 'Spiel vorbei', r.title || '', r.sub || '');
+    $('endExtra').innerHTML = M.endExtra(g);
+    $('btnAgain').textContent = M.again(g);
+    if (t - (r.at || t) < 4000) { announce({ say: r.say, sig: r.sig, cat: 'result' }); buzz([300, 100, 300]); }
+    if (!isRemote()) { unwake(); setTimeout(() => { if (G.phase === 'end') keepAlive(false); }, 6000); }
+  }
+  const SIG_PAUSE = { jingle: 700, boom: 2200, low: 900, start: 350, alert: 300, hit: 300 };
+  function playSig(sig) {
+    if (sig === 'start' && S.snd.signal) { tone(880, 0.12, 'square', 0.3); tone(1320, 0.18, 'square', 0.3, 0.14); }
+    else if (sig === 'alert' && S.snd.signal) { tone(1500, 0.1, 'square', 0.35); tone(1500, 0.1, 'square', 0.35, 0.15); }
+    else if (sig === 'hit' && S.snd.signal) { tone(990, 0.08, 'square', 0.35); tone(660, 0.16, 'square', 0.35, 0.1); }
+    else if (sig === 'low' && S.snd.signal) { tone(440, 0.4, 'square', 0.3); tone(330, 0.6, 'square', 0.3, 0.45); }
+    else if (sig === 'jingle' && S.snd.jingle) winJingle();
+    else if (sig === 'boom' && S.snd.boom) explosion(0);
+  }
+  /* One announcement: { say: [lineKeys], sig, cat } where cat picks the "Was angesagt wird" switch. */
+  function announce(item) {
+    if (item.sig === 'alert' || item.sig === 'hit') buzz([120, 60, 120]);
+    if (!soundOn()) return;
+    playSig(item.sig);
+    const on = { start: S.say.start, result: S.say.result, min1: S.say.min1, events: S.say.events }[item.cat || 'events'];
+    if (item.say && item.say.length && on) setTimeout(() => speak(item.say), item.sig ? (SIG_PAUSE[item.sig] || 300) : 0);
+  }
+  const seenEv = new Set();
+  let tlId = null, tlDone = new Set();
+  function scheduleMode(t) {
+    (G.ev || []).forEach((e) => { if (seenEv.has(e.id)) return; seenEv.add(e.id); if (t - e.at < 4000) announce(e); });
+    if (G.phase !== 'round') return;
+    if (tlId !== G.id) { tlId = G.id; tlDone = new Set(); }
+    const L = lat();
+    M.timeline(G).forEach((it) => {
+      if (tlDone.has(it.k) || t < it.at - L) return;
+      tlDone.add(it.k);
+      if (t - it.at < 3000) announce(it);
+    });
+  }
+
   function showResult(side, kicker, title, sub) {
     $('result').className = 'result ' + side;
     $('resKicker').textContent = kicker;
@@ -878,7 +971,8 @@
   }
   function schedule(t) {
     const L = lat(), snd = soundOn();
-    if (G.phase === 'planted' && t < G.bombEnd + 100) {
+    if (isMode(G)) scheduleMode(t);
+    else if (G.phase === 'planted' && t < G.bombEnd + 100) {
       const total = G.bombEnd - G.plantedAt;
       if (P.beepId !== G.id) { P.beepId = G.id; P.beepT = G.plantedAt + 900; }
       while (P.beepT < G.bombEnd && P.beepT - L <= t + LOOK) {
@@ -899,7 +993,7 @@
       if (snd && S.say.bomb && !P.said.s30 && remL <= 30500 && G.cfg.bombTime >= 40) { P.said.s30 = 1; if (remL > 27000) speak('s30'); }
       if (snd && S.say.bomb && !P.said.s10 && remL <= 10500 && G.cfg.bombTime >= 20) { P.said.s10 = 1; if (remL > 8000) speak('s10'); }
     }
-    if (G.phase === 'round' && G.roundEnd) {
+    if (!isMode(G) && G.phase === 'round' && G.roundEnd) {
       const remL = G.roundEnd - (t + L);
       if (snd && S.say.min1 && !P.said.min1 && remL <= 60000 && G.cfg.roundTime > 1) { P.said.min1 = 1; if (remL > 55000) speak('min1'); }
     }
@@ -936,6 +1030,7 @@
   }
   armConfirm($('abortRound'), toSetup);
   armConfirm($('abortPlanted'), toSetup);
+  armConfirm($('abortMode'), toSetup);
   armConfirm($('btnEndSession'), leaveSession, 'Nochmal tippen zum Beenden');
 
   $('btnStart').addEventListener('click', startRound);
@@ -970,6 +1065,12 @@
 
   bindAll();
   loadLines();
+  /* Announcer texts of all modes (also the phone-voice fallback) come from audio/lines.json. */
+  fetch('audio/lines.json').then((r) => (r.ok ? r.json() : null)).then((j) => {
+    if (!j) return;
+    Object.keys(j).forEach((l) => { LINES[l] = Object.assign({}, j[l], LINES[l]); });
+    loadLines();
+  }).catch(() => {});
 
   /* Resume a saved session (page reload) or open the join screen from a shared link (?s=CODE). */
   (function boot() {

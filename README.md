@@ -1,6 +1,6 @@
 # 💣 Airsoft Bomb Timer
 
-Ein Bomb-Timer fürs Airsoft-Feld als Web-App fürs Handy: Bombe auf Punkt A oder B planten, Countdown mit Piepen und Sprachansagen über die Bluetooth-Box, entschärfen per Gedrückthalten.
+Ein Bomb-Timer fürs Airsoft-Feld als Web-App fürs Handy: Bombe auf Punkt A oder B planten, Countdown mit Piepen und Sprachansagen über die Bluetooth-Box, entschärfen per Gedrückthalten. Dazu weitere Spielmodi: **VIP-Eskorte, Search & Destroy, Battle Royale, Geiselbefreiung, Infection** und **Murder Mystery** mit geheimen Rollen.
 
 **▶ Live: [airsoft-ops.onrender.com](https://airsoft-ops.onrender.com)**
 
@@ -25,6 +25,31 @@ Im **Allein-Modus** läuft die App komplett im Browser und funktioniert nach dem
 - **Display bleibt an:** Solange eine Runde läuft, sperrt sich das Handy nicht (Screen Wake Lock). Kann der Browser das nicht, zeigt die App einen Hinweis.
 - **Zum Startbildschirm hinzufügbar (PWA):** Über das Browsermenü („Zum Startbildschirm hinzufügen“ bzw. Teilen → „Zum Home-Bildschirm“) startet die App ohne Browserleiste wie eine normale App.
 
+## Spielmodi
+
+Den Modus wählt man oben auf dem Startbildschirm. Jeder Modus hat eigene Einstellungen, Ansagen und einen eigenen Spielbildschirm. Alle laufen allein auf einem Handy oder in einer Session mit Lautsprecher-Handys.
+
+| Modus | Ablauf in der App | Wer gewinnt |
+|---|---|---|
+| 💣 **Bombe** | Planten an A/B, Countdown, Entschärfen (siehe oben) | Angreifer bei Explosion, Verteidiger bei Entschärfung oder Zeitablauf |
+| 👑 **VIP-Eskorte** | Der VIP trägt das Handy. „VIP getroffen“ zieht ein Leben ab (einstellbar 1–5). „Ziel erreicht“ gedrückt halten. Bei 2–4 Zielpunkten lost die App eines aus, das nur die Eskorte über „Ziel anzeigen“ sieht. | Eskorte, wenn der VIP ankommt. Jäger bei VIP ausgeschaltet oder Zeitablauf |
+| 🎯 **Search & Destroy** | 2–5 Ziele (A–E), jedes per Gedrückthalten zerstören. Einstellbar, wie viele nötig sind. „Alle Angreifer ausgeschaltet“ (zweimal tippen). Punktestand über mehrere Runden mit automatischem Seitenwechsel. | Angreifer bei genug zerstörten Zielen. Verteidiger bei Zeitablauf oder ausgeschalteten Angreifern |
+| 🪂 **Battle Royale** | 2–8 Teams (farbig). Team zweimal antippen = ausgeschieden. Ansagen „Zone schrumpft in einer Minute“ / „jetzt“ im eingestellten Takt, Versorgungsabwürfe an zufälligen nummerierten Punkten. Rangliste am Ende. | Das letzte Team (bei Zeitablauf: Unentschieden) |
+| 🆘 **Geiselbefreiung** | Die Geisel trägt das Handy. „Befreien“ gedrückt halten, dann am Evakuierungspunkt „Evakuiert“. | Retter bei Evakuierung. Geiselnehmer bei Zeitablauf oder ausgeschalteten Rettern |
+| 🧟 **Infection** | Spielerzahl und Start-Infizierte einstellen. „Überlebender getroffen“ startet die Verwandlungszeit, danach Ansage und Zähler. Rücknahme möglich. | Infizierte, wenn alle infiziert sind. Überlebende bei Zeitablauf |
+| 🔪 **Murder Mystery** | Geheime Rollen, siehe unten | Entscheidet der Spielleiter |
+
+Alle Ansagen (Rundenstart, Treffer, Ziel zerstört, Zone, Abwurf, Ergebnis …) lassen sich unter *Erweiterte Einstellungen → Was angesagt wird* abschalten, z. B. „Spielereignisse“.
+
+### Murder Mystery
+
+Das Handy, das das Spiel startet, ist der **Spielleiter**. Es sieht alle Rollen, der Spielleiter spielt also nicht mit.
+
+- **Rollen:** 1–3 Mörder (kennen sich) und beliebige Sonderrollen zum Antippen: Medic, Kopfgeldjäger (bekommt ein Ziel), Trittbrettfahrer (zieht seine Rolle: Unschuldiger, Medic oder Amok-Mörder), Zwillinge (kennen sich, genau zwei), Detektiv (prüft einmal eine Person: Gut, Böse oder Eigenes Ziel), Informant („einer dieser drei ist ein Mörder“), Bodyguard, Doppelagent (mit geheimem Ziel), Rächer, Joker, Wissenschaftler (untersucht einmal: „X ist Rolle A oder Rolle B“) und Spion. Alle übrigen werden Unschuldige.
+- **Spieler mit Handy** treten der Session als **„Spieler“** bei. Ihre Rolle kommt nur auf ihr eigenes Handy, andere Handys bekommen sie nie zu sehen. Detektiv, Wissenschaftler und Trittbrettfahrer nutzen ihre Fähigkeit direkt auf der Rollenkarte.
+- **Spieler ohne Handy** trägt man als Namen ein. Sie tippen am Spielleiter-Handy ihren Namen an, decken die Karte auf, verdecken sie wieder und geben das Handy weiter.
+- **Während des Spiels** markiert der Spielleiter ausgeschaltete Spieler, kann die Rollen einblenden und Spielern mit Handy eine geheime Nachricht schicken (z. B. für den Spion). Am Ende wählt er den Gewinner und alle Rollen werden aufgedeckt.
+
 ## Mehrere Handys (Session)
 
 **So geht's:**
@@ -32,6 +57,7 @@ Im **Allein-Modus** läuft die App komplett im Browser und funktioniert nach dem
 1. Auf dem Handy, das die **Bombe** sein soll: **„Session starten“**. Es erscheinen ein 4-stelliger Code und ein QR-Code.
 2. Mitspieler scannen den QR-Code (oder öffnen die Seite → **„Beitreten“** → Code eingeben) und wählen eine Rolle:
    - **Lautsprecher:** Spielt alle Töne und Ansagen über die Box, die mit diesem Handy gekoppelt ist. Beliebig viele, verteilt übers Feld.
+   - **Spieler:** Bekommt bei Murder Mystery die geheime Rolle, sonst wie Zuschauer.
    - **Zuschauer:** Zeigt Rundenzeit, Bomben-Timer, Plant- und Entschärf-Fortschritt live, ohne Ton.
 3. Das Bomben-Handy sieht, wer verbunden ist, und startet die Runde wie gewohnt. Geplantet und entschärft wird nur am Bomben-Handy.
 
@@ -52,8 +78,9 @@ Im **Allein-Modus** läuft die App komplett im Browser und funktioniert nach dem
 ├── public/                 # Die eigentliche Web-App (statische Dateien)
 │   ├── index.html
 │   ├── style.css
-│   ├── app.js              # Spiellogik, Sound, Sprachausgabe
-│   ├── audio/de, audio/en  # Ansagen als MP3
+│   ├── app.js              # Spielschleife, Bomben-Modus, Sessions, Sound, Sprachausgabe
+│   ├── modes.js            # Weitere Spielmodi und Murder-Mystery-Rollen
+│   ├── audio/de, audio/en  # Ansagen als MP3, Liste in audio/lines.json
 │   ├── vendor/qrcode.js    # QR-Code-Generator (MIT, Kazuhiko Arase)
 │   ├── sw.js               # Service Worker für Offline-Betrieb
 │   ├── manifest.webmanifest
@@ -66,7 +93,7 @@ Im **Allein-Modus** läuft die App komplett im Browser und funktioniert nach dem
 
 ## Ansagen ändern
 
-Die Texte stehen in `tools/generate_voice.py` (und für die Handy-Stimme in `public/app.js` unter `LINES`). Nach einer Änderung die MP3s neu erzeugen:
+Die Texte stehen in `tools/generate_voice.py`. Das Skript schreibt außerdem `public/audio/lines.json`, aus der App (Handy-Stimme) und Offline-Cache die Liste lesen. Nach einer Änderung die MP3s neu erzeugen:
 
 ```bash
 pip install piper-tts      # außerdem wird ffmpeg benötigt

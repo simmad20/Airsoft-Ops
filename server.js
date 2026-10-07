@@ -71,8 +71,8 @@ const server = http.createServer((req, res) => {
 
 /* ---------- Sessions ---------- */
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O, 1/I
-const ROLES = new Set(['bomb', 'speaker', 'viewer']);
-const sessions = new Map(); // code -> { code, hostKey, state, members: Map<ws, member>, touched }
+const ROLES = new Set(['bomb', 'speaker', 'viewer', 'player']);
+const sessions = new Map(); // code -> { code, hostKey, state, priv: { memberId: data }, members: Map<ws, member>, touched }
 
 function newCode() {
   for (;;) {
@@ -113,6 +113,7 @@ function join(ws, s, role, name, id) {
   ws.role = role;
   s.touched = Date.now();
   send(ws, { t: 'joined', code: s.code, role, state: s.state, now: Date.now() });
+  if (s.priv[id] !== undefined) send(ws, { t: 'private', data: s.priv[id] });
   broadcast(s, { t: 'members', list: roster(s) });
 }
 
@@ -124,7 +125,7 @@ function handle(ws, msg) {
       return send(ws, { t: 'pong', c: msg.c, s: Date.now() });
 
     case 'create': {
-      const s = { code: newCode(), hostKey: crypto.randomBytes(16).toString('hex'), state: null, members: new Map(), touched: Date.now() };
+      const s = { code: newCode(), hostKey: crypto.randomBytes(16).toString('hex'), state: null, priv: {}, members: new Map(), touched: Date.now() };
       sessions.set(s.code, s);
       send(ws, { t: 'created', code: s.code, hostKey: s.hostKey });
       return join(ws, s, 'bomb', clean(msg.name, 24), clean(msg.id, 40));
@@ -144,6 +145,17 @@ function handle(ws, msg) {
       s.state = msg.state;
       s.touched = Date.now();
       return broadcast(s, { t: 'state', state: s.state }, ws);
+    }
+
+    // Murder Mystery: the bomb phone (game master) sends one player their secret role card.
+    // Only that player's connections get it; it is kept so a reconnecting phone gets it again.
+    case 'private': {
+      const s = ws.session;
+      if (!s || ws.role !== 'bomb') return;
+      const to = clean(msg.to, 40);
+      s.priv[to] = msg.data === undefined ? null : msg.data;
+      for (const [other, m] of s.members) if (m.id === to) send(other, { t: 'private', data: s.priv[to] });
+      return;
     }
 
     case 'leave':

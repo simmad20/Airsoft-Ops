@@ -43,6 +43,10 @@
     <button class="btn ghost" id="btnTest" type="button">Ton &amp; Box testen</button>
     <p class="msg" id="testMsg"></p>
 
+    <div class="modes" id="modePick" role="radiogroup" aria-label="Spielmodus"></div>
+    <p class="mdesc" id="modeDesc"></p>
+
+    <div class="modeset" data-mode="bomb">
     <div class="tgrid">
       <button class="tcard" type="button" data-key="roundTime"><span class="tl">Rundenzeit</span><span class="tv"></span><span class="td">Zeit zum Planten</span></button>
       <button class="tcard" type="button" data-key="bombTime"><span class="tl">Bombe</span><span class="tv"></span><span class="td">Bis zur Explosion</span></button>
@@ -55,6 +59,8 @@
         <label class="switch"><input type="checkbox" data-opt="half" aria-label="Halb-Entschärfen"><span></span></label>
       </div>
     </div>
+    </div>
+    <div id="modeSets"></div>
 
     <button class="btn primary big" id="btnStart" type="button">Runde starten</button>
     <p class="fine" id="wakeNote">Während der Runde bleibt das Display an und sperrt sich nicht. Die App im Vordergrund lassen.</p>
@@ -62,7 +68,7 @@
     <div class="mp" id="mpIdle">
       <div class="txt">
         <div class="lbl">Mehrere Handys &amp; Boxen</div>
-        <div class="desc">Dieses Handy wird die Bombe. Mitspieler verbinden sich als Lautsprecher mit eigener Box oder als Zuschauer. Braucht mobiles Internet.</div>
+        <div class="desc">Dieses Handy steuert das Spiel (bei „Bombe“ ist es die Bombe). Mitspieler verbinden sich als Lautsprecher mit eigener Box, als Spieler (geheime Rollen bei Murder Mystery) oder als Zuschauer. Braucht mobiles Internet.</div>
       </div>
       <div class="mp-btns">
         <button class="btn" id="btnHost" type="button">Session starten</button>
@@ -118,6 +124,7 @@
         <label class="row check"><div class="txt"><div class="lbl">Bombe platziert</div><div class="desc">„Bombe platziert auf Punkt A!“</div></div><span class="switch"><input type="checkbox" data-say="planted"><span></span></span></label>
         <label class="row check"><div class="txt"><div class="lbl">Noch eine Minute</div><div class="desc">Bei ablaufender Rundenzeit</div></div><span class="switch"><input type="checkbox" data-say="min1"><span></span></span></label>
         <label class="row check"><div class="txt"><div class="lbl">Bomben-Restzeit</div><div class="desc">„Noch dreißig Sekunden“ und „Noch zehn Sekunden“</div></div><span class="switch"><input type="checkbox" data-say="bomb"><span></span></span></label>
+        <label class="row check"><div class="txt"><div class="lbl">Spielereignisse</div><div class="desc">Andere Modi: Treffer, Ziel zerstört, Zone, Abwurf, Infektion …</div></div><span class="switch"><input type="checkbox" data-say="events"><span></span></span></label>
         <label class="row check"><div class="txt"><div class="lbl">Ergebnis</div><div class="desc">„Bombe entschärft. Verteidiger gewinnen!“</div></div><span class="switch"><input type="checkbox" data-say="result"><span></span></span></label>
       </div>
 
@@ -166,7 +173,7 @@
     <div class="group">
       <div class="row stack">
         <div class="txt"><div class="lbl">Rolle</div><div class="desc" id="roleDesc"></div></div>
-        <div class="seg" id="joinRole"><button type="button" data-v="speaker" aria-pressed="true">Lautsprecher</button><button type="button" data-v="viewer" aria-pressed="false">Zuschauer</button></div>
+        <div class="seg" id="joinRole"><button type="button" data-v="speaker" aria-pressed="true">Lautsprecher</button><button type="button" data-v="player" aria-pressed="false">Spieler</button><button type="button" data-v="viewer" aria-pressed="false">Zuschauer</button></div>
       </div>
       <div class="row">
         <div class="txt"><div class="lbl">Name</div><div class="desc">Optional, z. B. „Box Nord“</div></div>
@@ -186,6 +193,7 @@
       <div class="rem-status" id="remStatus">Warte auf Rundenstart …</div>
       <div class="desc" id="remHint">Box mit diesem Handy koppeln, Lautstärke aufdrehen und App offen lassen.</div>
     </div>
+    <button class="btn primary big" id="btnMyRole" type="button" hidden>Meine Rolle ansehen</button>
     <button class="btn ghost" id="btnRemTest" type="button">Ton &amp; Box testen</button>
     <div id="advSlot"></div>
     <button class="btn ghost danger" id="btnLeave" type="button">Session verlassen</button>
@@ -213,6 +221,18 @@
     <button class="btn ghost danger" id="abortPlanted" type="button">Runde abbrechen</button>
   </section>
 
+  <!-- OTHER GAME MODES (built by modes.js) -->
+  <section class="scr" id="scrMode" hidden>
+    <div class="modehead"><span class="micon" id="mIcon"></span><span id="mName"></span></div>
+    <div class="clockwrap" id="mClockWrap">
+      <div class="label" id="mClockLabel"></div>
+      <div class="clock" id="mClock"></div>
+    </div>
+    <div class="mstatus" id="mStatus"></div>
+    <div class="mbody" id="mBody"></div>
+    <button class="btn ghost danger" id="abortMode" type="button">Runde abbrechen</button>
+  </section>
+
   <!-- END -->
   <section class="scr" id="scrEnd" hidden>
     <div class="result" id="result">
@@ -220,6 +240,7 @@
       <h2 id="resTitle">Verteidiger gewinnen</h2>
       <p id="resSub"></p>
     </div>
+    <div class="endextra" id="endExtra"></div>
     <div class="endbtns">
       <button class="btn primary big" id="btnAgain" type="button">Neue Runde</button>
       <button class="btn ghost" id="btnSetup" type="button">Einstellungen</button>
@@ -245,7 +266,23 @@
   </div>
 </div>
 
+<div class="sheet-bg" id="cardBg" hidden>
+  <div class="sheet rolecard" role="dialog" aria-modal="true" aria-labelledby="cardWho">
+    <div class="sh-head">
+      <div><h2 id="cardWho">Deine Rolle</h2><p>Nur du darfst hinschauen.</p></div>
+      <button class="iconbtn" id="cardClose" type="button" aria-label="Schließen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <button class="reveal" id="cardReveal" type="button">
+      <span class="rv-cover">Tippen zum Aufdecken</span>
+      <span class="rv-body" id="cardBody"></span>
+    </button>
+    <div class="card-acts" id="cardActs"></div>
+    <button class="btn primary big" id="cardDone" type="button">Fertig &amp; verdecken</button>
+  </div>
+</div>
+
 <script src="vendor/qrcode.js"></script>
+<script src="modes.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

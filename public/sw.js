@@ -1,12 +1,17 @@
 /* Offline support: the app shell is cached on first visit so the timer still opens on a field without signal.
    Own files are fetched network-first (a new deploy shows up right away), fonts cache-first. */
-const CACHE = 'bomb-timer-v6';
-const LINES = ['start', 'planted_a', 'planted_b', 'min1', 's30', 's10', 'defused', 'def_win', 'att_win', 'timeout', 'test'];
-const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png', 'vendor/qrcode.js']
-  .concat(...['de', 'en'].map((l) => LINES.map((k) => 'audio/' + l + '/' + k + '.mp3')));
+const CACHE = 'bomb-timer-v7';
+const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'modes.js', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png', 'vendor/qrcode.js', 'audio/lines.json'];
 
+/* The announcer files are listed in audio/lines.json (written by tools/generate_voice.py). */
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(CACHE).then(async (c) => {
+    await c.addAll(SHELL);
+    try {
+      const lines = await (await c.match('audio/lines.json')).json();
+      await c.addAll(Object.keys(lines).flatMap((l) => Object.keys(lines[l]).map((k) => 'audio/' + l + '/' + k + '.mp3')));
+    } catch (err) { /* voice files are also cached on first use */ }
+  }).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (e) => {

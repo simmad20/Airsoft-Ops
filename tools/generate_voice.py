@@ -4,9 +4,10 @@ Usage:
     pip install piper-tts      # plus ffmpeg on the PATH
     python3 tools/generate_voice.py
 
-Voices are downloaded once into tools/.voices/ (git-ignored). Output goes to public/audio/<lang>/<key>.mp3.
+Voices are downloaded once into tools/.voices/ (git-ignored). Output goes to public/audio/<lang>/<key>.mp3 plus public/audio/lines.json.
 """
 import io
+import json
 import subprocess
 import tarfile
 import urllib.request
@@ -54,6 +55,79 @@ LINES = {
         "test": "Speaker check. Site A. Site B.",
     },
 }
+
+DE_NUM = ["eins", "zwei", "drei", "vier", "fünf", "sechs", "sieben", "acht"]
+EN_NUM = ["one", "two", "three", "four", "five", "six", "seven", "eight"]
+
+# Lines for the other game modes.
+LINES["de"].update({
+    "go": "Runde gestartet!",
+    "vip_start": "Runde gestartet. Eskorte, bringt den VIP ins Ziel!",
+    "vip_hit": "Der VIP wurde getroffen!",
+    "vip_down": "Der VIP wurde ausgeschaltet!",
+    "vip_extracted": "Der VIP hat das Ziel erreicht!",
+    "escort_win": "Die Eskorte gewinnt!",
+    "hunter_win": "Die Jäger gewinnen!",
+    "snd_start": "Runde gestartet. Angreifer, zerstört die Ziele!",
+    "obj_down": "Ziel zerstört!",
+    "att_elim": "Alle Angreifer wurden ausgeschaltet.",
+    "side_swap": "Seitenwechsel!",
+    "br_start": "Das Spiel beginnt. Viel Glück!",
+    "zone_warn": "Achtung! Die Zone schrumpft in einer Minute.",
+    "zone_now": "Die Zone schrumpft jetzt!",
+    "draw": "Unentschieden.",
+    "hos_start": "Runde gestartet. Befreit die Geisel!",
+    "hos_freed": "Die Geisel ist frei! Bringt sie zum Evakuierungspunkt!",
+    "hos_evac": "Die Geisel wurde evakuiert!",
+    "res_elim": "Alle Retter wurden ausgeschaltet.",
+    "rescuers_win": "Die Retter gewinnen!",
+    "kidnappers_win": "Die Geiselnehmer gewinnen!",
+    "inf_start": "Das Spiel beginnt. Die Infektion breitet sich aus!",
+    "inf_turned": "Ein weiterer Spieler wurde infiziert!",
+    "inf_last": "Nur noch ein Überlebender!",
+    "inf_win": "Alle sind infiziert. Die Infizierten gewinnen!",
+    "surv_win": "Die Überlebenden gewinnen!",
+    "mu_roles": "Die Rollen wurden verteilt. Schaut euch eure Rolle geheim an.",
+    "mu_start": "Das Spiel beginnt. Traut niemandem!",
+    "mu_end": "Das Spiel ist vorbei!",
+    **{f"team_out_{i + 1}": f"Team {n} ist ausgeschieden!" for i, n in enumerate(DE_NUM)},
+    **{f"team_win_{i + 1}": f"Team {n} gewinnt!" for i, n in enumerate(DE_NUM)},
+    **{f"drop_{i + 1}": f"Versorgungsabwurf bei Punkt {n}!" for i, n in enumerate(DE_NUM[:6])},
+})
+LINES["en"].update({
+    "go": "Round start!",
+    "vip_start": "Round start. Escort, get the VIP to the extraction point!",
+    "vip_hit": "The VIP has been hit!",
+    "vip_down": "The VIP is down!",
+    "vip_extracted": "The VIP has reached the extraction point!",
+    "escort_win": "The escort wins!",
+    "hunter_win": "The hunters win!",
+    "snd_start": "Round start. Attackers, destroy the objectives!",
+    "obj_down": "Objective destroyed!",
+    "att_elim": "All attackers have been eliminated.",
+    "side_swap": "Switch sides!",
+    "br_start": "The game begins. Good luck!",
+    "zone_warn": "Warning! The zone shrinks in one minute.",
+    "zone_now": "The zone is shrinking now!",
+    "draw": "It's a draw.",
+    "hos_start": "Round start. Rescue the hostage!",
+    "hos_freed": "The hostage is free! Get them to the extraction point!",
+    "hos_evac": "The hostage has been extracted!",
+    "res_elim": "All rescuers have been eliminated.",
+    "rescuers_win": "The rescuers win!",
+    "kidnappers_win": "The kidnappers win!",
+    "inf_start": "The game begins. The infection is spreading!",
+    "inf_turned": "Another player has been infected!",
+    "inf_last": "Only one survivor left!",
+    "inf_win": "Everyone is infected. The infected win!",
+    "surv_win": "The survivors win!",
+    "mu_roles": "Roles have been assigned. Check your role in secret.",
+    "mu_start": "The game begins. Trust no one!",
+    "mu_end": "The game is over!",
+    **{f"team_out_{i + 1}": f"Team {n} has been eliminated!" for i, n in enumerate(EN_NUM)},
+    **{f"team_win_{i + 1}": f"Team {n} wins!" for i, n in enumerate(EN_NUM)},
+    **{f"drop_{i + 1}": f"Supply drop at point {n}!" for i, n in enumerate(EN_NUM[:6])},
+})
 
 # Trim silence, cut rumble, compress and normalise loudly so it carries over a field.
 FILTER = (
@@ -112,6 +186,8 @@ def main() -> None:
                 input=synth(voice, text, syn), check=True,
             )
             print(f"{lang}/{key}.mp3  {text}")
+    # The app reads this for the phone-voice fallback, the service worker for offline caching.
+    (OUT_DIR / "lines.json").write_text(json.dumps(LINES, ensure_ascii=False, indent=1), encoding="utf-8")
 
 
 if __name__ == "__main__":
