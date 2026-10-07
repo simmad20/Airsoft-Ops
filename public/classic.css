@@ -103,9 +103,14 @@ body:has(#app.classic) { background: #111417; }
 #app.classic :focus-visible { outline-color: var(--amber); }
 
 /* Setup screen: mode buttons with names only, settings below */
-#app.classic .cmodes { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; }
+#app.classic .cmodes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 #app.classic .cmode { display: flex; align-items: center; justify-content: center; min-height: 52px; padding: 10px 6px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); text-align: center; font-family: var(--display); font-size: 13px; font-weight: 600; letter-spacing: .04em; line-height: 1.2; color: var(--fg); cursor: pointer; }
 #app.classic .cmode[aria-checked="true"] { border-color: var(--amber); background: var(--amber-soft); box-shadow: inset 0 0 0 1px var(--amber); }
+#app.classic .cmode { flex-direction: column; align-items: flex-start; gap: 3px; min-height: 64px; padding: 10px 12px; text-align: left; }
+#app.classic .cmode:last-child:nth-child(odd) { grid-column: 1 / -1; }
+#app.classic .cmode b { font-size: 15px; font-weight: 600; }
+#app.classic .cmode span { font-family: var(--body); font-size: 12.5px; font-weight: 400; letter-spacing: 0; color: var(--muted); }
+#app.classic .cmode[aria-checked="true"] b { color: var(--amber); }
 #app.classic .mdesc { margin: -6px 0 0; color: var(--muted); font-size: 14px; }
 #app.classic .tc { border-radius: 14px; border-color: var(--line); background: linear-gradient(180deg, var(--panel-2), var(--panel)); min-height: 0; }
 #app.classic .tc .gl { display: none; }
@@ -252,3 +257,19 @@ body:has(#app.classic) { background: #111417; }
 @media (prefers-reduced-motion: reduce) {
   #app.classic *, #app.classic *::before, #app.classic *::after { transition-duration: .01ms !important; }
 }
+
+/* Murder setup and pass screen */
+#app.classic .rmark { display: none; }
+#app.classic .pedit { padding: 6px; }
+#app.classic .pe { border-radius: 8px; background: var(--panel-2); border-color: var(--line); }
+#app.classic .pe.empty { background: none; }
+#app.classic .pe-tag { border-color: var(--line); color: var(--muted); }
+#app.classic .pe-del { border-radius: 8px; }
+#app.classic .pe-add .btn { padding: 0 14px; }
+#app.classic .roles .rrow.fixed .lbl { color: var(--fg); }
+#app.classic .pc-s svg.i { display: inline-block; }
+#app.classic .pcard.locked { border-style: dashed; }
+#app.classic .pcard.locked .pc-n { color: var(--muted); }
+#app.classic .pcard.locked .pc-s { color: var(--danger); }
+#app.classic .pcard.seen:not(.locked) .pc-s { color: var(--good); }
+#app.classic .pe-list.phones .pe { min-height: 46px; }

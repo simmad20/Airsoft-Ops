@@ -587,7 +587,8 @@
         return '<button class="btn ghost wide" data-act="muRoles" type="button" aria-pressed="' + murder.showRoles + '">' + ic(murder.showRoles ? 'eyeoff' : 'viewer') + '<span>' + tr(murder.showRoles ? 'mu.hideRoles' : 'mu.showRoles') + '</span></button>' +
           '<div class="plist" id="muList"></div><p class="fine">' + tr('mu.toggleHelp') + '</p>' +
           '<div class="gm-acts">' + (MU && MU.players.some((p) => p.mid) ? '<button class="btn ghost" data-act="muMsg" type="button">' + ic('msg') + '<span>' + tr('mu.msg') + '</span></button>' : '') +
-          (MU && MU.players.some((p) => !p.mid) ? '<button class="btn ghost" data-act="muCards" type="button">' + ic('cards') + '<span>' + tr('mu.cardsBtn') + '</span></button>' : '') + '</div>' +
+          (MU && MU.players.some((p) => !p.mid) ? '<button class="btn ghost" data-act="muCards" type="button">' + ic('cards') + '<span>' + tr('mu.cardsBtn') + '</span></button>' : '') +
+          '<button class="btn ghost" data-act="muInfo" type="button">' + ic('viewer') + '<span>' + tr('mu.rolesInfo') + '</span></button></div>' +
           '<button class="btn primary big" data-act="muEnd" type="button">' + ic('flag') + '<span>' + tr('mu.endBtn') + '</span></button>';
       },
       update(root, g) {
@@ -628,6 +629,7 @@
           return commit({ players });
         }
         if (name === 'muMsg') return openMsg();
+        if (name === 'muInfo') return openRoleInfo();
         if (name === 'muEnd') return openWinner();
       },
       finish(w) {
@@ -672,16 +674,24 @@
       body.querySelector('.wingrid').onclick = (e) => { const b = e.target.closest('[data-w]'); if (!b) return; UI.sheet.close(); setTimeout(() => murder.finish(b.dataset.w), 250); };
     }
 
-    /* Pass the phone: players without a phone look at their card here, one after another. */
+    /* Pass the phone: players without a phone look at their card here, one after another.
+       Before the game starts a card opens only once: if someone peeks at another card, its owner finds it locked. */
+    const passLocked = (p) => p.seen && !murder.review;
     function renderPass() {
       const root = $('s-pass');
       if (!MU) { root.innerHTML = ''; return; }
       const list = MU.players.map((p, i) => ({ p, i })).filter((x) => !x.p.mid), phones = MU.players.filter((p) => p.mid);
       const seen = list.filter((x) => x.p.seen).length;
-      root.innerHTML = '<div class="intro center" data-st><h1>' + tr('pass.title') + '</h1><p>' + tr('mu.passHint') + '</p></div>' +
+      const tile = (x, k) => {
+        const lock = passLocked(x.p);
+        return '<button class="pcard' + (x.p.seen ? ' seen' : '') + (lock ? ' locked' : '') + '" type="button" data-p="' + x.i + '" style="--i:' + k + '" aria-label="' + esc(tr(lock ? 'pass.lockedAria' : 'pass.view', { n: x.p.name })) + '">' +
+          '<span class="pc-img">' + cardBackHTML() + '<span class="seal">' + ic(lock ? 'lock' : 'check') + '</span></span><span class="pc-n">' + esc(x.p.name) + '</span>' +
+          '<span class="pc-s">' + (lock ? ic('lock') : '') + '<span>' + tr(lock ? 'pass.locked' : x.p.seen ? 'pass.seen' : 'pass.open') + '</span></span></button>';
+      };
+      root.innerHTML = '<div class="intro center" data-st><h1>' + tr('pass.title') + '</h1><p>' + tr(murder.review ? 'pass.hintReview' : 'pass.hint') + '</p></div>' +
         (list.length ? '<div class="pp-prog" data-st><span>' + tr('pass.progress', { s: seen, n: list.length }) + '</span><span class="pp-bar"><i id="ppBar"></i></span></div>' +
-        '<div class="pgrid" data-st>' + list.map((x, k) => '<button class="pcard ' + (x.p.seen ? 'seen' : '') + '" type="button" data-p="' + x.i + '" style="--i:' + k + '" aria-label="' + esc(tr('pass.view', { n: x.p.name })) + '"><span class="pc-img">' + cardBackHTML() + '<span class="seal">' + ic('check') + '</span></span><span class="pc-n">' + esc(x.p.name) + '</span><span class="pc-s">' + tr(x.p.seen ? 'pass.seen' : 'pass.open') + '</span></button>').join('') + '</div>' : '') +
-        (phones.length ? '<div class="hintc" data-st>' + ic('phone') + '<div>' + tr(phones.length === 1 ? 'pass.phones1' : 'pass.phonesN', { n: '<b>' + phones.map((p) => esc(p.name)).join(', ') + '</b>' }) + '</div></div>' : '') +
+        '<div class="pgrid" data-st>' + list.map(tile).join('') + '</div>' : '') +
+        (phones.length ? '<h3 class="sec" data-st>' + tr('pass.phonesH') + '</h3><ul class="pe-list phones" data-st>' + phones.map((p) => '<li class="pe phone"><span class="pe-n">' + esc(p.name) + '</span><span class="pe-tag">' + ic('phone') + '<span>' + tr('pass.ownPhone') + '</span></span></li>').join('') + '</ul>' : '') +
         '<div class="cta"><button class="btn primary big" type="button" data-pass="' + (murder.review ? 'back' : 'play') + '">' + ic(murder.review ? 'back' : 'play') + '<span>' + tr(murder.review ? 'pass.back' : 'mu.play') + '</span></button></div>' +
         '<button class="btn ghost danger wide classic-only" type="button" data-pass="abort">' + tr('game.abort') + '</button>';
       requestAnimationFrame(() => { const b = $('ppBar'); if (b) b.style.transform = 'scaleX(' + (list.length ? seen / list.length : 1) + ')'; });
@@ -690,6 +700,11 @@
       const c = e.target.closest('[data-p]');
       if (c && MU) {
         const idx = +c.dataset.p, p = MU.players[idx];
+        if (passLocked(p)) {
+          ctx.toast(tr('pass.lockedMsg', { n: p.name })); ctx.buzz([40, 60, 40]);
+          if (!UI.RM) c.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-5px)' }, { transform: 'translateX(4px)' }, { transform: 'translateX(-2px)' }, { transform: 'none' }], { duration: 300 });
+          return;
+        }
         openCard(p.card, () => {
           const first = !p.seen; p.seen = true; store.set('abt-mu', MU); renderPass();
           if (first && !UI.RM) { const nc = document.querySelector('[data-p="' + idx + '"]'); if (nc) nc.classList.add('stamp'); }
@@ -799,35 +814,68 @@
       openCard(mine.card, null, () => store.set('abt-card', mine));
     }
 
-    /* ---------- Murder lobby extras: special roles, names without phone, live count ---------- */
+    /* ---------- Murder lobby extras: roles with a one-line explanation, player list, live count ---------- */
+    const roleRow = (k, fixed, bare) => '<' + (fixed ? 'div' : 'label') + ' class="row rrow' + (fixed ? ' fixed' : '') + '"><span class="rmark">' + sym(k === 'twins' ? 'twin' : k, 'mini') + '</span><div class="txt"><div class="lbl">' + esc(tr(k === 'twins' ? 'r.twins' : 'r.' + k)) +
+      (k === 'murderer' && !bare ? ' <span class="rcnt" id="muMCnt"></span>' : '') + (k === 'innocent' && !bare ? ' <span class="rcnt">' + esc(tr('mu.rest')) + '</span>' : '') + '</div><div class="desc">' + esc(tr('rs.' + k)) + '</div></div>' +
+      (fixed ? '' : '<span class="switch"><input type="checkbox" role="switch" data-role="' + k + '"' + (S().muRoles[k] ? ' checked' : '') + ' aria-label="' + esc(tr(k === 'twins' ? 'r.twins' : 'r.' + k)) + '"><span></span></span>') + '</' + (fixed ? 'div' : 'label') + '>';
     function lobbyMurderHTML() {
-      const R = S().muRoles;
-      return '<div class="group" data-st><div class="row stack"><div class="txt"><div class="lbl">' + tr('mu.special') + '</div><div class="desc">' + tr('mu.specialDesc') + '</div></div><div class="rolepick" id="muRolePick">' +
-        MU_EXTRA.map((k) => '<button type="button" data-role="' + k + '" aria-pressed="' + !!R[k] + '">' + sym(k, 'mini') + '<span>' + esc(tr(k === 'twins' ? 'r.twins' : 'r.' + k)) + '</span></button>').join('') + '</div></div></div>' +
-        '<div class="group" data-st><div class="row stack"><div class="txt"><label class="lbl" for="muNames">' + tr('mu.names') + '</label><div class="desc">' + tr('mu.namesDesc') + '</div></div>' +
-        '<textarea class="inp" id="muNames" rows="4" placeholder="' + esc(tr('mu.namesPh')) + '">' + esc(S().muNames || '') + '</textarea><div class="pchips" id="pChips"></div><div class="count" id="muCount"></div></div></div>' +
-        '<div class="hintc" data-st>' + ic('phone') + '<div>' + tr('mu.phoneHint') + '</div></div>';
+      return '<h3 class="sec" data-st>' + tr('mu.players') + '<span class="count" id="muCount"></span></h3>' +
+        '<div class="group pedit" data-st><ul class="pe-list" id="muPl"></ul>' +
+        '<form class="pe-add" id="muAdd" autocomplete="off"><input class="inp" id="muNew" maxlength="20" enterkeyhint="done" placeholder="' + esc(tr('mu.addPh')) + '" aria-label="' + esc(tr('mu.addPh')) + '">' +
+        '<button class="btn primary" type="submit">' + ic('plus') + '<span>' + tr('mu.add') + '</span></button></form></div>' +
+        '<h3 class="sec" data-st>' + tr('mu.rolesH') + '</h3>' +
+        '<div class="group roles" data-st id="muRolePick">' + roleRow('murderer', true) + roleRow('innocent', true) + MU_EXTRA.map((k) => roleRow(k)).join('') + '</div>';
     }
+    function setNames(list) { S().muNames = list.join('\n'); ctx.save(); paintMuSetup(); }
     function paintMuSetup() {
       const c = $('muCount'); if (!c) return;
       const R = S().muRoles, sp = sessionPlayers(), mn = manualNames();
       const roles = S().muMurderers + Object.keys(R).filter((k) => R[k]).reduce((n, k) => n + (k === 'twins' ? 2 : 1), 0);
-      const n = sp.length + mn.length, bad = roles > n;
-      const pc = $('pChips');
-      const html = sp.map((p) => '<span class="pchip phone"><b>' + esc((p.name || '?')[0].toUpperCase()) + '</b>' + esc(p.name || tr('role.player')) + ic('phone') + '</span>').join('') + mn.map((x) => '<span class="pchip"><b>' + esc(x[0].toUpperCase()) + '</b>' + esc(x) + '</span>').join('');
-      if (pc._h !== html) { pc._h = html; pc.innerHTML = html; }
+      const n = sp.length + mn.length, bad = roles > n || n < 3;
+      const pl = $('muPl');
+      const html = sp.map((p) => '<li class="pe phone"><span class="pe-n">' + esc(p.name || tr('role.player')) + '</span><span class="pe-tag">' + ic('phone') + '<span>' + tr('mu.withPhone') + '</span></span></li>').join('') +
+        mn.map((x, i) => '<li class="pe"><span class="pe-n">' + esc(x) + '</span><button class="iconbtn pe-del" type="button" data-del="' + i + '" aria-label="' + esc(tr('mu.del', { n: x })) + '">' + ic('close') + '</button></li>').join('') +
+        (n ? '' : '<li class="pe empty">' + tr('mu.noPlayers') + '</li>');
+      if (pl._h !== html) { pl._h = html; pl.innerHTML = html; }
       c.classList.toggle('bad', bad);
-      c.innerHTML = tr('mu.count', { sp: '<b>' + sp.length + '</b>', mn: '<b>' + mn.length + '</b>', n: '<b>' + n + '</b>', r: '<b>' + roles + '</b>' }) + (bad ? '<b class="err">' + tr('mu.tooFew') + '</b>' : '');
-      document.querySelectorAll('#muRolePick button').forEach((b) => b.setAttribute('aria-pressed', String(!!R[b.dataset.role])));
+      c.innerHTML = tr('mu.count2', { n: '<b>' + n + '</b>', r: '<b>' + roles + '</b>' });
+      const mc = $('muMCnt'); if (mc) mc.textContent = '\u00d7' + S().muMurderers;
+      document.querySelectorAll('#muRolePick input[data-role]').forEach((b) => { b.checked = !!R[b.dataset.role]; });
     }
     function bindMurderLobby(root) {
-      root.querySelector('#muRolePick').addEventListener('click', (e) => {
+      root.querySelector('#muRolePick').addEventListener('change', (e) => {
         const b = e.target.closest('[data-role]'); if (!b) return;
-        const k = b.dataset.role; S().muRoles[k] = !S().muRoles[k]; ctx.save(); paintMuSetup();
-        if (!UI.RM) b.animate([{ transform: 'scale(.85)' }, { transform: 'scale(1.06)' }, { transform: 'none' }], { duration: 420, easing: UI.SPRING });
+        S().muRoles[b.dataset.role] = b.checked; ctx.save(); paintMuSetup();
       });
-      root.querySelector('#muNames').addEventListener('input', (e) => { S().muNames = e.target.value; ctx.save(); paintMuSetup(); });
+      const inp = root.querySelector('#muNew');
+      root.querySelector('#muAdd').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const v = inp.value.replace(/\s+/g, ' ').trim(), list = manualNames();
+        const taken = list.concat(sessionPlayers().map((m) => m.name || '')).some((x) => x.toLowerCase() === v.toLowerCase());
+        if (!v || taken || list.length >= 40) {
+          if (taken) ctx.toast(tr('mu.dup', { n: v }));
+          if (!UI.RM) inp.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-6px)' }, { transform: 'translateX(5px)' }, { transform: 'translateX(-3px)' }, { transform: 'none' }], { duration: 280 });
+          inp.focus(); return;
+        }
+        inp.value = ''; setNames(list.concat(v)); inp.focus();
+        const last = root.querySelector('#muPl .pe:not(.phone):last-child');
+        if (last && !UI.RM) last.animate([{ opacity: 0, transform: 'translate3d(0,-6px,0)' }, { opacity: 1, transform: 'none' }], { duration: 220, easing: 'cubic-bezier(.2,.7,.3,1)' });
+      });
+      root.querySelector('#muPl').addEventListener('click', (e) => {
+        const d = e.target.closest('[data-del]'); if (!d) return;
+        const list = manualNames(), i = +d.dataset.del, li = d.closest('.pe');
+        const go = () => { list.splice(i, 1); setNames(list); };
+        if (UI.RM || !li) return go();
+        li.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translate3d(16px,0,0)' }], { duration: 160, easing: 'ease-in', fill: 'forwards' }).onfinish = go;
+      });
       paintMuSetup();
+    }
+    /* Short explanation of every role in this game (game master, during the game). */
+    function openRoleInfo() {
+      const keys = MU ? [...new Set(MU.players.map((p) => p.role).concat(MU.players.map(realRole)))] : ['murderer', 'innocent'];
+      const order = ['murderer', 'innocent'].concat(MU_EXTRA.map((k) => (k === 'twins' ? 'twin' : k)), ['amok']);
+      UI.sheet.generic(UI.sheet.head(tr('mu.rolesInfo'), tr('mu.rolesInfoDesc'), tr('sheet.close')) +
+        '<div class="group roles">' + order.filter((k) => keys.includes(k)).map((k) => roleRow(k, true, true)).join('') + '</div>');
     }
 
     /* ---------- Screen plumbing for app.js ---------- */

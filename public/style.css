@@ -772,7 +772,6 @@ input[type=range].ruler::-webkit-slider-thumb { width: 30px; height: 30px; margi
 .tab .dot { position: absolute; top: 9px; left: calc(50% + 10px); width: 9px; height: 9px; border-radius: 50%; background: var(--good); border: 2px solid var(--bg); box-shadow: 0 0 8px var(--good); animation: popIn .4s var(--spring); }
 
 /* ---------- Toast ---------- */
-  -webkit-mask: radial-gradient(circle, transparent 8%, #fff 30%, transparent 62%); mask: radial-gradient(circle, transparent 8%, #fff 30%, transparent 62%); }
 .toast { position: absolute; left: 50%; bottom: calc(var(--tabh) + env(safe-area-inset-bottom, 0px) + 16px); z-index: 90; width: max-content; max-width: calc(100% - 32px); padding: 12px 18px; border-radius: 14px; background: var(--panel-2); border: 1px solid var(--pink); color: var(--fg); font-size: 14.5px; text-align: center; box-shadow: 0 10px 30px rgba(0, 0, 0, .5), var(--glow);
   opacity: 0; transform: translate(-50%, 16px) scale(.96); transition: opacity .3s, transform .5s var(--spring); pointer-events: none; }
 .toast.on { opacity: 1; transform: translate(-50%, 0); }
@@ -847,3 +846,28 @@ input[type=range].ruler::-webkit-slider-thumb { width: 30px; height: 30px; margi
 .mp-top > div:first-child { min-width: 0; }
 .linkrow .btn { flex-shrink: 0; }
 @media (max-width: 380px) { .code span { width: 38px; height: 52px; font-size: 30px; } .qr { width: 96px; height: 96px; } }
+
+/* Murder setup: player list editor, role list with one-line explanations; locked role cards */
+h3.sec .count { order: 1; font-size: 13px; letter-spacing: .04em; text-transform: none; font-weight: 400; }
+.pedit { padding: 6px; display: grid; gap: 6px; }
+.pe-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.pe { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 4px 4px 4px 14px; border-radius: 12px; background: var(--panel-2); border: 1px solid var(--line); }
+.pe-n { flex: 1; min-width: 0; font-weight: 600; font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pe-tag { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; margin-right: 6px; border-radius: 999px; border: 1px solid rgba(63, 224, 160, .45); color: var(--good); font-size: 12px; white-space: nowrap; }
+.pe-tag svg.i { width: 15px; height: 15px; }
+.pe.phone { border-color: rgba(63, 224, 160, .35); }
+.pe-del { width: 44px; height: 44px; border-radius: 10px; }
+.pe.empty { justify-content: center; padding: 14px; border-style: dashed; background: none; color: var(--muted); font-size: 14px; text-align: center; }
+.pe-add { display: flex; gap: 6px; }
+.pe-add .inp { flex: 1; min-width: 0; }
+.pe-add .btn { flex: none; min-height: 50px; padding: 0 16px; }
+.roles .rrow { justify-content: flex-start; gap: 12px; min-height: 0; padding: 12px 14px; cursor: pointer; }
+.roles .rrow .txt { flex: 1; }
+.roles .rrow.fixed { cursor: default; }
+.rmark { flex: none; display: grid; place-items: center; width: 28px; }
+.rcnt { margin-left: 4px; font-family: var(--mono); font-weight: 400; font-size: 13px; color: var(--amber); }
+.pc-s { display: inline-flex; align-items: center; gap: 4px; }
+.pc-s svg.i { width: 13px; height: 13px; }
+.pcard.locked .pc-img { opacity: .3; filter: grayscale(.8); }
+.pcard.locked .pc-s { color: var(--danger-hi); }
+.pe-list.phones { margin-top: -4px; }

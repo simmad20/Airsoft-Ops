@@ -741,8 +741,8 @@
     M.bindLobby(m.id, el);
     paintLobbySess();
   }
-  /* Classic design: one setup screen like the original bomb timer. Mode buttons with names only,
-     the settings of the chosen mode, start, the session and the advanced settings below. */
+  /* Classic design: one setup screen like the original bomb timer. Mode tiles (name and a short line),
+     the settings of the chosen mode and start. Session and settings are tabs. */
   /* Classic: after picking another mode, its settings fade in softly below the mode buttons. */
   function classicSwap() {
     if (UI.RM) return;
@@ -756,15 +756,12 @@
   }
   function renderClassic() {
     const id = M.info(S.mode) ? S.mode : 'bomb', m = M.info(id);
-    let h = '<div class="intro"><h1>' + esc(tr('cl.title')) + '</h1><p>' + esc(tr('cl.sub')) + '</p></div>' +
-      '<button class="btn ghost" type="button" data-act="test">' + esc(tr('set.test')) + '</button><p class="testmsg" id="clTestMsg" hidden></p>' +
-      '<div class="cmodes" role="radiogroup" aria-label="' + esc(tr('cl.modes')) + '">' + M.list.map((x) => '<button class="cmode" type="button" role="radio" data-cmode="' + x.id + '" aria-checked="' + (x.id === id) + '">' + esc(tr('m.' + x.id + '.name')) + '</button>').join('') + '</div>' +
-      '<p class="mdesc">' + esc(tr('m.' + id + '.desc')) + '</p>' +
-      '<div class="tgrid">' + m.keys.map(tcHTML).join('') + '</div>';
+    let h = '<div class="intro"><h1>' + esc(tr('cl.title')) + '</h1></div>' +
+      '<div class="cmodes" role="radiogroup" aria-label="' + esc(tr('cl.modes')) + '">' + M.list.map((x) => '<button class="cmode" type="button" role="radio" data-cmode="' + x.id + '" aria-checked="' + (x.id === id) + '"><b>' + esc(tr('m.' + x.id + '.name')) + '</b><span>' + esc(tr('m.' + x.id + '.tag')) + '</span></button>').join('') + '</div>' +
+      '<h3 class="sec">' + esc(tr('lobby.settings')) + '</h3><div class="tgrid">' + m.keys.map(tcHTML).join('') + '</div>';
     if (m.toggles) h += '<div class="group">' + m.toggles.map((x) => '<label class="row"><div class="txt"><div class="lbl">' + esc(tr(x[1])) + '</div><div class="desc">' + esc(tr(x[2])) + '</div></div><span class="switch"><input type="checkbox" role="switch" data-lopt="' + x[0] + '"' + (S[x[0]] ? ' checked' : '') + ' aria-label="' + esc(tr(x[1])) + '"><span></span></span></label>').join('') + '</div>';
     h += M.lobbyExtra(id) +
-      '<p class="errmsg" id="lbErr" role="alert"></p><button class="btn primary big" type="button" id="btnStart" data-act="start">' + esc(tr(id === 'murder' ? 'lobby.startMurder' : id === 'bomb' ? 'lobby.startBomb' : 'lobby.start')) + '</button>' +
-      '<p class="fine" id="lobbyFine"></p>';
+      '<p class="errmsg" id="lbErr" role="alert"></p><button class="btn primary big" type="button" id="btnStart" data-act="start">' + esc(tr(id === 'murder' ? 'lobby.startMurder' : id === 'bomb' ? 'lobby.startBomb' : 'lobby.start')) + '</button>';
     const el = $('s-lobby'), y = el.scrollTop;
     el.innerHTML = h;
     m.keys.forEach((k) => paintTC(k[0]));

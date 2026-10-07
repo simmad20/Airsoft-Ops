@@ -14,7 +14,7 @@ Die App hat unten eine Leiste mit drei Tabs:
 - **Session:** Mehrere Handys verbinden. Entweder dieses Handy steuert („Session starten“, mit Code und QR-Code), oder man tritt einer Session bei (Code, Rolle, Name).
 - **Einstellungen:** App-Sprache und Ansager-Sprache, Ansager (Stimme, Funkgerät-Effekt, Lautstärke), Sounds (Lautstärke, Vibration), Synchronisation (nur in einer Session), Anzeige (**Design: Classic / Modern**, Standard Classic, **Bilder: KI-Bilder / Eigene Grafik**, Vollbild), Zurücksetzen.
 
-**Design Classic (Standard):** Die App startet im Look des ursprünglichen Bomb Timers: dunkelgraue, flache Flächen mit Bernstein-Akzent, ohne Bilder und Symbole. Bewegung gibt es nur dezent: Bildschirme gleiten kurz herein, der Tab-Strich und die Auswahl-Knöpfe gleiten mit, Fenster fahren weich hoch und Knöpfe reagieren beim Antippen. Der Tab „Modi“ zeigt „Runde einstellen“ mit den Modus-Knöpfen (nur Namen), darunter die Einstellungen des Modus und „Runde starten“. Session und Einstellungen liegen wie bei Modern als Tabs unten; während einer Runde ist die Tab-Leiste ausgeblendet. Unter *Einstellungen → Anzeige → Design* lässt sich auf Modern (Tarot-Deck, Bilder, Animationen) umschalten. Die Einstellung gilt pro Handy.
+**Design Classic (Standard):** Die App startet im Look des ursprünglichen Bomb Timers: dunkelgraue, flache Flächen mit Bernstein-Akzent, ohne Bilder und Symbole. Bewegung gibt es nur dezent: Bildschirme gleiten kurz herein, der Tab-Strich und die Auswahl-Knöpfe gleiten mit, Fenster fahren weich hoch und Knöpfe reagieren beim Antippen. Der Tab „Modi“ zeigt „Runde einstellen“ mit den Modi als Kacheln (Name und eine kurze Zeile), darunter die Einstellungen des Modus und „Runde starten“. „Ton & Box testen“ liegt nur unter Einstellungen. Session und Einstellungen liegen wie bei Modern als Tabs unten; während einer Runde ist die Tab-Leiste ausgeblendet. Unter *Einstellungen → Anzeige → Design* lässt sich auf Modern (Tarot-Deck, Bilder, Animationen) umschalten. Die Einstellung gilt pro Handy.
 
 Oben rechts schaltet **DE/EN** die Sprache der ganzen App um. Die Ansager-Sprache folgt der App-Sprache oder lässt sich unter *Einstellungen* getrennt festlegen. In einer Session kann jedes Handy seine eigene Sprache haben, Ergebnisse und Rollenkarten erscheinen auf jedem Handy in dessen Sprache.
 
@@ -51,10 +51,11 @@ Alle Ereignisse (Rundenstart, Treffer, Ziel zerstört, Zone, Abwurf, Ergebnis �
 
 Das Handy, das das Spiel startet, ist der **Spielleiter**. Es sieht alle Rollen, der Spielleiter spielt also nicht mit.
 
-- **Rollen:** 1–3 Mörder (kennen sich) und beliebige Sonderrollen zum Antippen: Medic, Kopfgeldjäger (bekommt ein Ziel), Trittbrettfahrer (zieht seine Rolle: Unschuldiger, Medic oder Amok-Mörder), Zwillinge (kennen sich, genau zwei), Detektiv (prüft einmal eine Person: Gut, Böse oder Eigenes Ziel), Informant („einer dieser drei ist ein Mörder“), Bodyguard, Doppelagent (mit geheimem Ziel), Rächer, Joker, Wissenschaftler (untersucht einmal: „X ist Rolle A oder Rolle B“) und Spion. Alle übrigen werden Unschuldige.
+- **Rollen:** In der Rollenliste steht bei jeder Rolle eine kurze Erklärung, Sonderrollen schaltet man per Schalter an. 1–3 Mörder (kennen sich) und beliebige Sonderrollen: Medic, Kopfgeldjäger (bekommt ein Ziel), Trittbrettfahrer (zieht seine Rolle: Unschuldiger, Medic oder Amok-Mörder), Zwillinge (kennen sich, genau zwei), Detektiv (prüft einmal eine Person: Gut, Böse oder Eigenes Ziel), Informant („einer dieser drei ist ein Mörder“), Bodyguard, Doppelagent (mit geheimem Ziel), Rächer, Joker, Wissenschaftler (untersucht einmal: „X ist Rolle A oder Rolle B“) und Spion. Alle übrigen werden Unschuldige.
 - **Spieler mit Handy** treten der Session als **„Spieler“** bei. Ihre Rolle kommt nur auf ihr eigenes Handy, andere Handys bekommen sie nie zu sehen. Detektiv, Wissenschaftler und Trittbrettfahrer nutzen ihre Fähigkeit direkt auf der Rollenkarte.
-- **Spieler ohne Handy** trägt man als Namen ein. Auf dem Bildschirm „Handy weitergeben“ tippen sie ihre Karte an, drehen sie um, verdecken sie wieder und geben das Handy weiter. Angesehene Karten bekommen einen Haken.
-- **Während des Spiels** markiert der Spielleiter ausgeschaltete Spieler, kann die Rollen einblenden und Spielern mit Handy eine geheime Nachricht schicken (z. B. für den Spion). Am Ende wählt er den Gewinner und alle Rollen werden aufgedeckt.
+- **Spielerliste:** Spieler ohne Handy fügt man einzeln per Name hinzu und löscht sie mit dem X. Verbundene Handys stehen automatisch mit in der Liste.
+- **Handy weitergeben:** Spieler ohne Handy tippen ihren Namen an, drehen die Karte um, verdecken sie wieder und geben das Handy weiter. Jede Karte geht vor dem Spielstart nur einmal auf, danach ist sie gesperrt. Schaut jemand bei einer fremden Karte nach, findet der echte Besitzer seine Karte gesperrt vor, und der Schummler fliegt auf. Erst nach dem Start kann der Spielleiter über „Rollenkarten“ das erneute Ansehen freigeben.
+- **Während des Spiels** markiert der Spielleiter ausgeschaltete Spieler, kann die Rollen einblenden und Spielern mit Handy eine geheime Nachricht schicken (z. B. für den Spion). Unter „Rollen erklärt“ sieht er kurz, was die Rollen in diesem Spiel können. Am Ende wählt er den Gewinner und alle Rollen werden aufgedeckt.
 
 ## Mehrere Handys (Session)
 
@@ -166,7 +167,7 @@ Für maximalen Schutz vor versehentlichem Schließen kann man zusätzlich die Bi
 ## Am Spieltag
 
 1. Bluetooth-Box mit dem Handy koppeln und die Lautstärke aufdrehen.
-2. App öffnen (am besten vorher zum Home-Bildschirm hinzufügen) und **„Ton & Box testen“** drücken.
+2. App öffnen (am besten vorher zum Home-Bildschirm hinzufügen) und unter *Einstellungen* **„Ton & Box testen“** drücken.
 3. Einstellungen wählen und **„Runde starten“**.
 4. Handy während der Runde nicht sperren und die App im Vordergrund lassen.
 
