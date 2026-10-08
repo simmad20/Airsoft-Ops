@@ -12,7 +12,7 @@ Die App hat unten eine Leiste mit drei Tabs:
 
 - **Modi:** Die Spielmodi liegen als Tarotkarten (I–VII) in einem Kartenfächer vor einem drehenden Runen-Portal. Wischen, die Pfeile oder ein Tipp auf eine Karte wechseln den Modus, **„Wählen“** öffnet die **Lobby**: Das Bild fliegt aus der Karte an seinen Platz, darunter die Einstellungen des Modus, „So läuft es“ (aufklappbar) und der Start-Knopf. „Alle Modi“ bringt das Bild zurück in seine Karte.
 - **Session:** Mehrere Handys verbinden. Entweder dieses Handy steuert („Session starten“, mit Code und QR-Code), oder man tritt einer Session bei (Code, Rolle, Name).
-- **Einstellungen:** App-Sprache und Ansager-Sprache, Ansager (Stimme, Funkgerät-Effekt, Lautstärke), Sounds (Lautstärke, Vibration), Synchronisation (nur in einer Session), Anzeige (**Design: Classic / Modern**, Standard Classic, **Bilder: KI-Bilder / Eigene Grafik**, Vollbild), Zurücksetzen.
+- **Einstellungen:** App-Sprache und Ansager-Sprache, Ansager (Stimme, Funkgerät-Effekt, Lautstärke), Sounds (Lautstärke, Vibration), Synchronisation (nur in einer Session), Anzeige (**Bezeichnung: Spike / Bombe**, Standard Spike: ändert Texte und Ansagen, Explosion bleibt gleich; im Spiel übernehmen alle Handys die Wahl des steuernden Handys; **Design: Classic / Modern**, Standard Classic, **Bilder: KI-Bilder / Eigene Grafik**, Vollbild), Zurücksetzen.
 
 **Design Classic (Standard):** Die App startet im Look des ursprünglichen Bomb Timers: dunkelgraue, flache Flächen mit Bernstein-Akzent, ohne Bilder und Symbole. Bewegung gibt es nur dezent: Bildschirme gleiten kurz herein, der Tab-Strich und die Auswahl-Knöpfe gleiten mit, Fenster fahren weich hoch und Knöpfe reagieren beim Antippen. Der Tab „Modi“ zeigt „Runde einstellen“ mit den Modi als Kacheln (Name und eine kurze Zeile), darunter die Einstellungen des Modus und „Runde starten“. „Ton & Box testen“ liegt nur unter Einstellungen. Session und Einstellungen liegen wie bei Modern als Tabs unten; während einer Runde ist die Tab-Leiste ausgeblendet. Unter *Einstellungen → Anzeige → Design* lässt sich auf Modern (Tarot-Deck, Bilder, Animationen) umschalten. Die Einstellung gilt pro Handy.
 
@@ -37,7 +37,7 @@ Den Modus wählt man im Tab **Modi**. Jeder Modus hat eine eigene Lobby mit Rege
 
 | Modus | Ablauf in der App | Wer gewinnt |
 |---|---|---|
-| **Bombe** | Planten an A/B, Countdown, Entschärfen (siehe oben) | Angreifer bei Explosion, Verteidiger bei Entschärfung oder Zeitablauf |
+| **Spike** (oder **Bombe**) | Planten an A/B, Countdown, Entschärfen (siehe oben) | Angreifer bei Explosion, Verteidiger bei Entschärfung oder Zeitablauf |
 | **VIP-Eskorte** | Der VIP trägt das Handy. „VIP getroffen“ zieht ein Leben ab (einstellbar 1–5). „Ziel erreicht“ gedrückt halten. Bei 2–4 Zielpunkten lost die App eines aus, das nur die Eskorte über „Ziel anzeigen“ sieht. | Eskorte, wenn der VIP ankommt. Jäger bei VIP ausgeschaltet oder Zeitablauf |
 | **Search & Destroy** | 2–5 Ziele (A–E), jedes per Gedrückthalten zerstören. Einstellbar, wie viele nötig sind. „Alle Angreifer ausgeschaltet“ (zweimal tippen). Punktestand über mehrere Runden mit automatischem Seitenwechsel. | Angreifer bei genug zerstörten Zielen. Verteidiger bei Zeitablauf oder ausgeschalteten Angreifern |
 | **Battle Royale** | 2–8 Teams (farbig). Team zweimal antippen = ausgeschieden. Ansagen „Zone schrumpft in einer Minute“ / „jetzt“ im eingestellten Takt, Versorgungsabwürfe an zufälligen nummerierten Punkten. Rangliste am Ende. | Das letzte Team (bei Zeitablauf: Unentschieden) |

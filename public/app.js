@@ -10,7 +10,7 @@
   /* ---------- Settings ---------- */
   const DEF = {
     roundTime: 10, bombTime: 45, plantTime: 4, defuseTime: 7, half: true,
-    lang: window.I18N.guess(), voiceLang: 'auto', art: 'ai', design: 'classic', voice: 'male', radio: false, voiceVol: 100, vol: 80, vibrate: true, fs: true, lat: 0, local: true
+    lang: window.I18N.guess(), voiceLang: 'auto', art: 'ai', design: 'classic', term: 'spike', voice: 'male', radio: false, voiceVol: 100, vol: 80, vibrate: true, fs: true, lat: 0, local: true
   };
   /* Settings and time cards of the other game modes live in modes.js. */
   const MD = window.MODES || { DEF: {}, TIME: {} };
@@ -64,14 +64,16 @@
       planted_a: 'Bombe platziert auf Punkt A!', planted_b: 'Bombe platziert auf Punkt B!',
       min1: 'Noch eine Minute.', s30: 'Noch dreißig Sekunden!', s10: 'Noch zehn Sekunden!',
       defused: 'Bombe entschärft.', def_win: 'Verteidiger gewinnen!', att_win: 'Angreifer gewinnen!',
-      timeout: 'Zeit abgelaufen.', test: 'Lautsprechertest. Punkt A. Punkt B.'
+      timeout: 'Zeit abgelaufen.', test: 'Lautsprechertest. Punkt A. Punkt B.',
+      start_spike: 'Runde gestartet. Angreifer, platziert den Spike!', planted_a_spike: 'Spike platziert auf Punkt A!', planted_b_spike: 'Spike platziert auf Punkt B!', defused_spike: 'Spike entschärft.'
     },
     en: {
       start: 'Round start. Attackers, plant the bomb!',
       planted_a: 'Bomb planted on site A!', planted_b: 'Bomb planted on site B!',
       min1: 'One minute remaining.', s30: 'Thirty seconds!', s10: 'Ten seconds!',
       defused: 'Bomb defused.', def_win: 'Defenders win!', att_win: 'Attackers win!',
-      timeout: 'Time is up.', test: 'Speaker check. Site A. Site B.'
+      timeout: 'Time is up.', test: 'Speaker check. Site A. Site B.',
+      start_spike: 'Round start. Attackers, plant the spike!', planted_a_spike: 'Spike planted on site A!', planted_b_spike: 'Spike planted on site B!', defused_spike: 'Spike defused.'
     }
   };
   /* Announcer language: its own setting, or the app language. */
@@ -111,6 +113,8 @@
   /* Plays one line or several back to back, e.g. speak(['defused', 'def_win']). */
   function speak(keys) {
     keys = Array.isArray(keys) ? keys : [keys];
+    /* "Spike" setting: lines that name the bomb have a spike version (start_spike, planted_a_spike, ...). */
+    if (termNow() === 'spike') keys = keys.map((k) => (LINES[lang()][k + '_spike'] ? k + '_spike' : k));
     stopVoice();
     const l = lang();
     const bufs = keys.map((k) => buffers[l + '/' + k]);
@@ -616,7 +620,7 @@
     if (S.fs) enterFs();
     armBack();
     const t = now();
-    const cfg = { roundTime: S.roundTime, bombTime: S.bombTime, plantTime: S.plantTime, defuseTime: S.defuseTime, half: S.half };
+    const cfg = { roundTime: S.roundTime, bombTime: S.bombTime, plantTime: S.plantTime, defuseTime: S.defuseTime, half: S.half, term: S.term };
     G = { mode: 'bomb', phase: 'round', id: rid(), cfg, startedAt: t, roundEnd: cfg.roundTime > 0 ? t + cfg.roundTime * 60000 : null, hold: null };
     publish();
   }
@@ -921,9 +925,15 @@
 
   /* ---------- Rendering ---------- */
   let lastKey = null;
+  /* Spike or bomb: during a round every phone uses the controlling phone's choice, otherwise its own setting. */
+  function termNow(g) {
+    g = g || G;
+    return (g && g.phase && g.phase !== 'setup' && g.cfg && g.cfg.term) || S.term;
+  }
   function render() {
     const t = now();
     const g = derive(G, t);
+    if (termNow(g) !== window.I18N.term) applyLang();
     const phase = g.phase || 'setup';
     const key = (g.id || '-') + ':' + phase;
     if (key !== lastKey) { lastKey = key; enter(g, t); }
@@ -1180,6 +1190,7 @@
     if (key === 'voiceLang') loadLines();
     if (key === 'art') { applyArt(true); toast(tr(v === 'ai' ? 'art.ai' : 'art.vec')); }
     if (key === 'design') applyTheme();
+    if (key === 'term') { applyLang(); loadLines(); }
   });
   $('setBody').addEventListener('change', (e) => { const k = e.target.dataset.opt; if (k) { S[k] = e.target.checked; save(); } });
   $('setBody').addEventListener('input', (e) => {
@@ -1200,6 +1211,7 @@
   /* Language switch: static text via data-i18n, everything built from code gets rebuilt. */
   function applyLang() {
     window.I18N.set(S.lang);
+    window.I18N.setTerm(termNow());
     window.I18N.apply();
     $('btnLang').textContent = S.lang.toUpperCase();
     UI.deck.relabel(deckItems());

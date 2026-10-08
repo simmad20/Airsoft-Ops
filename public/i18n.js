@@ -256,6 +256,7 @@
       'snd.carry': 'Die Angreifer tragen das Handy und halten am Ziel dessen Feld gedrückt.',
       'rem.connectedTo': 'Verbunden mit {c}', 'rem.as': 'Als „{n}“', 'rem.noName': 'Ohne Namen', 'rem.running': 'Spiel läuft',
       'art.ai': 'Bilder: KI-Bilder', 'art.vec': 'Bilder: Eigene Grafik',
+      'set.term': 'Bezeichnung', 'set.termDesc': 'Wie das Ziel im ersten Modus heißt, in Texten und Ansagen', 'set.termSpike': 'Spike', 'set.termBomb': 'Bombe',
       'set.theme': 'Design', 'set.themeDesc': 'Modern mit Bildern und Animationen oder Classic wie der ursprüngliche Bomb Timer', 'set.themeModern': 'Modern', 'set.themeClassic': 'Classic',
       'cl.title': 'Runde einstellen', 'cl.sub': 'Bluetooth-Box mit diesem Handy koppeln, Lautstärke aufdrehen und einmal testen.', 'cl.modes': 'Spielmodus'
     },
@@ -508,14 +509,38 @@
       'snd.carry': 'The attackers carry the phone and hold the target’s pad at the target.',
       'rem.connectedTo': 'Connected to {c}', 'rem.as': 'As “{n}”', 'rem.noName': 'No name', 'rem.running': 'Game running',
       'art.ai': 'Pictures: AI pictures', 'art.vec': 'Pictures: own graphics',
+      'set.term': 'Name', 'set.termDesc': 'What the objective in the first mode is called, in texts and announcements', 'set.termSpike': 'Spike', 'set.termBomb': 'Bomb',
       'set.theme': 'Design', 'set.themeDesc': 'Modern with pictures and animations, or Classic like the original bomb timer', 'set.themeModern': 'Modern', 'set.themeClassic': 'Classic',
       'cl.title': 'Set up the round', 'cl.sub': 'Pair a Bluetooth speaker with this phone, turn the volume up and run a test.', 'cl.modes': 'Game mode'
     }
   };
 
-  let lang = 'de';
+  /* "Spike" instead of "Bombe": only the texts that name the bomb (setting "Bezeichnung"). */
+  const SPIKE = {
+    de: {
+      'chip.planted': 'Spike aktiv', 'sess.hostDesc': 'Dieses Handy steuert das Spiel. Bei „Spike“ ist es der Spike.',
+      'set.previewDesc': 'Spielt „Spike platziert“ mit den aktuellen Einstellungen',
+      'bomb.bombTime': 'Spike', 'bomb.bombTimeTitle': 'Spike-Timer', 'bomb.timer': 'Spike-Timer', 'bomb.planted': 'Spike platziert',
+      'bomb.remotePlant': 'Wird am Spike geplantet', 'bomb.remoteDefuse': 'Wird am Spike entschärft', 'bomb.defuseAria': 'Spike entschärfen',
+      'bomb.rDefusedK': 'Spike entschärft', 'bomb.rBoomSub': 'Der Spike auf Punkt {site} ist hochgegangen.',
+      'm.bomb.name': 'Spike', 'm.bomb.desc': 'Der Klassiker: Die Angreifer planten den Spike an Punkt A oder B, die Verteidiger müssen ihn rechtzeitig entschärfen.',
+      'm.bomb.how': 'Angreifer halten A oder B gedrückt, um zu planten.|Danach läuft der Spike-Timer mit immer schnellerem Piepen.|Verteidiger halten „Entschärfen“ gedrückt, bevor die Zeit abläuft.|Ohne Plant bis Rundenende gewinnen die Verteidiger.', 'stat.left': 'Spike übrig'
+    },
+    en: {
+      'chip.planted': 'Spike armed', 'sess.hostDesc': 'This phone runs the game. In "Spike" mode it is the spike.',
+      'set.previewDesc': 'Plays "Spike planted" with the current settings',
+      'bomb.bombTime': 'Spike', 'bomb.bombTimeTitle': 'Spike timer', 'bomb.timer': 'Spike timer', 'bomb.planted': 'Spike planted',
+      'bomb.remotePlant': 'Planted on the spike phone', 'bomb.remoteDefuse': 'Defused on the spike phone', 'bomb.defuseAria': 'Defuse the spike',
+      'bomb.rDefusedK': 'Spike defused', 'bomb.rBoomSub': 'The spike at site {site} went off.',
+      'm.bomb.name': 'Spike', 'm.bomb.desc': 'The classic: attackers plant the spike at site A or B, defenders have to defuse it in time.',
+      'm.bomb.how': 'Attackers hold A or B to plant.|Then the spike timer runs with ever faster beeps.|Defenders hold "Defuse" before time runs out.|No plant by the end of the round: defenders win.', 'stat.left': 'Spike left'
+    }
+  };
+
+  let lang = 'de', term = 'spike';
   function T(k, v) {
-    let s = D[lang][k];
+    let s = term === 'spike' ? SPIKE[lang][k] : null;
+    if (s == null) s = D[lang][k];
     if (s == null) s = D.de[k];
     if (s == null) return k;
     return v ? s.replace(/\{(\w+)\}/g, (m, n) => (v[n] != null ? v[n] : m)) : s;
@@ -531,6 +556,8 @@
     T, apply,
     set(l) { lang = D[l] ? l : 'de'; document.documentElement.lang = lang; },
     get lang() { return lang; },
+    setTerm(t) { term = t === 'bomb' ? 'bomb' : 'spike'; },
+    get term() { return term; },
     guess() { return /^de\b/i.test(navigator.language || '') ? 'de' : 'en'; }
   };
 })();

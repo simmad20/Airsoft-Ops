@@ -2,7 +2,8 @@
 
 Usage:
     pip install piper-tts      # plus ffmpeg on the PATH
-    python3 tools/generate_voice.py
+    python3 tools/generate_voice.py                 # all lines
+    python3 tools/generate_voice.py start_spike     # only these keys
 
 Voices are downloaded once into tools/.voices/ (git-ignored). Output goes to public/audio/<lang>/<key>.mp3 plus public/audio/lines.json.
 """
@@ -40,6 +41,11 @@ LINES = {
         "att_win": "Angreifer gewinnen!",
         "timeout": "Zeit abgelaufen.",
         "test": "Lautsprechertest. Punkt A. Punkt B.",
+        # Setting "Spike" instead of "Bombe": the lines that name the bomb.
+        "start_spike": "Runde gestartet. Angreifer, platziert den Spike!",
+        "planted_a_spike": "Spike platziert auf Punkt A!",
+        "planted_b_spike": "Spike platziert auf Punkt B!",
+        "defused_spike": "Spike entschärft.",
     },
     "en": {
         "start": "Round start. Attackers, plant the bomb!",
@@ -53,6 +59,10 @@ LINES = {
         "att_win": "Attackers win!",
         "timeout": "Time is up.",
         "test": "Speaker check. Site A. Site B.",
+        "start_spike": "Round start. Attackers, plant the spike!",
+        "planted_a_spike": "Spike planted on site A!",
+        "planted_b_spike": "Spike planted on site B!",
+        "defused_spike": "Spike defused.",
     },
 }
 
@@ -191,11 +201,19 @@ def voice_path(name: str) -> Path:
     return model
 
 
-def synth(voice: PiperVoice, text: str, syn: SynthesisConfig) -> bytes:
+# German espeak reads "Spike" as "Schpicke"; say it the English way.
+PHONE_FIX = {"de": [("ʃpˈɪkə", "spˈaɪk"), ("ʃpˈaɪk", "spˈaɪk"), ("ʃpɪkə", "spaɪk")]}
+
+
+def synth(voice: PiperVoice, text: str, syn: SynthesisConfig, lang: str = "") -> bytes:
     """Text -> 16-bit mono WAV. Newer espeak splits "ç" into "c" + combining cedilla, which the
     older Thorsten model does not know, so the pair is merged back before synthesis."""
     audio = []
     for sentence in voice.phonemize(text):
+        joined = "".join(sentence)
+        for a, b in PHONE_FIX.get(lang, []):
+            joined = joined.replace(a, b)
+        sentence = list(joined)
         merged = []
         for ph in sentence:
             if ph == "\u0327" and merged and merged[-1] == "c":
@@ -213,7 +231,7 @@ def synth(voice: PiperVoice, text: str, syn: SynthesisConfig) -> bytes:
     return buf.getvalue()
 
 
-def main() -> None:
+def main(only: list) -> None:
     # Lower noise_scale: less breathy, grainy texture in the generated voice.
     syn = SynthesisConfig(length_scale=1.05, noise_scale=0.4, noise_w_scale=0.6)
     for lang, lines in LINES.items():
@@ -221,11 +239,15 @@ def main() -> None:
         out = OUT_DIR / lang
         out.mkdir(parents=True, exist_ok=True)
         for key, text in lines.items():
-            render(synth(voice, text, syn), lang, out / f"{key}.mp3")
+            if only and key not in only:
+                continue
+            render(synth(voice, text, syn, lang), lang, out / f"{key}.mp3")
             print(f"{lang}/{key}.mp3  {text}")
     # The app reads this for the phone-voice fallback, the service worker for offline caching.
     (OUT_DIR / "lines.json").write_text(json.dumps(LINES, ensure_ascii=False, indent=1), encoding="utf-8")
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+    # Optional keys, e.g. "planted_a_spike": only those files are rendered again (lines.json is always written).
+    main(sys.argv[1:])
