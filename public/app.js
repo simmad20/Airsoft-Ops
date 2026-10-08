@@ -65,7 +65,7 @@
       min1: 'Noch eine Minute.', s30: 'Noch dreißig Sekunden!', s10: 'Noch zehn Sekunden!',
       defused: 'Bombe entschärft.', def_win: 'Verteidiger gewinnen!', att_win: 'Angreifer gewinnen!',
       timeout: 'Zeit abgelaufen.', test: 'Lautsprechertest. Punkt A. Punkt B.',
-      start_spike: 'Runde gestartet. Angreifer, platziert den Spike!', planted_a_spike: 'Spike platziert auf Punkt A!', planted_b_spike: 'Spike platziert auf Punkt B!', defused_spike: 'Spike entschärft.', clutch: 'Clutch!'
+      start_spike: 'Runde gestartet. Angreifer, platziert den Spike!', planted_a_spike: 'Spike platziert auf Punkt A!', planted_b_spike: 'Spike platziert auf Punkt B!', defused_spike: 'Spike entschärft.'
     },
     en: {
       start: 'Round start. Attackers, plant the bomb!',
@@ -73,18 +73,19 @@
       min1: 'One minute remaining.', s30: 'Thirty seconds!', s10: 'Ten seconds!',
       defused: 'Bomb defused.', def_win: 'Defenders win!', att_win: 'Attackers win!',
       timeout: 'Time is up.', test: 'Speaker check. Site A. Site B.',
-      start_spike: 'Round start. Attackers, plant the spike!', planted_a_spike: 'Spike planted on site A!', planted_b_spike: 'Spike planted on site B!', defused_spike: 'Spike defused.', clutch: 'Clutch!'
+      start_spike: 'Round start. Attackers, plant the spike!', planted_a_spike: 'Spike planted on site A!', planted_b_spike: 'Spike planted on site B!', defused_spike: 'Spike defused.'
     }
   };
   /* Announcer language: its own setting, or the app language. */
   const lang = () => { const l = S.voiceLang && S.voiceLang !== 'auto' ? S.voiceLang : S.lang; return LINES[l] ? l : 'de'; };
   const buffers = {};   /* "de/start" -> AudioBuffer */
   const loading = {};
+  /* Sound effects that are files rather than synthesised tones (audio/sfx). */
+  const SFX = ['clutch'];
   function loadLines() {
     const a = ctx(); if (!a) return;
     const l = lang();
-    Object.keys(LINES[l]).forEach((k) => {
-      const id = l + '/' + k;
+    Object.keys(LINES[l]).map((k) => l + '/' + k).concat(SFX.map((k) => 'sfx/' + k)).forEach((id) => {
       if (buffers[id] || loading[id]) return;
       loading[id] = fetch('audio/' + id + '.mp3')
         .then((r) => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
@@ -213,6 +214,13 @@
     const og = a.createGain(); og.gain.setValueAtTime(1, t); og.gain.exponentialRampToValueAtTime(0.001, t + 1.6);
     o.connect(og); og.connect(master); o.start(t); o.stop(t + 1.7);
     return [n, o];
+  }
+  /* Plays a loaded sound effect through the sound volume; returns its length in ms (0 if not loaded). */
+  function playSfx(name) {
+    const a = audio(), buf = buffers['sfx/' + name];
+    if (!a || !buf) return 0;
+    const s = a.createBufferSource(); s.buffer = buf; s.connect(master); s.start(a.currentTime + 0.02);
+    return Math.round(buf.duration * 1000);
   }
   function winJingle() {
     [523, 659, 784, 1047].forEach((f, i) => tone(f, i === 3 ? 0.4 : 0.13, 'triangle', 0.4, i * 0.13));
@@ -1004,7 +1012,12 @@
         cancelBoom();
         if (isFresh) {
           pendingFx = 'win'; buzz(200);
-          if (snd) { winJingle(); setTimeout(() => { if (G.phase === 'end') speak(isClutch(g) ? ['defused', 'clutch', 'def_win'] : ['defused', 'def_win']); }, 700); }
+          if (snd) {
+            /* Clutch (Spike setting, under 5 s left): the VALORANT clutch sound instead of the jingle, then the announcer. */
+            const sfx = isClutch(g) ? playSfx('clutch') : 0;
+            if (!sfx) winJingle();
+            setTimeout(() => { if (G.phase === 'end') speak(['defused', 'def_win']); }, sfx ? sfx + 250 : 700);
+          }
         }
       } else if (r.why === 'boom') {
         if (isFresh) {

@@ -256,6 +256,7 @@
       'snd.carry': 'Die Angreifer tragen das Handy und halten am Ziel dessen Feld gedrückt.',
       'rem.connectedTo': 'Verbunden mit {c}', 'rem.as': 'Als „{n}“', 'rem.noName': 'Ohne Namen', 'rem.running': 'Spiel läuft',
       'art.ai': 'Bilder: KI-Bilder', 'art.vec': 'Bilder: Eigene Grafik',
+      'set.riot': 'Der Clutch-Sound stammt aus VALORANT. Airsoft Ops wurde unter der Richtlinie „Legal Jibber Jabber“ von Riot Games mit Inhalten von Riot Games erstellt. Riot Games unterstützt oder sponsert dieses Projekt nicht.',
       'set.term': 'Bezeichnung', 'set.termDesc': 'Wie das Ziel im ersten Modus heißt, in Texten und Ansagen', 'set.termSpike': 'Spike', 'set.termBomb': 'Bombe',
       'set.theme': 'Design', 'set.themeDesc': 'Modern mit Bildern und Animationen oder Classic wie der ursprüngliche Bomb Timer', 'set.themeModern': 'Modern', 'set.themeClassic': 'Classic',
       'cl.title': 'Runde einstellen', 'cl.sub': 'Bluetooth-Box mit diesem Handy koppeln, Lautstärke aufdrehen und einmal testen.', 'cl.modes': 'Spielmodus'
@@ -509,6 +510,7 @@
       'snd.carry': 'The attackers carry the phone and hold the target’s pad at the target.',
       'rem.connectedTo': 'Connected to {c}', 'rem.as': 'As “{n}”', 'rem.noName': 'No name', 'rem.running': 'Game running',
       'art.ai': 'Pictures: AI pictures', 'art.vec': 'Pictures: own graphics',
+      'set.riot': 'The clutch sound comes from VALORANT. Airsoft Ops was created under Riot Games\' "Legal Jibber Jabber" policy using assets owned by Riot Games. Riot Games does not endorse or sponsor this project.',
       'set.term': 'Name', 'set.termDesc': 'What the objective in the first mode is called, in texts and announcements', 'set.termSpike': 'Spike', 'set.termBomb': 'Bomb',
       'set.theme': 'Design', 'set.themeDesc': 'Modern with pictures and animations, or Classic like the original bomb timer', 'set.themeModern': 'Modern', 'set.themeClassic': 'Classic',
       'cl.title': 'Set up the round', 'cl.sub': 'Pair a Bluetooth speaker with this phone, turn the volume up and run a test.', 'cl.modes': 'Game mode'
