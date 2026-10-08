@@ -5,15 +5,21 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>Airsoft Ops</title>
   <meta name="description" content="Airsoft game companion: bomb timer, VIP escort, search & destroy, battle royale, hostage rescue, infection and murder mystery with announcer and synced speakers.">
-  <meta name="theme-color" content="#050a26">
+  <meta name="theme-color" content="#111417" id="metaTheme">
   <meta name="color-scheme" content="dark">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Airsoft Ops">
-  <link rel="icon" href="icon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="icon-192.png">
-  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon-classic.svg" type="image/svg+xml" id="linkIcon">
+  <link rel="apple-touch-icon" href="icon-classic-192.png" id="linkTouch">
+  <link rel="manifest" href="manifest.webmanifest" id="linkManifest">
+  <!-- Classic icon and colours are the default. A phone that chose Modern (stored only in this browser,
+       localStorage "abt-settings") gets the Modern icon before anything is shown. app.js keeps it in sync. -->
+  <script>try { if ((JSON.parse(localStorage.getItem('abt-settings') || '{}').design) === 'modern') {
+    document.getElementById('linkIcon').href = 'icon.svg'; document.getElementById('linkTouch').href = 'icon-192.png';
+    document.getElementById('linkManifest').href = 'manifest-modern.webmanifest'; document.getElementById('metaTheme').content = '#050a26';
+  } } catch (e) {}</script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Chakra+Petch:wght@500;600;700&family=Share+Tech+Mono&display=swap">

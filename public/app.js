@@ -785,7 +785,16 @@
     paintLobbySess();
   }
   const classic = () => S.design === 'classic';
+  /* Tab icon, home-screen icon, manifest and browser bar colour follow the design (this browser only). */
+  function applyIcons() {
+    const c = classic();
+    $('linkIcon').href = c ? 'icon-classic.svg' : 'icon.svg';
+    $('linkTouch').href = c ? 'icon-classic-192.png' : 'icon-192.png';
+    $('linkManifest').href = c ? 'manifest.webmanifest' : 'manifest-modern.webmanifest';
+    $('metaTheme').content = c ? '#111417' : '#050a26';
+  }
   function applyTheme() {
+    applyIcons();
     $('app').classList.toggle('classic', classic());
     UI.setPlain(classic());
     renderLobby(false);
@@ -1233,7 +1242,7 @@
   });
 
   applyArt(false);
-  $('app').classList.toggle('classic', classic()); UI.setPlain(classic());
+  $('app').classList.toggle('classic', classic()); UI.setPlain(classic()); applyIcons();
   applyLang();
   loadLines();
   /* Announcer texts of all modes (also the phone-voice fallback) come from audio/lines.json. */
