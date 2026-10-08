@@ -54,7 +54,7 @@
     mode: 'bomb',
     vipTime: 15, vipLives: 1, vipTargets: 2,
     sndTime: 8, sndObjs: 3, sndNeed: 2, sndHold: 5,
-    brTeams: 4, brTime: 20, brZone: 5, brDrop: 0, brPts: 4,
+    brTeams: 4, brTime: 20, brZone: 0, brDrop: 0, brPts: 4,
     hosTime: 10, hosFree: 10, hosEvac: 3,
     infPlayers: 12, infStart: 1, infDelay: 10, infTime: 10,
     muTime: 0, muMurderers: 2, muNames: '',
