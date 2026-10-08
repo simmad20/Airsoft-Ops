@@ -65,7 +65,7 @@
       min1: 'Noch eine Minute.', s30: 'Noch dreißig Sekunden!', s10: 'Noch zehn Sekunden!',
       defused: 'Bombe entschärft.', def_win: 'Verteidiger gewinnen!', att_win: 'Angreifer gewinnen!',
       timeout: 'Zeit abgelaufen.', test: 'Lautsprechertest. Punkt A. Punkt B.',
-      start_spike: 'Runde gestartet. Angreifer, platziert den Spike!', planted_a_spike: 'Spike platziert auf Punkt A!', planted_b_spike: 'Spike platziert auf Punkt B!', defused_spike: 'Spike entschärft.'
+      start_spike: 'Runde gestartet. Angreifer, platziert den Spike!', planted_a_spike: 'Spike platziert auf Punkt A!', planted_b_spike: 'Spike platziert auf Punkt B!', defused_spike: 'Spike entschärft.', ninja: 'Ninja Defuse!'
     },
     en: {
       start: 'Round start. Attackers, plant the bomb!',
@@ -73,7 +73,7 @@
       min1: 'One minute remaining.', s30: 'Thirty seconds!', s10: 'Ten seconds!',
       defused: 'Bomb defused.', def_win: 'Defenders win!', att_win: 'Attackers win!',
       timeout: 'Time is up.', test: 'Speaker check. Site A. Site B.',
-      start_spike: 'Round start. Attackers, plant the spike!', planted_a_spike: 'Spike planted on site A!', planted_b_spike: 'Spike planted on site B!', defused_spike: 'Spike defused.'
+      start_spike: 'Round start. Attackers, plant the spike!', planted_a_spike: 'Spike planted on site A!', planted_b_spike: 'Spike planted on site B!', defused_spike: 'Spike defused.', ninja: 'Ninja Defuse!'
     }
   };
   /* Announcer language: its own setting, or the app language. */
@@ -1016,7 +1016,7 @@
             /* Clutch (Spike setting, under 5 s left): the VALORANT clutch sound instead of the jingle, then the announcer. */
             const sfx = isClutch(g) ? playSfx('clutch') : 0;
             if (!sfx) winJingle();
-            setTimeout(() => { if (G.phase === 'end') speak(['defused', 'def_win']); }, sfx ? sfx + 250 : 700);
+            setTimeout(() => { if (G.phase === 'end') speak(defuseEgg(g) === 'ninja' ? ['defused', 'ninja', 'def_win'] : ['defused', 'def_win']); }, sfx ? sfx + 250 : 700);
           }
         }
       } else if (r.why === 'boom') {
@@ -1050,8 +1050,16 @@
     if (!isRemote()) { unwake(); setTimeout(() => { if (G.phase === 'end') keepAlive(false); }, 6000); }
   }
   /* Result screen: emblem, texts in this phone's language, stats, extra lists, buttons. */
-  /* Spike setting only: defused with less than 5 s left. */
-  const isClutch = (g) => !!(g && g.mode === 'bomb' && g.result && g.result.why === 'defused' && g.result.rem < 5000 && termNow(g) === 'spike');
+  /* Easter eggs on a close defuse: "clutch" with the Spike setting (under 5 s left),
+     "ninja" with the Bombe setting (under 1 s left, Counter-Strike style). */
+  function defuseEgg(g) {
+    if (!g || g.mode !== 'bomb' || !g.result || g.result.why !== 'defused') return null;
+    const spike = termNow(g) === 'spike';
+    if (spike && g.result.rem < 5000) return 'clutch';
+    if (!spike && g.result.rem < 1000) return 'ninja';
+    return null;
+  }
+  const isClutch = (g) => defuseEgg(g) === 'clutch';
   function showEndFor(g) {
     const r = g.result || {};
     let side, kicker, title, sub, icon, sym = null, stats = [], extra = '', again = tr('game.again'), againIcon = 'refresh';
@@ -1078,7 +1086,8 @@
     $('btnAgain').innerHTML = ic(againIcon) + '<span>' + esc(again) + '</span>';
     document.querySelector('#s-end .endbtns').hidden = isRemote();
     const em = $('eEm'); em.classList.remove('pop'); void em.offsetWidth; em.classList.add('pop');
-    const cl = $('eClutch'), clutch = isClutch(g);
+    const cl = $('eClutch'), egg = defuseEgg(g), clutch = !!egg;
+    if (egg) { cl.textContent = egg === 'ninja' ? 'NINJA DEFUSE' : 'CLUTCH!'; cl.classList.toggle('ninja', egg === 'ninja'); }
     if (clutch && cl.hidden && !UI.RM) cl.animate([{ transform: 'scale(2.2) rotate(-8deg)', opacity: 0 }, { transform: 'scale(.92) rotate(-4deg)', opacity: 1, offset: 0.6 }, { transform: 'rotate(-4deg)', opacity: 1 }], { duration: 520, delay: 250, easing: 'cubic-bezier(.2,.8,.3,1)', fill: 'backwards' });
     cl.hidden = !clutch;
   }
