@@ -1,7 +1,7 @@
 /* Offline support: the app shell is cached on first visit so the timer still opens on a field without signal.
    Own files are fetched network-first (a new deploy shows up right away), fonts cache-first. */
-const CACHE = 'airsoft-ops-v24';
-const SHELL = ['./', 'index.html', 'style.css', 'classic.css', 'app.js', 'ui.js', 'modes.js', 'i18n.js', 'art.js', 'manifest.webmanifest', 'manifest-modern.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png', 'icon-classic.svg', 'icon-classic-192.png', 'icon-classic-512.png', 'vendor/qrcode.js', 'audio/lines.json', 'audio/sfx/clutch.mp3',
+const CACHE = 'airsoft-ops-v25';
+const SHELL = ['./', 'index.html', 'style.css', 'classic.css', 'app.js', 'ui.js', 'modes.js', 'i18n.js', 'art.js', 'manifest.webmanifest', 'manifest-modern.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png', 'icon-classic.svg', 'icon-classic-192.png', 'icon-classic-512.png', 'vendor/qrcode.js', 'audio/lines.json', 'audio/sfx/clutch.mp3', 'fonts/fonts.css', 'fonts/barlow-400.woff2', 'fonts/barlow-500.woff2', 'fonts/barlow-600.woff2', 'fonts/barlow-700.woff2', 'fonts/chakra-petch-500.woff2', 'fonts/chakra-petch-600.woff2', 'fonts/chakra-petch-700.woff2', 'fonts/share-tech-mono-400.woff2',
   'img/modes/bomb.webp', 'img/modes/vip.webp', 'img/modes/snd.webp', 'img/modes/br.webp', 'img/modes/hostage.webp', 'img/modes/inf.webp', 'img/modes/murder.webp', 'img/logo.webp', 'img/card-frame.webp', 'img/card-back.webp'];
 
 /* The announcer files are listed in audio/lines.json (written by tools/generate_voice.py). */
@@ -40,12 +40,4 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  if (url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com') {
-    e.respondWith(
-      caches.match(req).then((hit) => hit || fetch(req).then((res) => {
-        const copy = res.clone(); caches.open(CACHE).then((c) => c.put(req, copy));
-        return res;
-      }))
-    );
-  }
 });

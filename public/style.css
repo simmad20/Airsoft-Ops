@@ -887,4 +887,7 @@ h3.sec .count { order: 1; font-size: 13px; letter-spacing: .04em; text-transform
 .clutch { align-self: center; margin: 4px auto 2px; padding: 6px 18px; transform: rotate(-4deg); border: 3px solid #ff4655; border-radius: 6px;
   font-family: var(--display); font-weight: 700; font-size: 40px; line-height: 1; letter-spacing: .08em; color: #fff; background: #ff4655;
   box-shadow: 0 0 30px rgba(255, 70, 85, .55); }
-.legal { margin: 4px 4px 0; font-size: 12px; line-height: 1.45; color: var(--muted); text-align: center; }
+.legalbtn { margin-top: 4px; }
+.legaltxt { display: grid; gap: 8px; font-size: 14px; line-height: 1.5; color: var(--muted); }
+.legaltxt h3 { margin-top: 8px; font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: var(--fg); }
+.legaltxt h3:first-child { margin-top: 0; }

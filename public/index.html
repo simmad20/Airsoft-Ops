@@ -20,9 +20,7 @@
     document.getElementById('linkIcon').href = 'icon.svg'; document.getElementById('linkTouch').href = 'icon-192.png';
     document.getElementById('linkManifest').href = 'manifest-modern.webmanifest'; document.getElementById('metaTheme').content = '#050a26';
   } } catch (e) {}</script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Chakra+Petch:wght@500;600;700&family=Share+Tech+Mono&display=swap">
+  <link rel="stylesheet" href="fonts/fonts.css">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="classic.css">
 </head>
@@ -264,7 +262,7 @@
       </div>
       </div>
       <p class="set-ver" data-st>Airsoft Ops</p>
-      <p class="fine legal" data-st data-i18n="set.riot"></p>
+      <button class="btn ghost wide legalbtn" type="button" id="btnLegal" data-st data-i18n="legal.btn"></button>
     </section>
   </main>
 

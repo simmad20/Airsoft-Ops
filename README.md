@@ -180,6 +180,10 @@ Die Ansagen wurden offline mit [Piper](https://github.com/rhasspy/piper) erzeugt
 
 - **Clutch-Sound** (`public/audio/sfx/clutch.mp3`): aus VALORANT. Airsoft Ops wurde unter der Richtlinie [„Legal Jibber Jabber“](https://www.riotgames.com/de/legal) von Riot Games mit Inhalten von Riot Games erstellt. Riot Games unterstützt oder sponsert dieses Projekt nicht. Die App ist kostenlos und nicht-kommerziell.
 
+- **Schriften:** Barlow, Chakra Petch und Share Tech Mono (SIL Open Font License) liegen unter `public/fonts/` und werden vom eigenen Server geladen, nicht von Google Fonts.
+
+**Impressum & Datenschutz** stehen in der App unter *Einstellungen* ganz unten: keine Cookies, kein Tracking, Einstellungen nur im Browser (localStorage), Session-Daten nur im Arbeitsspeicher des Servers, keine Verbindungen zu Dritten. Dort steht auch der Riot-Hinweis.
+
 ## Browser-Unterstützung
 
 Getestet für aktuelle mobile Browser (Chrome auf Android, Safari auf iOS). Sprachausgabe nutzt die Stimmen des Geräts. Fehlt eine deutsche oder englische Stimme, laufen Piepen und Explosion trotzdem.

@@ -1225,6 +1225,14 @@
     const k = e.target.dataset.range; if (!k) return;
     S[k] = +e.target.value; paintRange(e.target); applyGains(); save();
   });
+  /* Legal notice, privacy and licences in a sheet (keeps the VALORANT notice out of sight). */
+  $('btnLegal').addEventListener('click', () => {
+    const P = (k) => '<p>' + esc(tr(k)) + '</p>';
+    UI.sheet.generic(UI.sheet.head(tr('legal.title'), tr('legal.desc'), tr('sheet.close')) +
+      '<div class="legaltxt"><h3>' + esc(tr('legal.imprH')) + '</h3>' + P('legal.impr') +
+      '<h3>' + esc(tr('legal.privH')) + '</h3>' + P('legal.p1') + P('legal.p2') + P('legal.p3') + P('legal.p4') +
+      '<h3>' + esc(tr('legal.licH')) + '</h3>' + P('legal.l1') + P('legal.l2') + '</div>');
+  });
   UI.twoTap($('btnReset'), () => tr('set.sure'), () => {
     S = clone(DEF); save(); applyArt(true); applyTheme(); applyLang(); applyGains(); loadLines();
     toast(tr('set.resetDesc'));
