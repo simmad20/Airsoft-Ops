@@ -274,3 +274,4 @@ body:has(#app.classic) { background: #111417; }
 #app.classic .pcard.locked .pc-s { color: var(--danger); }
 #app.classic .pcard.seen:not(.locked) .pc-s { color: var(--good); }
 #app.classic .pe-list.phones .pe { min-height: 46px; }
+#app.classic .clutch { box-shadow: none; }

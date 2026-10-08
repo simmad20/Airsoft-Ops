@@ -65,7 +65,7 @@
       min1: 'Noch eine Minute.', s30: 'Noch dreißig Sekunden!', s10: 'Noch zehn Sekunden!',
       defused: 'Bombe entschärft.', def_win: 'Verteidiger gewinnen!', att_win: 'Angreifer gewinnen!',
       timeout: 'Zeit abgelaufen.', test: 'Lautsprechertest. Punkt A. Punkt B.',
-      start_spike: 'Runde gestartet. Angreifer, platziert den Spike!', planted_a_spike: 'Spike platziert auf Punkt A!', planted_b_spike: 'Spike platziert auf Punkt B!', defused_spike: 'Spike entschärft.'
+      start_spike: 'Runde gestartet. Angreifer, platziert den Spike!', planted_a_spike: 'Spike platziert auf Punkt A!', planted_b_spike: 'Spike platziert auf Punkt B!', defused_spike: 'Spike entschärft.', clutch: 'Clutch!'
     },
     en: {
       start: 'Round start. Attackers, plant the bomb!',
@@ -73,7 +73,7 @@
       min1: 'One minute remaining.', s30: 'Thirty seconds!', s10: 'Ten seconds!',
       defused: 'Bomb defused.', def_win: 'Defenders win!', att_win: 'Attackers win!',
       timeout: 'Time is up.', test: 'Speaker check. Site A. Site B.',
-      start_spike: 'Round start. Attackers, plant the spike!', planted_a_spike: 'Spike planted on site A!', planted_b_spike: 'Spike planted on site B!', defused_spike: 'Spike defused.'
+      start_spike: 'Round start. Attackers, plant the spike!', planted_a_spike: 'Spike planted on site A!', planted_b_spike: 'Spike planted on site B!', defused_spike: 'Spike defused.', clutch: 'Clutch!'
     }
   };
   /* Announcer language: its own setting, or the app language. */
@@ -991,7 +991,8 @@
     } else if (phase === 'planted') {
       if (fresh(g.plantedAt)) {
         buzz([120, 60, 120]);
-        UI.evt((LINES[S.lang] || LINES.de)[g.site === 'B' ? 'planted_b' : 'planted_a'], 'red', 'bomb');
+        const pk = (g.site === 'B' ? 'planted_b' : 'planted_a') + (termNow(g) === 'spike' ? '_spike' : ''), PL = LINES[S.lang] || LINES.de;
+        UI.evt(PL[pk] || PL[g.site === 'B' ? 'planted_b' : 'planted_a'], 'red', 'bomb');
         if (snd) { tone(1500, 0.1, 'square', 0.35); tone(1500, 0.1, 'square', 0.35, 0.15); speak(g.site === 'B' ? 'planted_b' : 'planted_a'); }
       }
     } else if (phase === 'end') {
@@ -1003,7 +1004,7 @@
         cancelBoom();
         if (isFresh) {
           pendingFx = 'win'; buzz(200);
-          if (snd) { winJingle(); setTimeout(() => { if (G.phase === 'end') speak(['defused', 'def_win']); }, 700); }
+          if (snd) { winJingle(); setTimeout(() => { if (G.phase === 'end') speak(isClutch(g) ? ['defused', 'clutch', 'def_win'] : ['defused', 'def_win']); }, 700); }
         }
       } else if (r.why === 'boom') {
         if (isFresh) {
@@ -1036,6 +1037,8 @@
     if (!isRemote()) { unwake(); setTimeout(() => { if (G.phase === 'end') keepAlive(false); }, 6000); }
   }
   /* Result screen: emblem, texts in this phone's language, stats, extra lists, buttons. */
+  /* Spike setting only: defused with less than 5 s left. */
+  const isClutch = (g) => !!(g && g.mode === 'bomb' && g.result && g.result.why === 'defused' && g.result.rem < 5000 && termNow(g) === 'spike');
   function showEndFor(g) {
     const r = g.result || {};
     let side, kicker, title, sub, icon, sym = null, stats = [], extra = '', again = tr('game.again'), againIcon = 'refresh';
@@ -1062,6 +1065,9 @@
     $('btnAgain').innerHTML = ic(againIcon) + '<span>' + esc(again) + '</span>';
     document.querySelector('#s-end .endbtns').hidden = isRemote();
     const em = $('eEm'); em.classList.remove('pop'); void em.offsetWidth; em.classList.add('pop');
+    const cl = $('eClutch'), clutch = isClutch(g);
+    if (clutch && cl.hidden && !UI.RM) cl.animate([{ transform: 'scale(2.2) rotate(-8deg)', opacity: 0 }, { transform: 'scale(.92) rotate(-4deg)', opacity: 1, offset: 0.6 }, { transform: 'rotate(-4deg)', opacity: 1 }], { duration: 520, delay: 250, easing: 'cubic-bezier(.2,.8,.3,1)', fill: 'backwards' });
+    cl.hidden = !clutch;
   }
   const SIG_PAUSE = { jingle: 700, boom: 2200, low: 900, start: 350, alert: 300, hit: 300 };
   function playSig(sig) {

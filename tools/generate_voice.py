@@ -46,6 +46,7 @@ LINES = {
         "planted_a_spike": "Spike platziert auf Punkt A!",
         "planted_b_spike": "Spike platziert auf Punkt B!",
         "defused_spike": "Spike entschärft.",
+        "clutch": "Clutch!",
     },
     "en": {
         "start": "Round start. Attackers, plant the bomb!",
@@ -63,6 +64,7 @@ LINES = {
         "planted_a_spike": "Spike planted on site A!",
         "planted_b_spike": "Spike planted on site B!",
         "defused_spike": "Spike defused.",
+        "clutch": "Clutch!",
     },
 }
 
@@ -201,8 +203,8 @@ def voice_path(name: str) -> Path:
     return model
 
 
-# German espeak reads "Spike" as "Schpicke"; say it the English way.
-PHONE_FIX = {"de": [("ʃpˈɪkə", "spˈaɪk"), ("ʃpˈaɪk", "spˈaɪk"), ("ʃpɪkə", "spaɪk")]}
+# German espeak reads "Spike" as "Schpicke" and "Clutch" as "Klutsch"; say them the English way.
+PHONE_FIX = {"de": [("ʃpˈɪkə", "spˈaɪk"), ("ʃpˈaɪk", "spˈaɪk"), ("ʃpɪkə", "spaɪk"), ("klˈʊtʃ", "klˈatʃ")]}
 
 
 def synth(voice: PiperVoice, text: str, syn: SynthesisConfig, lang: str = "") -> bytes:
