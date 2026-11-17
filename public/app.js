@@ -10,7 +10,7 @@
   /* ---------- Settings ---------- */
   const DEF = {
     roundTime: 10, bombTime: 45, plantTime: 4, defuseTime: 7, half: true,
-    lang: window.I18N.guess(), voiceLang: 'auto', art: 'ai', design: 'classic', term: 'spike', voice: 'male', radio: false, voiceVol: 100, vol: 80, vibrate: true, fs: true, lat: 0, local: true
+    lang: window.I18N.guess(), voiceLang: 'auto', art: 'ai', design: 'classic', term: 'spike', voice: 'male', voiceDe: 'thorsten', voiceEn: 'ryan', radio: false, voiceVol: 100, vol: 80, vibrate: true, fs: true, lat: 0, local: true
   };
   /* Settings and time cards of the other game modes live in modes.js. */
   const MD = window.MODES || { DEF: {}, TIME: {} };
@@ -78,14 +78,18 @@
   };
   /* Announcer language: its own setting, or the app language. */
   const lang = () => { const l = S.voiceLang && S.voiceLang !== 'auto' ? S.voiceLang : S.lang; return LINES[l] ? l : 'de'; };
+  /* Announcer voices per language (tools/generate_voice.py). The default voice lives in audio/<lang>/,
+     the others in audio/<lang>-<voice>/. */
+  const VOICE_DIRS = { de: { thorsten: 'de', ramona: 'de-ramona' }, en: { ryan: 'en', michael: 'en-michael' } };
+  const vdir = (l) => (VOICE_DIRS[l] && VOICE_DIRS[l][l === 'de' ? S.voiceDe : S.voiceEn]) || l;
   const buffers = {};   /* "de/start" -> AudioBuffer */
   const loading = {};
   /* Sound effects that are files rather than synthesised tones (audio/sfx). */
   const SFX = ['clutch'];
   function loadLines() {
     const a = ctx(); if (!a) return;
-    const l = lang();
-    Object.keys(LINES[l]).map((k) => l + '/' + k).concat(SFX.map((k) => 'sfx/' + k)).forEach((id) => {
+    const l = lang(), dir = vdir(l);
+    Object.keys(LINES[l]).map((k) => dir + '/' + k).concat(SFX.map((k) => 'sfx/' + k)).forEach((id) => {
       if (buffers[id] || loading[id]) return;
       loading[id] = fetch('audio/' + id + '.mp3')
         .then((r) => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
@@ -118,7 +122,7 @@
     if (termNow() === 'spike') keys = keys.map((k) => (LINES[lang()][k + '_spike'] ? k + '_spike' : k));
     stopVoice();
     const l = lang();
-    const bufs = keys.map((k) => buffers[l + '/' + k]);
+    const bufs = keys.map((k) => buffers[vdir(l) + '/' + k]);
     if (S.voice === 'male' && bufs.every(Boolean) && ctx()) return playBuffers(bufs);
     if (!hasTTS) return;
     keys.forEach((k, i) => {
@@ -1202,7 +1206,13 @@
   }
   $('btnTest').addEventListener('click', () => testSound($('btnTest'), $('testMsg')));
   $('btnRemTest').addEventListener('click', () => testSound($('btnRemTest'), null));
-  $('btnVoiceTest').addEventListener('click', () => { audio(); loadLines(); speak('planted_a'); });
+  /* Plays "planted on site A" in the chosen voice, waiting for its file if it is still loading. */
+  function previewVoice() {
+    audio(); loadLines();
+    const k = termNow() === 'spike' ? 'planted_a_spike' : 'planted_a', id = vdir(lang()) + '/' + k;
+    Promise.resolve(loading[id]).then(() => speak('planted_a'), () => speak('planted_a'));
+  }
+  $('btnVoiceTest').addEventListener('click', previewVoice);
   $('optSyncBeep').addEventListener('change', () => { audio(); P.syncT = 0; });
   $('btnToSess').addEventListener('click', () => { UIS.tab = 'session'; render(); });
 
@@ -1217,6 +1227,9 @@
     $$('#setBody [data-range]').forEach((el) => { el.value = S[el.dataset.range]; paintRange(el); });
     $('rowArt').hidden = classic();
     $('voiceDesc').textContent = tr(S.voice === 'male' ? 'set.voiceMaleDesc' : 'set.voiceDeviceDesc');
+    /* Voice choice for the announcer language in use (only for the pre-rendered announcer). */
+    $('rowVoiceDe').hidden = S.voice !== 'male' || lang() !== 'de';
+    $('rowVoiceEn').hidden = S.voice !== 'male' || lang() !== 'en';
   }
   $('setBody').addEventListener('click', (e) => {
     const b = e.target.closest('[data-seg] button'); if (!b) return;
@@ -1225,6 +1238,7 @@
     S[key] = v; save(); paintSettings();
     if (key === 'lang') { applyLang(); loadLines(); }
     if (key === 'voiceLang') loadLines();
+    if (key === 'voiceDe' || key === 'voiceEn') previewVoice();
     if (key === 'art') { applyArt(true); toast(tr(v === 'ai' ? 'art.ai' : 'art.vec')); }
     if (key === 'design') applyTheme();
     if (key === 'term') { applyLang(); loadLines(); }

@@ -177,6 +177,10 @@ Die Ansagen wurden offline mit [Piper](https://github.com/rhasspy/piper) erzeugt
 
 - **Deutsch:** Stimme „Thorsten“ von [Thorsten-Voice](https://github.com/thorstenMueller/Thorsten-Voice), Lizenz CC0.
 - **Englisch:** Stimme „Ryan“ auf Basis des [RyanSpeech](https://www.kaggle.com/datasets/roholazandie/ryanspeech)-Datensatzes, Lizenz [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/). Die englischen Ansagen dürfen daher nur **nicht-kommerziell** genutzt werden.
+- **Deutsch, zweite Stimme:** „Ramona“ (weiblich), Piper-Stimme auf Basis des [M-AILABS Speech Dataset](https://www.caito.de/2019/01/03/the-m-ailabs-speech-dataset/).
+- **Englisch, zweite Stimme:** „Michael“ (männlich), erzeugt mit [Kokoro-82M](https://github.com/hexgrad/kokoro), Lizenz Apache 2.0, also auch kommerziell nutzbar.
+
+Welche Stimme spricht, stellt man unter *Einstellungen → Ansager* ein (je Sprache zwei Stimmen, beim Umschalten kommt sofort eine Hörprobe).
 
 - **Clutch-Sound** (`public/audio/sfx/clutch.mp3`): aus VALORANT. Airsoft Ops wurde unter der Richtlinie [„Legal Jibber Jabber“](https://www.riotgames.com/de/legal) von Riot Games mit Inhalten von Riot Games erstellt. Riot Games unterstützt oder sponsert dieses Projekt nicht. Die App ist kostenlos und nicht-kommerziell.
 

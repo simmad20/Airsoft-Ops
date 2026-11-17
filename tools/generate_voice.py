@@ -1,11 +1,14 @@
-"""Renders the announcer lines to MP3 with Piper (offline neural TTS).
+"""Renders the announcer lines to MP3 with Piper and Kokoro (offline neural TTS).
 
 Usage:
-    pip install piper-tts      # plus ffmpeg on the PATH
-    python3 tools/generate_voice.py                 # all lines
-    python3 tools/generate_voice.py start_spike     # only these keys
+    pip install piper-tts kokoro-onnx      # plus ffmpeg on the PATH
+    python3 tools/generate_voice.py                          # every voice, all lines
+    python3 tools/generate_voice.py --voice ramona           # one voice
+    python3 tools/generate_voice.py --voice ryan start_spike # one voice, only these keys
 
-Voices are downloaded once into tools/.voices/ (git-ignored). Output goes to public/audio/<lang>/<key>.mp3 plus public/audio/lines.json.
+Voices are downloaded once into tools/.voices/ (git-ignored). Output: public/audio/<dir>/<key>.mp3, where <dir>
+is the language for its default voice (audio/de/, audio/en/) and <lang>-<voice> for the others
+(audio/de-ramona/, audio/en-michael/), plus public/audio/lines.json with the texts.
 """
 import io
 import json
@@ -25,8 +28,14 @@ VOICE_DIR = Path(__file__).resolve().parent / ".voices"
 OUT_DIR = ROOT / "public" / "audio"
 RELEASE = "https://github.com/rhasspy/piper/releases/download/v0.0.2/voice-{}.tar.gz"
 
-# Male voices: Thorsten (German, CC0) and Ryan (US English, CC BY-NC-SA 4.0).
-VOICES = {"de": "de-thorsten-low", "en": "en-us-ryan-high"}
+# Announcer voices per language: (id, engine, model). The first one is the default.
+# Licences: Thorsten CC0; Ramona M-AILABS Speech Dataset; Ryan CC BY-NC-SA 4.0 (non-commercial only!);
+# Michael = Kokoro-82M (Apache 2.0).
+VOICES = {
+    "de": [("thorsten", "piper", "de-thorsten-low"), ("ramona", "piper", "de-ramona-low")],
+    "en": [("ryan", "piper", "en-us-ryan-high"), ("michael", "kokoro", "am_michael")],
+}
+KOKORO = "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/{}"
 
 LINES = {
     "de": {
@@ -234,23 +243,66 @@ def synth(voice: PiperVoice, text: str, syn: SynthesisConfig, lang: str = "") ->
     return buf.getvalue()
 
 
-def main(only: list) -> None:
+def kokoro_model():
+    """Kokoro-82M (Apache 2.0) as ONNX, downloaded once."""
+    from kokoro_onnx import Kokoro
+    d = VOICE_DIR / "kokoro"
+    d.mkdir(parents=True, exist_ok=True)
+    for f in ("kokoro-v1.0.onnx", "voices-v1.0.bin"):
+        if not (d / f).exists():
+            print(f"Downloading {f} ...")
+            (d / f).write_bytes(urllib.request.urlopen(KOKORO.format(f)).read())
+    return Kokoro(str(d / "kokoro-v1.0.onnx"), str(d / "voices-v1.0.bin"))
+
+
+def kokoro_synth(model, text: str, voice: str) -> bytes:
+    audio, rate = model.create(text, voice=voice, speed=1.0, lang="en-gb" if voice.startswith("b") else "en-us")
+    buf = io.BytesIO()
+    with wave.open(buf, "wb") as wav:
+        wav.setnchannels(1)
+        wav.setsampwidth(2)
+        wav.setframerate(rate)
+        wav.writeframes((np.clip(audio, -1, 1) * 32767).astype(np.int16).tobytes())
+    return buf.getvalue()
+
+
+def voice_dir(lang: str, vid: str) -> str:
+    """audio/<lang>/ for the default voice of a language, audio/<lang>-<voice>/ for the others."""
+    return lang if VOICES[lang][0][0] == vid else f"{lang}-{vid}"
+
+
+def main(only: list, only_voice: str = "") -> None:
     # Lower noise_scale: less breathy, grainy texture in the generated voice.
     syn = SynthesisConfig(length_scale=1.05, noise_scale=0.4, noise_w_scale=0.6)
     for lang, lines in LINES.items():
-        voice = PiperVoice.load(str(voice_path(VOICES[lang])))
-        out = OUT_DIR / lang
-        out.mkdir(parents=True, exist_ok=True)
-        for key, text in lines.items():
-            if only and key not in only:
+        for vid, engine, model in VOICES[lang]:
+            if only_voice and vid != only_voice:
                 continue
-            render(synth(voice, text, syn, lang), lang, out / f"{key}.mp3")
-            print(f"{lang}/{key}.mp3  {text}")
+            if engine == "kokoro":
+                km = kokoro_model()
+                make = lambda text: kokoro_synth(km, text, model)
+            else:
+                voice = PiperVoice.load(str(voice_path(model)))
+                make = lambda text, voice=voice: synth(voice, text, syn, lang)
+            out = OUT_DIR / voice_dir(lang, vid)
+            out.mkdir(parents=True, exist_ok=True)
+            for key, text in lines.items():
+                if only and key not in only:
+                    continue
+                render(make(text), lang, out / f"{key}.mp3")
+                print(f"{out.name}/{key}.mp3  {text}")
     # The app reads this for the phone-voice fallback, the service worker for offline caching.
     (OUT_DIR / "lines.json").write_text(json.dumps(LINES, ensure_ascii=False, indent=1), encoding="utf-8")
 
 
 if __name__ == "__main__":
     import sys
-    # Optional keys, e.g. "planted_a_spike": only those files are rendered again (lines.json is always written).
-    main(sys.argv[1:])
+    # Optional "--voice <id>" and keys, e.g. "planted_a_spike": only those files are rendered again
+    # (lines.json is always written).
+    args = sys.argv[1:]
+    only_voice = ""
+    if "--voice" in args:
+        i = args.index("--voice")
+        only_voice = args[i + 1]
+        del args[i:i + 2]
+    main(args, only_voice)
