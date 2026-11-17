@@ -24,14 +24,14 @@ jobs:
     env:
       HAS_UPLOAD_KEY: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 21
@@ -74,17 +74,34 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: ./gradlew --no-daemon bundleRelease
 
+      # Without the secrets, still prove that the release build and its signing work,
+      # with a throwaway key that is deleted right after (the result is not uploaded).
+      - name: Check release build with a throwaway key
+        if: env.HAS_UPLOAD_KEY != 'true'
+        working-directory: android
+        run: |
+          keytool -genkeypair -storetype PKCS12 -keystore check-key.jks -alias check -keyalg RSA -keysize 2048 \
+            -validity 1 -storepass checkpass -keypass checkpass -dname "CN=CI check"
+          ANDROID_KEYSTORE_FILE=check-key.jks ANDROID_KEYSTORE_PASSWORD=checkpass ANDROID_KEY_ALIAS=check ANDROID_KEY_PASSWORD=checkpass \
+            ./gradlew --no-daemon bundleRelease
+          jarsigner -verify app/build/outputs/bundle/release/app-release.aab | tail -1
+          rm -f check-key.jks app/build/outputs/bundle/release/*.aab
+
+      - name: Verify signature of the release bundle
+        if: env.HAS_UPLOAD_KEY == 'true'
+        run: jarsigner -verify android/app/build/outputs/bundle/release/app-release.aab | tail -1
+
       - name: Remove upload key
         if: always()
         run: rm -f android/upload-key.jks
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: airsoft-ops-debug-apk-${{ steps.version.outputs.name }}-${{ steps.version.outputs.code }}
           path: android/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         if: env.HAS_UPLOAD_KEY == 'true'
         with:
           name: airsoft-ops-release-aab-${{ steps.version.outputs.name }}-${{ steps.version.outputs.code }}
