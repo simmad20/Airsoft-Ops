@@ -893,3 +893,4 @@ h3.sec .count { order: 1; font-size: 13px; letter-spacing: .04em; text-transform
 .legaltxt { display: grid; gap: 8px; font-size: 14px; line-height: 1.5; color: var(--muted); }
 .legaltxt h3 { margin-top: 8px; font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: var(--fg); }
 .legaltxt h3:first-child { margin-top: 0; }
+.legaltxt a { color: var(--amber); }

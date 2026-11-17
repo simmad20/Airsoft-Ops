@@ -3,3 +3,7 @@ npm-debug.log*
 .DS_Store
 .env
 tools/.voices/
+srv.log
+__pycache__/
+# Android app (Capacitor): web assets are copied here by scripts/build-www.mjs
+www/

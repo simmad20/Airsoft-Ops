@@ -1,16 +1,25 @@
 {
-  "name": "airsoft-bomb-timer",
+  "name": "airsoft-ops",
   "version": "1.0.0",
-  "description": "Bomb-Timer Web-App für Airsoft: Planten, Entschärfen, Countdown und Sprachansagen.",
+  "description": "Airsoft Ops: Spielmodi, Ansager und synchrone Bluetooth-Boxen für Airsoft. Web-App und Android-App (Capacitor).",
   "main": "server.js",
   "private": true,
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "build:www": "node scripts/build-www.mjs",
+    "android:sync": "node scripts/build-www.mjs && cap sync android",
+    "android:open": "cap open android"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=22"
   },
   "dependencies": {
+    "@capacitor/android": "^8.6.2",
+    "@capacitor/core": "^8.6.2",
+    "@capacitor/share": "^8.0.3",
     "ws": "^8.22.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.6.2"
   }
 }

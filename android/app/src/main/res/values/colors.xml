@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Classic design colours (public/classic.css) -->
+    <color name="ao_background">#111417</color>
+    <color name="ao_amber">#FFB22E</color>
+</resources>

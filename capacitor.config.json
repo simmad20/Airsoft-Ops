@@ -1,0 +1,20 @@
+{
+  "appId": "com.simmad20.airsoftops",
+  "appName": "Airsoft Ops",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "backgroundColor": "#111417",
+    "allowMixedContent": false,
+    "webContentsDebuggingEnabled": false
+  },
+  "plugins": {
+    "SystemBars": {
+      "insetsHandling": "native",
+      "style": "DARK",
+      "initialViewportFitValueHint": "cover"
+    }
+  }
+}

@@ -6,6 +6,11 @@
   const $ = (id) => document.getElementById(id);
   const $$ = UI.$$, esc = UI.esc, ic = UI.ic;
   const tr = (k, v) => window.T(k, v);
+  /* Inside the Android app (Capacitor) the files are bundled with the app, so the session server
+     and invitation links point at the live site instead of the page's own origin. */
+  const NATIVE = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+  const SERVER = NATIVE ? 'https://airsoft-ops.onrender.com' : location.origin;
+  if (NATIVE) document.documentElement.classList.add('native');
 
   /* ---------- Settings ---------- */
   const DEF = {
@@ -268,7 +273,7 @@
   const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
   function enterFs() {
     const req = root.requestFullscreen || root.webkitRequestFullscreen;
-    if (!canFs || fsEl() || !req) return;
+    if (NATIVE || !canFs || fsEl() || !req) return;
     try {
       const p = req.call(root, { navigationUI: 'hide' });
       const lock = () => { try { screen.orientation.lock('portrait').catch(() => {}); } catch (e) {} };
@@ -285,7 +290,7 @@
     $('btnFs').dataset.i18nAria = on ? 'fs.off' : 'fs.on';
     $('btnFs').setAttribute('aria-label', tr($('btnFs').dataset.i18nAria));
   }
-  if (canFs && !isApp()) {
+  if (canFs && !isApp() && !NATIVE) {
     $('btnFs').hidden = false;
     $('rowFs').hidden = false;
     $('btnFs').addEventListener('click', () => { fsEl() ? exitFs() : enterFs(); });
@@ -333,7 +338,7 @@
   function connect() {
     if (NET.ws) return;
     let ws;
-    try { ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws'); } catch (e) { return retry(); }
+    try { ws = new WebSocket(SERVER.replace(/^http/, 'ws') + '/ws'); } catch (e) { return retry(); }
     NET.ws = ws;
     ws.onopen = () => {
       NET.retry = 0; NET.samples = [];
@@ -451,7 +456,7 @@
 
   /* ---------- Session screens ---------- */
   const ROLE_NAME = (r) => tr('role.' + r);
-  function joinUrl() { return location.origin + location.pathname + '?s=' + NET.code; }
+  function joinUrl() { return SERVER + (NATIVE ? '/' : location.pathname) + '?s=' + NET.code; }
   let qrFor = null, codeFor = null;
   function paintSession() {
     const host = isHost(), on = inSession();
@@ -561,6 +566,8 @@
   $('btnShare').addEventListener('click', async () => {
     const url = joinUrl();
     try {
+      const NS = NATIVE && window.Capacitor.Plugins && window.Capacitor.Plugins.Share;
+      if (NS) { await NS.share({ title: tr('sess.shareTitle', { code: NET.code }), text: tr('sess.shareTitle', { code: NET.code }), url, dialogTitle: tr('sess.shareTitle', { code: NET.code }) }); return; }
       if (navigator.share) { await navigator.share({ title: tr('sess.shareTitle', { code: NET.code }), url }); return; }
       await navigator.clipboard.writeText(url); toast(tr('sess.copied'));
     } catch (e) {}
@@ -817,7 +824,7 @@
       b.querySelector('span').textContent = tr('lobby.sessOn', { code: NET.code || '…' });
       b.querySelector('b').textContent = NET.members.length + ' ' + tr('u.players');
     }
-    if (f) f.textContent = ('wakeLock' in navigator ? tr('lobby.wake') : tr('lobby.wakeNo')) + (isHost() ? '' : ' ' + tr('lobby.sessHint'));
+    if (f) f.textContent = (NATIVE || 'wakeLock' in navigator ? tr('lobby.wake') : tr('lobby.wakeNo')) + (isHost() ? '' : ' ' + tr('lobby.sessHint'));
   }
   $('s-lobby').addEventListener('click', (e) => {
     const cm = e.target.closest('[data-cmode]');
@@ -1239,8 +1246,9 @@
     const P = (k) => '<p>' + esc(tr(k)) + '</p>';
     UI.sheet.generic(UI.sheet.head(tr('legal.title'), tr('legal.desc'), tr('sheet.close')) +
       '<div class="legaltxt"><h3>' + esc(tr('legal.imprH')) + '</h3>' + P('legal.impr') +
-      '<h3>' + esc(tr('legal.privH')) + '</h3>' + P('legal.p1') + P('legal.p2') + P('legal.p3') + P('legal.p4') +
-      '<h3>' + esc(tr('legal.licH')) + '</h3>' + P('legal.l1') + P('legal.l2') + '</div>');
+      '<h3>' + esc(tr('legal.privH')) + '</h3>' + P('legal.p1') + P('legal.p2') + P('legal.p3') + P(NATIVE ? 'legal.p4app' : 'legal.p4') +
+      '<p><a href="' + SERVER + '/datenschutz.html" target="_blank" rel="noopener">' + esc(tr('legal.full')) + '</a></p>' +
+      '<h3>' + esc(tr('legal.licH')) + '</h3>' + P('legal.l1') + (NATIVE ? '' : P('legal.l2')) + '</div>');
   });
   UI.twoTap($('btnReset'), () => tr('set.sure'), () => {
     S = clone(DEF); save(); applyArt(true); applyTheme(); applyLang(); applyGains(); loadLines();
@@ -1313,7 +1321,7 @@
   })();
 
   /* ---------- Offline support (PWA) ---------- */
-  if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  if (!NATIVE && 'serviceWorker' in navigator && location.protocol !== 'file:') {
     window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
   }
 })();

@@ -2,6 +2,8 @@
 
 Die Airsoft-Begleit-App fürs Handy: Spielmodus wählen, einstellen, losspielen. Mit männlichem Ansager, Countdown, Piepen und synchronen Bluetooth-Boxen auf mehreren Handys. Auf Deutsch und Englisch. Modi: **Bombe**, **VIP-Eskorte, Search & Destroy, Battle Royale, Geiselbefreiung, Infection** und **Murder Mystery** mit geheimen Rollen.
 
+> **Android-App:** Dieser Branch enthält zusätzlich die Android-App für Google Play (Capacitor). Bauen, signieren und veröffentlichen: siehe [ANDROID.md](ANDROID.md).
+
 **▶ Live: [airsoft-ops.onrender.com](https://airsoft-ops.onrender.com)**
 
 Im **Allein-Modus** läuft die App komplett im Browser und funktioniert nach dem ersten Öffnen dank Service Worker **auch ohne Netz**. Im **Session-Modus** verbinden sich mehrere Handys über mobiles Internet: ein Handy ist die Bombe, die anderen spielen als Lautsprecher die Töne synchron über ihre eigenen Bluetooth-Boxen ab.
