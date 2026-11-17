@@ -41,8 +41,13 @@ jobs:
           HTML
 
       - uses: actions/configure-pages@v5
+      # One artifact name per attempt: with a fixed name a "Re-run" finds the upload of the
+      # earlier attempt as well and deploy-pages stops ("Multiple artifacts named github-pages").
       - uses: actions/upload-pages-artifact@v4
         with:
           path: _site
+          name: github-pages-${{ github.run_attempt }}
       - id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          artifact_name: github-pages-${{ github.run_attempt }}
