@@ -4,10 +4,23 @@ Dieser Branch (`android`) enthält die fertige Android-App. Sie ist mit **Capaci
 
 | | |
 |---|---|
-| Paketname (application ID) | `com.simmad20.airsoftops` – **nie mehr änderbar**, sobald die App bei Google ist |
+| Paketname (application ID) | `com.dummygames.airsoftops` – **nie mehr änderbar**, sobald die App bei Google ist |
+| Entwickler | DummyGamesStudios · dummygamesstudios@gmail.com |
 | Mindest-Android | 7.0 (API 24) |
 | Ziel-Android | 16 (API 36), wie Google Play es verlangt |
 | Berechtigungen | Internet (Sessions), Vibration |
+
+---
+
+## Schritt 0: Datenschutzseite einschalten (einmalig, 1 Minute)
+
+Google Play braucht eine Datenschutz-URL, die **immer** erreichbar ist. Der kostenlose Render-Server schläft nach 15 Minuten ein und braucht dann bis zu einer Minute zum Aufwachen. Die Datenschutzseite liegt deshalb zusätzlich auf **GitHub Pages**, das nie einschläft.
+
+1. GitHub → Repo **Airsoft-Ops** → **Settings → Pages**
+2. Unter *Build and deployment* bei **Source** „**GitHub Actions**“ wählen.
+3. **Actions → „Privacy page“ → Run workflow** (Branch `main`).
+
+Danach ist die Seite dauerhaft unter **<https://simmad20.github.io/Airsoft-Ops/datenschutz.html>** erreichbar. Jede Änderung an `public/datenschutz.html` auf `main` wird automatisch neu veröffentlicht.
 
 ---
 
@@ -102,7 +115,7 @@ Für Englisch: **Store-Eintrag → Übersetzungen verwalten → Englisch (USA)**
 
 | Punkt | Antwort |
 |---|---|
-| **Datenschutzerklärung** | `https://airsoft-ops.onrender.com/datenschutz.html` |
+| **Datenschutzerklärung** | `https://simmad20.github.io/Airsoft-Ops/datenschutz.html` |
 | **App-Zugriff** | Alle Funktionen ohne Einschränkungen verfügbar (kein Login) |
 | **Werbung** | Nein, die App enthält keine Werbung |
 | **Einstufung des Inhalts** | Fragebogen ausfüllen, siehe unten |
@@ -161,9 +174,13 @@ Neue **private** Konten müssen vor der Veröffentlichung einen **geschlossenen 
 
 ## Wichtig für später
 
-- **Englische Stimme „Ryan“** steht unter CC BY-NC-SA 4.0, also **nur nicht-kommerziell**. Solange die App kostenlos und ohne Werbung ist, passt das. Für eine kostenpflichtige Pro-Version oder Werbung muss die englische Stimme vorher ersetzt werden. Die deutsche Stimme „Thorsten“ ist CC0 und frei nutzbar.
+- **Stimmen und Geld:** Die deutsche Stimme „Thorsten“ ist **CC0**, also frei, auch kommerziell. Die englische Stimme „Ryan“ wurde mit dem Datensatz *RyanSpeech* trainiert, und der steht unter **CC BY-NC-SA 4.0**. „NC“ heißt *non-commercial*: Solange die App **kostenlos und ohne Werbung** ist, ist alles in Ordnung. Sobald Geld damit verdient wird (Pro-Version, In-App-Kauf, Werbung), müssen die englischen Ansagen vorher ersetzt werden. Möglichkeiten:
+  1. **Kokoro-TTS** (Apache-2.0, kommerziell erlaubt) mit einer männlichen englischen Stimme, z. B. `am_michael` oder `bm_george`. Claude kann die 62 Zeilen damit neu erzeugen, die Stimme klingt sogar natürlicher.
+  2. **Eigene Stimme** aufnehmen (z. B. mit einem USB-Mikro), dann gehört alles dir.
+  3. **Bezahlter TTS-Dienst** mit kommerzieller Lizenz (z. B. ElevenLabs ab dem Starter-Plan).
+  4. Die Autoren von RyanSpeech um eine kommerzielle Erlaubnis bitten.
 - **Render-Server (kostenlos)** schläft nach 15 Minuten ohne Besucher ein. Die erste Session danach braucht bis zu einer Minute, bis sie verbunden ist. Spielen ohne Session ist davon nicht betroffen.
-- **Paketname** `com.simmad20.airsoftops` bleibt für immer. Wenn du lieber einen anderen willst, **vor dem ersten Upload** in `capacitor.config.json` und `android/app/build.gradle` (`namespace`, `applicationId`) ändern und den Java-Ordner `android/app/src/main/java/com/simmad20/airsoftops` passend umbenennen.
+- **Paketname** `com.dummygames.airsoftops` bleibt für immer, sobald die erste .aab bei Google hochgeladen ist.
 
 ## Projektstruktur (Android-Teil)
 
@@ -173,9 +190,10 @@ scripts/build-www.mjs        kopiert public/ nach www/ (ohne Web-only-Dateien)
 android/                     natives Android-Projekt (Gradle)
   app/build.gradle           Version und Signierung (Upload-Schlüssel aus Secrets oder keystore.properties)
   app/src/main/AndroidManifest.xml
-  app/src/main/java/.../MainActivity.java   Bildschirm an, Zurück-Taste
+  app/src/main/java/com/dummygames/airsoftops/MainActivity.java   Bildschirm an, Zurück-Taste
   app/src/main/res/          Icons, Startbild, Farben
 .github/workflows/android.yml   automatischer Build auf GitHub
 play-store/                  Texte, Icon, Grafik und Screenshots für den Store-Eintrag
-public/datenschutz.html      Datenschutzerklärung (URL für Google Play)
+public/datenschutz.html      Datenschutzerklärung (auf GitHub Pages veröffentlicht, URL für Google Play)
+LICENSE, THIRD_PARTY_NOTICES.md   Lizenz des Projekts und der fremden Bestandteile
 ```

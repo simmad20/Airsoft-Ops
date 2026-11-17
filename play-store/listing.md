@@ -106,6 +106,6 @@ Free, no ads, no account, no tracking. Your settings stay on your phone.
 |---|---|
 | App-Kategorie | **Sport** |
 | Tags | Sport, Tools (bis zu 5 aus Googles Liste) |
-| E-Mail-Adresse | deine Entwickler-E-Mail (wird öffentlich angezeigt) |
+| E-Mail-Adresse | `dummygamesstudios@gmail.com` (wird öffentlich angezeigt) |
 | Website | `https://airsoft-ops.onrender.com` |
-| Datenschutzerklärung | `https://airsoft-ops.onrender.com/datenschutz.html` |
+| Datenschutzerklärung | `https://simmad20.github.io/Airsoft-Ops/datenschutz.html` |

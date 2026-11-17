@@ -14,10 +14,10 @@ def appVersionCode = (project.findProperty('versionCode') ?: System.getenv('VERS
 def appVersionName = (project.findProperty('versionName') ?: System.getenv('VERSION_NAME') ?: '1.0.0') as String
 
 android {
-    namespace = "com.simmad20.airsoftops"
+    namespace = "com.dummygames.airsoftops"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.simmad20.airsoftops"
+        applicationId "com.dummygames.airsoftops"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode appVersionCode
