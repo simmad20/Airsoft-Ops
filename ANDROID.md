@@ -174,11 +174,10 @@ Neue **private** Konten müssen vor der Veröffentlichung einen **geschlossenen 
 
 ## Wichtig für später
 
-- **Stimmen und Geld:** Die deutsche Stimme „Thorsten“ ist **CC0**, also frei, auch kommerziell. Die englische Stimme „Ryan“ wurde mit dem Datensatz *RyanSpeech* trainiert, und der steht unter **CC BY-NC-SA 4.0**. „NC“ heißt *non-commercial*: Solange die App **kostenlos und ohne Werbung** ist, ist alles in Ordnung. Sobald Geld damit verdient wird (Pro-Version, In-App-Kauf, Werbung), müssen die englischen Ansagen vorher ersetzt werden. Möglichkeiten:
-  1. **Kokoro-TTS** (Apache-2.0, kommerziell erlaubt) mit einer männlichen englischen Stimme, z. B. `am_michael` oder `bm_george`. Claude kann die 62 Zeilen damit neu erzeugen, die Stimme klingt sogar natürlicher.
-  2. **Eigene Stimme** aufnehmen (z. B. mit einem USB-Mikro), dann gehört alles dir.
-  3. **Bezahlter TTS-Dienst** mit kommerzieller Lizenz (z. B. ElevenLabs ab dem Starter-Plan).
-  4. Die Autoren von RyanSpeech um eine kommerzielle Erlaubnis bitten.
+- **Stimmen:** Alle vier Ansager-Stimmen dürfen auch in einer kostenpflichtigen Version (Pro-Version, In-App-Kauf) genutzt werden:
+  - **Thorsten** (Deutsch, Standard): CC0.
+  - **Ramona** (Deutsch): M-AILABS-Lizenz, erlaubt ausdrücklich jede Nutzung einschließlich kommerzieller. Bedingungen: Copyright-Hinweis behalten (steht in `THIRD_PARTY_NOTICES.md` und im Impressum der App) und nicht mit dem Namen M-AILABS werben.
+  - **Fenrir** (Englisch, Standard) und **Michael** (Englisch): Kokoro-82M, Apache 2.0.
 - **Render-Server (kostenlos)** schläft nach 15 Minuten ohne Besucher ein. Die erste Session danach braucht bis zu einer Minute, bis sie verbunden ist. Spielen ohne Session ist davon nicht betroffen.
 - **Paketname** `com.dummygames.airsoftops` bleibt für immer, sobald die erste .aab bei Google hochgeladen ist.
 
