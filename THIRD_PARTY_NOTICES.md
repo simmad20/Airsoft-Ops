@@ -6,6 +6,8 @@ Airsoft Ops' own code, texts and artwork are licensed under the [PolyForm Noncom
 | Part | Files | Author / source | License |
 |---|---|---|---|
 | German announcer voice "Thorsten" | `public/audio/de/*.mp3` | [Thorsten-Voice](https://github.com/thorstenMueller/Thorsten-Voice), rendered with [Piper](https://github.com/rhasspy/piper) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| German announcer voice "Ramona" | `public/audio/de-ramona/*.mp3` | Piper voice trained on the [M-AILABS Speech Dataset](https://www.caito.de/2019/01/03/the-m-ailabs-speech-dataset/) | licence of the M-AILABS dataset (see link) |
+| English announcer voice "Michael" | `public/audio/en-michael/*.mp3` | [Kokoro-82M](https://github.com/hexgrad/kokoro) by hexgrad, voice `am_michael` | [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0) |
 | English announcer voice "Ryan" | `public/audio/en/*.mp3` | Piper voice trained on the [RyanSpeech](https://www.kaggle.com/datasets/roholazandie/ryanspeech) dataset | [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/): attribution, **non-commercial only**, share alike. These files are therefore under CC BY-NC-SA 4.0. |
 | Fonts Barlow, Chakra Petch, Share Tech Mono | `public/fonts/*.woff2` | see `public/fonts/OFL-*.txt` | [SIL Open Font License 1.1](https://openfontlicense.org) |
 | QR Code Generator for JavaScript | `public/vendor/qrcode.js` | Kazuhiko Arase | MIT (notice in the file). "QR Code" is a registered trademark of DENSO WAVE INCORPORATED. |
@@ -13,4 +15,4 @@ Airsoft Ops' own code, texts and artwork are licensed under the [PolyForm Noncom
 | WebSocket library `ws` (server) | npm dependency | Einar Otto Stangvik and contributors | MIT |
 | Capacitor (Android app, branch `android`) | npm dependencies | Ionic | MIT |
 
-Piper itself (MIT) is only used offline by `tools/generate_voice.py` and is not shipped.
+Piper and Kokoro are only used offline by `tools/generate_voice.py` and are not shipped.
