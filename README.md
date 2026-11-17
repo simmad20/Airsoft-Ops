@@ -187,3 +187,9 @@ Die Ansagen wurden offline mit [Piper](https://github.com/rhasspy/piper) erzeugt
 ## Browser-Unterstützung
 
 Getestet für aktuelle mobile Browser (Chrome auf Android, Safari auf iOS). Sprachausgabe nutzt die Stimmen des Geräts. Fehlt eine deutsche oder englische Stimme, laufen Piepen und Explosion trotzdem.
+
+## Lizenz
+
+Der eigene Code, die Texte und die Grafiken von Airsoft Ops stehen unter der **[PolyForm Noncommercial License 1.0.0](LICENSE)** (Copyright © 2026 DummyGamesStudios): ansehen, lernen, verändern und nicht-kommerziell nutzen ist erlaubt, verkaufen oder kommerziell verwenden nicht. Schriften, Ansager-Stimmen, die QR-Code-Bibliothek und ein Soundeffekt haben eigene Lizenzen, siehe [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+Datenschutzerklärung: <https://simmad20.github.io/Airsoft-Ops/datenschutz.html>

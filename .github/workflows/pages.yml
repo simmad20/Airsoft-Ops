@@ -1,0 +1,48 @@
+# Publishes the privacy policy on GitHub Pages, which never sleeps (unlike the free Render server).
+# URL for Google Play: https://simmad20.github.io/Airsoft-Ops/datenschutz.html
+# One-time setup: Settings -> Pages -> Build and deployment -> Source: "GitHub Actions".
+name: Privacy page
+
+on:
+  push:
+    branches: [main]
+    paths: ['public/datenschutz.html', 'public/fonts/**', 'public/icon-classic.svg', '.github/workflows/pages.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}datenschutz.html
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Collect the page and what it needs
+        run: |
+          mkdir -p _site/fonts
+          cp public/datenschutz.html public/icon-classic.svg _site/
+          cp public/fonts/fonts.css public/fonts/*.woff2 public/fonts/OFL-*.txt _site/fonts/
+          cp _site/datenschutz.html _site/privacy.html
+          # The root only forwards to the app.
+          cat > _site/index.html <<'HTML'
+          <!doctype html><meta charset="utf-8"><title>Airsoft Ops</title>
+          <meta http-equiv="refresh" content="0; url=https://airsoft-ops.onrender.com/">
+          <a href="https://airsoft-ops.onrender.com/">Airsoft Ops</a> · <a href="datenschutz.html">Datenschutz / Privacy</a>
+          HTML
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4
