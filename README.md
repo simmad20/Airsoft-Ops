@@ -173,12 +173,13 @@ Für maximalen Schutz vor versehentlichem Schließen kann man zusätzlich die Bi
 
 ## Stimmen und Lizenzen
 
-Die Ansagen wurden offline mit [Piper](https://github.com/rhasspy/piper) erzeugt und danach entrauscht: Brummen unter 95 Hz und Zischen in den Höhen werden abgeschnitten, das Grundrauschen des Stimmmodells wird spektral entfernt, Pausen zwischen den Wörtern werden abgesenkt und alle Zeilen gleich laut gemacht (`tools/generate_voice.py`). Damit die Bluetooth-Box nicht einschläft, spielt die App während der Runde einen unhörbaren 20-Hz-Ton sehr leise mit.
+Die Ansagen wurden offline mit [Piper](https://github.com/rhasspy/piper) und [Kokoro](https://github.com/hexgrad/kokoro) erzeugt und danach entrauscht: Brummen unter 95 Hz und Zischen in den Höhen werden abgeschnitten, das Grundrauschen des Stimmmodells wird spektral entfernt, Pausen zwischen den Wörtern werden abgesenkt und alle Zeilen gleich laut gemacht (`tools/generate_voice.py`). Damit die Bluetooth-Box nicht einschläft, spielt die App während der Runde einen unhörbaren 20-Hz-Ton sehr leise mit.
 
 - **Deutsch:** Stimme „Thorsten“ von [Thorsten-Voice](https://github.com/thorstenMueller/Thorsten-Voice), Lizenz CC0.
-- **Englisch:** Stimme „Ryan“ auf Basis des [RyanSpeech](https://www.kaggle.com/datasets/roholazandie/ryanspeech)-Datensatzes, Lizenz [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/). Die englischen Ansagen dürfen daher nur **nicht-kommerziell** genutzt werden.
-- **Deutsch, zweite Stimme:** „Ramona“ (weiblich), Piper-Stimme auf Basis des [M-AILABS Speech Dataset](https://www.caito.de/2019/01/03/the-m-ailabs-speech-dataset/).
-- **Englisch, zweite Stimme:** „Michael“ (männlich), erzeugt mit [Kokoro-82M](https://github.com/hexgrad/kokoro), Lizenz Apache 2.0, also auch kommerziell nutzbar.
+- **Englisch:** „Fenrir“ (männlich, energisch, Standard) und „Michael“ (männlich, ruhig), erzeugt mit [Kokoro-82M](https://github.com/hexgrad/kokoro), Lizenz Apache 2.0.
+- **Deutsch, zweite Stimme:** „Ramona“ (weiblich), Piper-Stimme auf Basis des [M-AILABS Speech Dataset](https://github.com/i-celeste-aurora/m-ailabs-dataset) (BSD-artige Lizenz, kommerzielle Nutzung erlaubt; Aufnahmen von LibriVox, gemeinfrei).
+
+Alle vier Stimmen dürfen auch in einer kostenpflichtigen Version genutzt werden.
 
 Welche Stimme spricht, stellt man unter *Einstellungen → Ansager* ein (je Sprache zwei Stimmen, beim Umschalten kommt sofort eine Hörprobe).
 

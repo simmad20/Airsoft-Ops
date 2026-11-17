@@ -10,7 +10,7 @@
   /* ---------- Settings ---------- */
   const DEF = {
     roundTime: 10, bombTime: 45, plantTime: 4, defuseTime: 7, half: true,
-    lang: window.I18N.guess(), voiceLang: 'auto', art: 'ai', design: 'classic', term: 'spike', voice: 'male', voiceDe: 'thorsten', voiceEn: 'ryan', radio: false, voiceVol: 100, vol: 80, vibrate: true, fs: true, lat: 0, local: true
+    lang: window.I18N.guess(), voiceLang: 'auto', art: 'ai', design: 'classic', term: 'spike', voice: 'male', voiceDe: 'thorsten', voiceEn: 'fenrir', radio: false, voiceVol: 100, vol: 80, vibrate: true, fs: true, lat: 0, local: true
   };
   /* Settings and time cards of the other game modes live in modes.js. */
   const MD = window.MODES || { DEF: {}, TIME: {} };
@@ -80,7 +80,10 @@
   const lang = () => { const l = S.voiceLang && S.voiceLang !== 'auto' ? S.voiceLang : S.lang; return LINES[l] ? l : 'de'; };
   /* Announcer voices per language (tools/generate_voice.py). The default voice lives in audio/<lang>/,
      the others in audio/<lang>-<voice>/. */
-  const VOICE_DIRS = { de: { thorsten: 'de', ramona: 'de-ramona' }, en: { ryan: 'en', michael: 'en-michael' } };
+  const VOICE_DIRS = { de: { thorsten: 'de', ramona: 'de-ramona' }, en: { fenrir: 'en', michael: 'en-michael' } };
+  /* A saved voice that no longer exists (e.g. "ryan") falls back to the default. */
+  if (!VOICE_DIRS.de[S.voiceDe]) S.voiceDe = DEF.voiceDe;
+  if (!VOICE_DIRS.en[S.voiceEn]) S.voiceEn = DEF.voiceEn;
   const vdir = (l) => (VOICE_DIRS[l] && VOICE_DIRS[l][l === 'de' ? S.voiceDe : S.voiceEn]) || l;
   const buffers = {};   /* "de/start" -> AudioBuffer */
   const loading = {};
@@ -1324,7 +1327,23 @@
       UI.deck.size(); UI.placeTabInd(); if (view === 'home') UI.deck.deal();
     });
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => UI.placeTabInd());
+    hideIntro();
   })();
+
+  /* Intro (index.html): stays until its animation has run (about 1.4 s from page start). While a saved
+     session is reconnecting it waits up to 5 s and says so. A tap skips it. */
+  function hideIntro() {
+    const el = $('intro'); if (!el) return;
+    const minT = UI.RM ? 250 : 1400;
+    const done = () => { if (!el.isConnected || el.classList.contains('out')) return; el.classList.add('out'); setTimeout(() => el.remove(), 380); };
+    el.addEventListener('click', done);
+    (function check() {
+      const t = performance.now();
+      if (t < minT) return setTimeout(check, minT - t);
+      if (NET.code && !NET.online && t < 5000) { $('introMsg').textContent = tr('intro.connect'); return setTimeout(check, 150); }
+      done();
+    })();
+  }
 
   /* ---------- Offline support (PWA) ---------- */
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {

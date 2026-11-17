@@ -29,11 +29,11 @@ OUT_DIR = ROOT / "public" / "audio"
 RELEASE = "https://github.com/rhasspy/piper/releases/download/v0.0.2/voice-{}.tar.gz"
 
 # Announcer voices per language: (id, engine, model). The first one is the default.
-# Licences: Thorsten CC0; Ramona M-AILABS Speech Dataset; Ryan CC BY-NC-SA 4.0 (non-commercial only!);
-# Michael = Kokoro-82M (Apache 2.0).
+# All four may be used commercially: Thorsten CC0; Ramona from the M-AILABS Speech Dataset (BSD-style licence,
+# "including any commercial use", audio from LibriVox, public domain); Fenrir and Michael = Kokoro-82M (Apache 2.0).
 VOICES = {
     "de": [("thorsten", "piper", "de-thorsten-low"), ("ramona", "piper", "de-ramona-low")],
-    "en": [("ryan", "piper", "en-us-ryan-high"), ("michael", "kokoro", "am_michael")],
+    "en": [("fenrir", "kokoro", "am_fenrir"), ("michael", "kokoro", "am_michael")],
 }
 KOKORO = "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/{}"
 
