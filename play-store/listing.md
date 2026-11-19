@@ -41,7 +41,7 @@ SIEBEN SPIELMODI
 
 GEMACHT FÜRS FELD
 • Riesige Halteflächen zum Planten und Entschärfen, auch mit Handschuhen und unter Stress.
-• Männlicher Ansager auf Deutsch und Englisch mit Countdown, Piepen und Funkgerät-Effekt.
+• Ansager auf Deutsch und Englisch (je zwei Stimmen) mit Countdown, Piepen und Funkgerät-Effekt.
 • Der Bildschirm bleibt während der Runde an.
 • Funktioniert offline. Nur Sessions mit mehreren Handys brauchen Internet.
 
@@ -84,7 +84,7 @@ SEVEN GAME MODES
 
 BUILT FOR THE FIELD
 • Huge hold areas to plant and defuse, even with gloves and under pressure.
-• Male announcer in English and German with countdown, beeps and a radio effect.
+• Announcer in English and German (two voices each) with countdown, beeps and a radio effect.
 • The screen stays on during a round.
 • Works offline. Only sessions with several phones need internet.
 
